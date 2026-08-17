@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SORT – Tonprüfung</title>
+<style>
+:root{--papier:#f4f1ec;--tinte:#191713;--braun:#935100;--sand:#e3dbcd;--grau:#7d746a;
+      --gruen:#2f6b3c;--rot:#a32b1f;}
+*{box-sizing:border-box}
+body{margin:0;padding:44px 24px 80px;background:var(--papier);color:var(--tinte);
+  font-family:"Source Sans 3","Segoe UI",-apple-system,sans-serif;font-size:17px;line-height:1.55;}
+main{max-width:560px;margin:0 auto}
+.marke{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--braun);
+  font-weight:700;margin:0 0 14px}
+h1{font-size:1.7rem;margin:0 0 10px;letter-spacing:-.015em}
+.vor{color:#3d3831;margin:0 0 30px}
+button{font:inherit;font-weight:600;padding:12px 22px;border:none;border-radius:3px;
+  background:var(--braun);color:#fff;cursor:pointer}
+button:hover{background:#7d4500}
+button.neben{background:none;color:var(--braun);border:1px solid var(--sand);font-size:.88rem;
+  padding:9px 16px}
+.balken{height:22px;background:#e6e0d5;border-radius:11px;overflow:hidden;margin:22px 0 10px;
+  display:none}
+.fuell{height:100%;width:0;background:#c4b8a8;transition:width .07s linear}
+.fuell.gut{background:var(--gruen)}
+.stand{font-size:.92rem;min-height:1.4em;margin:0 0 8px}
+.stand.gut{color:var(--gruen);font-weight:600}
+.stand.schlecht{color:var(--rot)}
+.wert{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;color:var(--grau)}
+.abschnitt{margin-top:36px;padding-top:22px;border-top:1px solid var(--sand)}
+h2{font-size:1.05rem;margin:0 0 10px}
+ul{margin:0;padding-left:20px;font-size:.92rem;color:#3d3831}
+li{margin-bottom:6px}
+audio{width:100%;margin-top:14px;display:none}
+</style>
+</head>
+<body>
+<main>
+  <p class="marke">PH Luzern · Projekt SORT</p>
+  <h1>Tonprüfung</h1>
+  <p class="vor">Prüft auf einem Schülergerät, ob der Browser das Mikrofon freigibt und
+    ob das Gerät die Stimmen im Raum tatsächlich aufnimmt.</p>
+
+  <button id="los">Mikrofon prüfen</button>
+
+  <div class="balken" id="balken"><div class="fuell" id="fuell"></div></div>
+  <p class="stand" id="stand"></p>
+  <p class="wert" id="wert"></p>
+
+  <audio id="hoeren" controls></audio>
+
+  <div class="abschnitt">
+    <h2>So prüft ihr richtig</h2>
+    <ul>
+      <li>Auf einem echten Schülergerät, nicht auf dem eigenen Notebook.</li>
+      <li>Im Schulnetz, nicht über das Handynetz.</li>
+      <li>Aus etwa einem Meter Abstand sprechen – so sitzen die Gruppen später auch.</li>
+      <li>Nach der Aufnahme anhören: sind alle Stimmen verständlich?</li>
+    </ul>
+  </div>
+</main>
+
+<script>
+const los = document.getElementById('los');
+const balken = document.getElementById('balken');
+const fuell = document.getElementById('fuell');
+const stand = document.getElementById('stand');
+const wert = document.getElementById('wert');
+const hoeren = document.getElementById('hoeren');
+
+los.onclick = async () => {
+  los.disabled = true;
+  stand.className = 'stand';
+  stand.textContent = 'Erlaubnis wird angefragt …';
+
+  let spur;
+  try {
+    spur = await navigator.mediaDevices.getUserMedia({audio:true});
+  } catch (f){
+    stand.className = 'stand schlecht';
+    stand.textContent = 'Kein Zugriff auf das Mikrofon (' + f.name + '). '
+      + 'Entweder wurde die Erlaubnis verweigert, oder die Geräteverwaltung sperrt es.';
+    los.disabled = false;
+    return;
+  }
+
+  const geraet = spur.getAudioTracks()[0];
+  wert.textContent = 'Mikrofon: ' + (geraet.label || 'ohne Namen')
+                   + ' · Adresse: ' + location.origin;
+  balken.style.display = 'block';
+  stand.textContent = 'Sprecht jetzt zehn Sekunden lang normal miteinander.';
+
+  const ac = new (window.AudioContext || window.webkitAudioContext)();
+  const an = ac.createAnalyser(); an.fftSize = 1024;
+  ac.createMediaStreamSource(spur).connect(an);
+  const d = new Uint8Array(an.fftSize);
+  let spitze = 0, laufend = true;
+
+  (function messen(){
+    if (!laufend) return;
+    an.getByteTimeDomainData(d);
+    let s = 0;
+    for (let i = 0; i < d.length; i++){ const v = (d[i]-128)/128; s += v*v; }
+    const p = Math.min(1, Math.sqrt(s/d.length) * 6);
+    spitze = Math.max(spitze, p);
+    fuell.style.width = (p*100) + '%';
+    fuell.className = 'fuell' + (p > 0.12 ? ' gut' : '');
+    requestAnimationFrame(messen);
+  })();
+
+  const auf = new MediaRecorder(spur);
+  const teile = [];
+  auf.ondataavailable = e => teile.push(e.data);
+  auf.onstop = () => {
+    laufend = false;
+    spur.getTracks().forEach(t => t.stop());
+    hoeren.src = URL.createObjectURL(new Blob(teile));
+    hoeren.style.display = 'block';
+    if (spitze > 0.12){
+      stand.className = 'stand gut';
+      stand.textContent = 'Das Gerät hört gut. Hört die Aufnahme zur Sicherheit noch an.';
+    } else {
+      stand.className = 'stand schlecht';
+      stand.textContent = 'Es kam kaum Ton an. Falsches Mikrofon gewählt, stummgeschaltet '
+                        + 'oder das Gerät nimmt zu leise auf.';
+    }
+    los.disabled = false;
+    los.textContent = 'Nochmals prüfen';
+  };
+  auf.start();
+  setTimeout(() => auf.stop(), 10000);
+};
+</script>
+</body>
+</html>
