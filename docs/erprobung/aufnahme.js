@@ -35,7 +35,8 @@ const S = {
   sitzung: null, klasse: '', namen: [],
   beginn: null, t0: 0,
   ereignisse: [], spur: null, aufnehmer: null, brocken: [],
-  laeuft: false, zuletztGezogen: {}, uhr: null, pegel: 0
+  laeuft: false, zuletztGezogen: {}, uhr: null, pegel: 0,
+  zwischenbilder: [], runde: 0, fenster: null
 };
 
 /* ============================================================
@@ -213,7 +214,7 @@ function mitschreibenStarten(){
 /* ============================================================
    Endbild der Sortierfläche
    ============================================================ */
-async function endbild(){
+async function flaechenbild(){
   try {
     if (typeof tisch === 'undefined' || !tisch) return null;
     const b = (typeof breite !== 'undefined' ? breite : 170);
@@ -251,6 +252,25 @@ async function endbild(){
     }
     return await new Promise(f => c.toBlob(f, 'image/png'));
   } catch(e){ return null; }
+}
+
+/* ============================================================
+   Rundenwechsel: das Zwischenbild kommt ins Paket statt in
+   den Download-Ordner. Die Sortierfläche ruft dafür bild(true).
+   ============================================================ */
+function rundenbilderAbfangen(){
+  if (typeof window.bild !== 'function') return;
+  const original = window.bild;
+  window.bild = async function(still){
+    if (still && S.laeuft){
+      S.runde++;
+      const b = await flaechenbild();
+      if (b) S.zwischenbilder.push({ nr: S.runde, blob: b });
+      merken('rundenbild', { nr: S.runde, gespeichert: !!b });
+      return;
+    }
+    return original.apply(this, arguments);
+  };
 }
 
 /* ============================================================
@@ -504,6 +524,7 @@ function starten(){
   huelle.style.display = 'none';
   leiste();
   mitschreibenStarten();
+  rundenbilderAbfangen();
 
   addEventListener('beforeunload', e => {
     if (!S.laeuft) return;
@@ -583,11 +604,12 @@ async function beenden(){
   bildschirm(f);
 
   const ton = new Blob(S.brocken, { type: S.brocken[0] ? S.brocken[0].type : 'audio/webm' });
-  const bild = await endbild();
+  const bild = await flaechenbild();
   const kopf = kopfdaten();
   kopf.ende = new Date().toISOString();
   kopf.dauer_s = Math.round((performance.now() - S.t0) / 1000);
   kopf.ereignisse = S.ereignisse.length;
+  kopf.runden = S.zwischenbilder.length;
 
   const dateien = [
     { name: 'angaben.json',   daten: textBytes(JSON.stringify(kopf, null, 2)) },
@@ -595,6 +617,10 @@ async function beenden(){
     { name: 'ton.webm',       daten: await zuBytes(ton) }
   ];
   if (bild) dateien.push({ name: 'ergebnis.png', daten: await zuBytes(bild) });
+  for (const zb of S.zwischenbilder){
+    dateien.push({ name: 'runde-' + String(zb.nr).padStart(2, '0') + '.png',
+                   daten: await zuBytes(zb.blob) });
+  }
 
   const paket = zip(dateien);
   const name = 'SORT_' + thema + '_' + variante + '_' + S.sitzung + '.zip';
@@ -674,20 +700,66 @@ async function beenden(){
     if (CFG.ablage) abgeben.disabled = false;
   };
 
+  /* Schritt 3 --------------------------------------------------- */
+  const s3 = el('div', 'sortauf-schritt aus');
+  s3.appendChild(el('span', 'sortauf-zahl', '3'));
+  const s3t = el('div', 'sortauf-schritttext');
+  s3t.appendChild(el('b', null, 'Bestätigen'));
+  s3t.appendChild(el('p', null,
+    'Wenn die Datei drüben angekommen ist, drückt hier.'));
+  s3.appendChild(s3t);
+  g.appendChild(s3);
+
+  const bestaetigen = el('button', 'sortauf-knopf', 'Wir haben abgegeben');
+  bestaetigen.disabled = true;
+  g.appendChild(bestaetigen);
+
   if (CFG.ablage){
     abgeben.onclick = () => {
-      window.open(CFG.ablage, '_blank', 'noopener');
+      // kleines Fenster, damit die Sortierung dahinter sichtbar bleibt
+      const b = Math.min(900, Math.round(screen.width * 0.62));
+      const h = Math.min(720, Math.round(screen.height * 0.72));
+      const l = Math.round((screen.width - b) / 2);
+      const o = Math.round((screen.height - h) / 2.6);
+      S.fenster = window.open(CFG.ablage, 'sortabgabe',
+        `width=${b},height=${h},left=${l},top=${o},resizable=yes,scrollbars=yes`);
+      if (!S.fenster) window.open(CFG.ablage, '_blank', 'noopener');
       abgeben.textContent = 'Abgabefenster nochmals öffnen';
       abgeben.classList.add('sortauf-erledigt');
+      s3.classList.remove('aus');
+      bestaetigen.disabled = false;
+      merken('abgabefenster');
     };
   } else {
     abgeben.textContent = 'Kein Abgabeort eingerichtet';
     s2t.querySelector('p').textContent =
       'Gebt die gespeicherte Datei eurer Lehrperson.';
+    s2t.querySelector('.sortauf-fundort').remove();
+    s3.classList.remove('aus');
+    bestaetigen.disabled = false;
   }
+
+  bestaetigen.onclick = () => {
+    if (S.fenster && !S.fenster.closed){ try { S.fenster.close(); } catch(e){} }
+    merken('abgegeben');
+    danke();
+  };
 
   bildschirm(g);
 
+  try { localStorage.removeItem('sort-protokoll-' + S.sitzung); } catch(e){}
+}
+
+function danke(){
+  const d = document.createDocumentFragment();
+  d.appendChild(el('p', 'sortauf-hand', 'Geschafft'));
+  d.appendChild(el('h2', null, 'Danke für eure Arbeit!'));
+  d.appendChild(el('p', 'sortauf-lauf',
+    'Eure Sortierung ist bei uns angekommen. Ihr könnt das Fenster jetzt '
+    + 'schliessen – einen schönen Tag noch.'));
+  d.appendChild(el('p', 'sortauf-klein', 'Sitzungscode:'));
+  d.appendChild(el('p', 'sortauf-code', S.sitzung));
+  bildschirm(d);
   try { localStorage.removeItem('sort-protokoll-' + S.sitzung); } catch(e){}
 }
 
