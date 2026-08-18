@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SORT – Kopfentwürfe</title>
+<meta name="description" content="Kärtchensortieraufgaben für selbstreguliertes Lernen im Mathematikunterricht Projekt SORT, PH Luzern.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Patrick+Hand&display=swap" rel="stylesheet">
+<style>
+:root{
+  --papier:#fbf8f3;
+  --creme:#f6ecdf;
+  --tinte:#2d2924;
+  --tinte-hell:#6c6357;
+  --braun:#935100;
+  --braun-hell:#b07c3c;
+  --linie:#e4d9c7;
+  --karte:#fffdf9;
+
+  --blau:#6f9dc4;  --gruen:#85a862; --gelb:#d3a03f;
+  --lila:#9b8ac4;  --rot:#cf8188;   --tuerkis:#6faa9c;
+
+  --druck:'Fira Sans','Segoe UI',sans-serif;   /* gesetzte Schrift */
+  --sans:"Source Sans 3","Segoe UI",-apple-system,BlinkMacSystemFont,sans-serif;
+  --hand:'Patrick Hand',"Bradley Hand","Segoe Print",cursive;
+  --handfrage:1.34rem;
+  --handnotiz:1.04rem;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--papier);color:var(--tinte);
+  font-family:var(--druck);font-size:17.5px;line-height:1.62;}
+.rand{max-width:1020px;margin:0 auto;padding:0 30px}
+a{color:var(--braun)}
+img{max-width:100%}
+
+/* ---------- Kopfleiste ---------- */
+.leiste{border-bottom:1px solid var(--linie);background:#fff}
+.leiste .rand{display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding-top:16px;
+  padding-bottom:16px}
+.wortmarke{font-family:var(--druck);font-weight:700;font-size:1.25rem;letter-spacing:.06em;
+  text-decoration:none;color:var(--braun)}
+.haus{display:block;line-height:0}
+.haus img{width:118px;height:auto;display:block}
+.geldgeber{margin-left:auto;display:flex;align-items:center;gap:11px}
+.geldgeber span{font-family:var(--druck);font-size:.68rem;letter-spacing:.12em;
+  text-transform:uppercase;font-weight:700;color:var(--tinte-hell)}
+.geldgeber img{width:104px;height:auto;display:block}
+.ort{font-family:var(--sans);font-size:.72rem;letter-spacing:.15em;text-transform:uppercase;
+  font-weight:700;color:var(--tinte-hell);border-left:1px solid var(--linie);padding-left:18px}
+.ort.aufloesung{letter-spacing:.09em;font-weight:400;color:#8d8377}
+.ort.aufloesung b{font-weight:700;color:var(--braun)}
+.leiste nav{margin-left:auto;display:flex;gap:22px;font-family:var(--sans);font-size:.88rem}
+.leiste nav a{text-decoration:none;font-weight:600;color:var(--tinte-hell)}
+.leiste nav a:hover{color:var(--braun);text-decoration:underline;text-underline-offset:4px}
+
+/* ---------- Kopfbereich ---------- */
+.augen{font-family:var(--sans);font-size:.74rem;font-weight:700;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--braun);margin:0 0 12px}
+.titelzeile{display:grid;grid-template-columns:auto 1fr;gap:44px;align-items:end}
+.titelzeile .schrift{min-width:220px}
+.danebentext{padding-bottom:9px;text-align:right}
+.aufloesung{font-family:var(--druck);font-size:.82rem;font-weight:400;letter-spacing:.1em;
+  text-transform:uppercase;color:#8d8377;margin:10px 0 0}
+.aufloesung b{font-weight:700;color:var(--braun)}
+h1.sort{font-family:var(--druck);font-weight:700;color:var(--braun);
+  font-size:clamp(3rem,7.5vw,4.6rem);line-height:.95;margin:0 0 10px;letter-spacing:.01em}
+.untertitel{font-family:var(--druck);font-weight:600;font-size:clamp(1.08rem,2vw,1.42rem);
+  line-height:1.32;margin:0 0 0 auto;max-width:30ch;color:var(--tinte)}
+.hauslogo{width:150px;flex:none;padding-top:6px}
+.hauslogo img{display:block;width:100%;height:auto}
+
+.banner{margin:32px 0 0;border:1px solid var(--linie);overflow:hidden;line-height:0}
+.banner img{width:100%;height:auto;display:block}
+
+.zweispalt{display:grid;grid-template-columns:270px 1fr;gap:26px;margin:32px 0 0;
+  align-items:start}
+.fakten{background:var(--creme);padding:22px 22px 6px;border-top:3px solid var(--braun)}
+.fakt{margin-bottom:17px}
+.fakt b{display:block;font-family:var(--druck);font-weight:700;color:var(--braun);
+  font-size:1.02rem;line-height:1.2}
+.fakt span{display:block;font-family:var(--sans);font-size:.83rem;color:var(--tinte-hell);
+  line-height:1.35;margin-top:2px}
+.blick{background:var(--creme);padding:24px 26px;border-top:3px solid var(--braun)}
+.blick h2{font-family:var(--druck);font-size:1.12rem;font-weight:700;color:var(--braun);
+  margin:0 0 10px}
+.blick p{margin:0 0 12px;font-size:1rem}
+.blick p:last-child{margin-bottom:0;font-weight:600}
+
+/* ---------- Abschnittsüberschrift wie im Antrag ---------- */
+.balken{font-family:var(--sans);font-size:.78rem;font-weight:700;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--braun);margin:0 0 10px;
+  border-bottom:2px solid var(--braun);padding-bottom:9px}
+
+/* ---------- Türen ---------- */
+.tueren{display:grid;grid-template-columns:repeat(auto-fit,minmax(276px,1fr));gap:22px;
+  margin:22px 0 0}
+.tuer{display:block;text-decoration:none;color:inherit;background:var(--karte);
+  border:1px solid var(--linie);border-top:4px solid var(--blau);padding:24px 26px 22px;
+  transition:transform .25s ease,box-shadow .25s ease}
+.tuer:nth-child(2){border-top-color:var(--lila)}
+.tuer:hover,.tuer:focus-visible{transform:translateY(-3px);
+  box-shadow:0 14px 30px rgba(90,70,35,.12);outline:none}
+.tuer:focus-visible{outline:2px solid var(--braun);outline-offset:3px}
+.tuer h3{font-family:var(--druck);font-size:1.42rem;font-weight:700;margin:0 0 6px}
+.tuer p{margin:0 0 12px;font-size:.95rem;color:var(--tinte-hell)}
+.tuer .weiter{font-family:var(--sans);font-weight:700;font-size:.85rem;color:var(--braun)}
+
+/* ---------- Textabschnitte ---------- */
+main{padding-top:52px}
+.abschnitt{display:grid;grid-template-columns:1fr 1fr;gap:42px;align-items:center;
+  padding:44px 0;border-top:1px solid var(--linie)}
+.abschnitt:first-child{border-top:none;padding-top:26px}
+.abschnitt:nth-of-type(even) .wort{order:2}
+.abschnitt h2{font-family:var(--druck);font-size:1.45rem;font-weight:700;margin:0 0 12px;
+  line-height:1.25}
+.abschnitt p{margin:0;color:#463f36;font-size:1rem}
+.abschnitt figure{margin:0}
+.abschnitt figure img{display:block;width:100%;height:auto;border:1px solid var(--linie)}
+.abschnitt figcaption{font-family:var(--hand);font-size:var(--handnotiz);color:var(--tinte-hell);
+  margin-top:10px;line-height:1.35}
+
+/* ---------- Klassenseiten ---------- */
+.kopfklein{padding:44px 0 0}
+.kopfklein h1{font-family:var(--druck);font-size:clamp(2rem,5vw,2.9rem);font-weight:700;
+  margin:0 0 10px;line-height:1.08}
+.kopfklein p{margin:0;font-size:1.06rem;color:var(--tinte-hell);max-width:54ch}
+
+.feld{padding:36px 0 4px;border-top:1px solid var(--linie);margin-top:30px}
+.feldkopf{display:flex;align-items:baseline;gap:13px;flex-wrap:wrap;margin-bottom:4px}
+.marker{width:12px;height:12px;border-radius:50%;flex:none;position:relative;top:-1px}
+.feld h2{font-family:var(--druck);font-size:1.4rem;font-weight:700;margin:0}
+.feld .zeile{color:var(--tinte-hell);margin:0 0 22px;max-width:58ch;font-size:.97rem}
+.knoepfe{display:grid;gap:17px;grid-template-columns:repeat(auto-fill,minmax(218px,1fr));
+  padding-bottom:14px}
+.sortierung{display:block;text-decoration:none;color:inherit;background:var(--karte);
+  padding:17px 18px 19px;min-height:128px;
+  transition:transform .25s ease,box-shadow .25s ease}
+.sortierung:hover,.sortierung:focus-visible{transform:translateY(-3px);
+  box-shadow:0 12px 26px rgba(90,70,35,.13);outline:none}
+.sortierung:focus-visible{outline:2px solid var(--braun);outline-offset:3px}
+.nummer{display:block;margin-bottom:8px;color:var(--braun)}
+.sortierung h3{margin:0 0 8px}
+.sortierung p{margin:0;color:var(--tinte-hell)}
+
+/* Entwurf 1 — Kärtchen: die Frage in Handschrift, sonst nichts */
+.kv1 .sortierung{border:2px dashed var(--f);border-radius:7px}
+.kv1 .nummer{font-family:var(--sans);font-size:.68rem;font-weight:700;letter-spacing:.14em;
+  text-transform:uppercase}
+.kv1 .sortierung h3{font-family:var(--hand);font-weight:400;font-size:var(--handfrage);
+  line-height:1.2;color:var(--tinte)}
+.kv1 .sortierung p{display:none}
+
+/* Entwurf 2 — Karteikarte: Etikett in Handschrift, Frage gesetzt */
+.kv2 .sortierung{border:1px solid var(--linie);border-top:4px solid var(--f)}
+.kv2 .nummer{font-family:var(--hand);font-size:var(--handnotiz);line-height:1;transform:rotate(-1.5deg)}
+.kv2 .sortierung h3{font-family:var(--druck);font-size:1.04rem;font-weight:600;line-height:1.3}
+.kv2 .sortierung p{font-family:var(--sans);font-size:.84rem;line-height:1.45}
+
+/* Entwurf 3 — Zettel: Frage in Handschrift, ein Satz darunter */
+.kv3 .sortierung{border:1px solid var(--linie);border-left:5px solid var(--f);border-radius:2px}
+.kv3 .nummer{font-family:var(--sans);font-size:.68rem;font-weight:700;letter-spacing:.14em;
+  text-transform:uppercase}
+.kv3 .sortierung h3{font-family:var(--hand);font-weight:400;font-size:calc(var(--handfrage) * .96);
+  line-height:1.22;color:var(--tinte)}
+.kv3 .sortierung p{font-family:var(--druck);font-size:.88rem;line-height:1.45}
+.wartet{border:2px dashed var(--linie);border-radius:6px;padding:20px;color:var(--tinte-hell);
+  font-size:.93rem}
+
+/* ---------- Projektblock ---------- */
+.projekt{columns:2;column-gap:42px;margin-top:18px}
+.projekt p{margin:0 0 14px;font-size:1rem;color:#463f36;break-inside:avoid}
+.projekt p:last-child{font-weight:600;color:var(--tinte)}
+@media (max-width:820px){.projekt{columns:1}}
+
+.klassenbild{margin:22px 0 0;border:1px solid var(--linie);line-height:0}
+.klassenbild img{width:100%;height:auto;display:block}
+.handzeile{font-family:var(--hand);font-size:1.34rem;color:var(--braun);
+  margin:2px 0 0;transform:rotate(-.8deg);display:inline-block}
+footer.schlicht{margin-top:44px;padding:26px 0 44px}
+footer.schlicht .rand{display:flex;align-items:center;gap:26px;flex-wrap:wrap}
+footer.schlicht img.phlu{width:118px;height:auto;display:block}
+footer.schlicht img.mrh{width:124px;height:auto;display:block}
+footer.schlicht .worte{flex:1;min-width:230px}
+footer.schlicht p{margin:0 0 5px;line-height:1.5}
+
+.hinweis{background:var(--creme);border-left:4px solid var(--braun);padding:14px 18px;
+  margin:16px 0 0;font-size:.95rem;line-height:1.5;max-width:60ch}
+.hinweis b{display:block;margin-bottom:3px}
+.probe{display:block;text-decoration:none;color:inherit;max-width:60ch;
+  border:2px dashed var(--gruen);border-radius:6px;padding:13px 17px;margin:12px 0 0;
+  background:var(--karte);transition:transform .2s,box-shadow .2s}
+.probe:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(90,70,35,.12)}
+.probe b{display:block;color:var(--gruen);font-size:1rem;margin-bottom:2px}
+.probe span{font-size:.9rem;color:var(--tinte-hell);line-height:1.45}
+
+/* ---------- Projektteam ---------- */
+.teamvorspann{margin:26px 0 0;padding-top:24px;border-top:1px solid var(--linie);font-size:1rem;color:#463f36;max-width:62ch}
+.team{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:26px;
+  margin-top:22px}
+.kopfperson{padding-top:2px}
+.portraet{display:block;width:104px;height:104px;object-fit:cover;
+  border-radius:50%;margin:0 0 12px;filter:contrast(1.02)}
+.kopfperson b{display:block;font-size:1.04rem;font-weight:700;margin-bottom:5px}
+.kopfperson p{margin:0;font-size:.91rem;color:var(--tinte-hell);line-height:1.48}
+
+/* ---------- Fuss ---------- */
+footer{margin-top:58px;border-top:1px solid var(--linie);background:#fff;
+  padding:34px 0 56px;font-family:var(--sans);font-size:.86rem;color:var(--tinte-hell)}
+footer .spalten{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:30px}
+footer b{display:block;color:var(--tinte);font-size:.72rem;letter-spacing:.14em;
+  text-transform:uppercase;margin-bottom:8px}
+footer p{margin:0 0 5px}
+
+@media (max-width:820px){
+  .titelzeile{grid-template-columns:1fr;gap:16px;align-items:start}
+  .danebentext{padding-bottom:0;text-align:left}
+  .untertitel{margin-left:0}
+  .haus img{width:96px}
+  .geldgeber img{width:84px}
+  .geldgeber span{display:none}
+  .zweispalt{grid-template-columns:1fr}
+  .abschnitt{grid-template-columns:1fr;gap:24px;padding:36px 0}
+  .abschnitt:nth-of-type(even) .wort{order:0}
+  .rand{padding:0 22px}
+  .leiste nav{width:100%;margin-left:0}
+  .ort{border-left:none;padding-left:0}
+  .hauslogo{width:118px}
+}
+@media (prefers-reduced-motion:reduce){
+  .tuer,.sortierung{transition:none}
+  .tuer:hover,.sortierung:hover{transform:none}
+}
+</style>
+</head>
+<body>
+<div class="leiste"><div class="rand"><a class="haus" href="index.html"><img src="bilder/logo-phlu.png" alt="PH Luzern, Pädagogische Hochschule"></a><span class="geldgeber"><span>Gefördert von</span><img src="bilder/logo-mrh.png" alt="Milton Ray Hartmann Stiftung"></span></div></div>
+<div class="rand" style="padding-top:44px"><h1 style="font-family:var(--druck);font-size:2rem;margin:0 0 8px">Drei Kopfentwürfe</h1><p style="margin:0;color:var(--tinte-hell);max-width:56ch">Derselbe Inhalt, drei Anordnungen. Die gewählte Nummer oben in <code>studie_bauen.py</code> bei <code>KOPFVARIANTE</code> eintragen.</p></div><div class="rand" style="padding-top:36px;padding-bottom:4px"><p class="balken">Entwurf 1 — Antragskopf</p></div><div style="border:1px solid var(--linie);margin:0 30px 46px;background:var(--papier)"><div class="rand" style="padding-top:52px"><div class="titelzeile"><div class="schrift"><h1 class="sort">SORT</h1><p class="aufloesung"><b>S</b>ortieren · <b>O</b>rdnen · <b>R</b>eflektieren · <b>T</b>ransfer</p></div><div class="danebentext"><p class="untertitel">Kärtchensortieraufgaben für selbstreguliertes Lernen im Mathematikunterricht</p></div></div><div class="banner"><img src="bilder/banner.jpg" alt="Jugendliche ordnen Termkarten auf einem Tisch." width="1400" height="560"></div><div class="zweispalt"><div class="fakten"><div class="fakt"><b>Klasse 7 und 9</b><span>Sekundarstufe I. Weitere Themen kommen dazu.</span></div><div class="fakt"><b>Im Browser</b><span>Ohne Anmeldung, ohne Installation, auf jedem Gerät.</span></div><div class="fakt"><b>In Gruppen</b><span>Drei bis vier Lernende an einem Gerät.</span></div><div class="fakt"><b>Frei nutzbar</b><span>Veröffentlichung als Open Educational Resources.</span></div></div><div class="blick"><h2>Worum es geht</h2><p>Eine Klasse bekommt einen Satz Karten – Terme, Figuren, Begriffe, Aussagen – und soll sie ordnen. Welche gehören zusammen? Wonach eigentlich? Und wo hört das Kriterium auf zu passen?</p><p>Die Antwort ist nicht die fertige Sortierung, sondern die Begründung. Deshalb wird zu zweit oder zu dritt gelegt und dabei geredet. Die Lernenden müssen sich einigen, ihr Vorgehen prüfen und es notfalls umwerfen – genau das, was in der Fachsprache selbstreguliertes Lernen heisst.</p><p>Alles läuft im Browser. Kein Konto, keine Installation.</p></div></div></div></div><div class="rand" style="padding-top:36px;padding-bottom:4px"><p class="balken">Entwurf 2 — Bild zuerst</p></div><div style="border:1px solid var(--linie);margin:0 30px 46px;background:var(--papier)"><div class="banner" style="border:none;margin:0"><img src="bilder/banner.jpg" alt="Jugendliche ordnen Termkarten auf einem Tisch." width="1400" height="560"></div><div class="rand" style="padding-top:40px"><div class="titelzeile"><div class="schrift"><h1 class="sort">SORT</h1><p class="aufloesung"><b>S</b>ortieren · <b>O</b>rdnen · <b>R</b>eflektieren · <b>T</b>ransfer</p></div><div class="danebentext"><p class="untertitel">Kärtchensortieraufgaben für selbstreguliertes Lernen im Mathematikunterricht</p></div></div><div class="zweispalt" style="margin-top:26px"><div class="fakten"><div class="fakt"><b>Klasse 7 und 9</b><span>Sekundarstufe I. Weitere Themen kommen dazu.</span></div><div class="fakt"><b>Im Browser</b><span>Ohne Anmeldung, ohne Installation, auf jedem Gerät.</span></div><div class="fakt"><b>In Gruppen</b><span>Drei bis vier Lernende an einem Gerät.</span></div><div class="fakt"><b>Frei nutzbar</b><span>Veröffentlichung als Open Educational Resources.</span></div></div><div class="blick"><h2>Worum es geht</h2><p>Eine Klasse bekommt einen Satz Karten – Terme, Figuren, Begriffe, Aussagen – und soll sie ordnen. Welche gehören zusammen? Wonach eigentlich? Und wo hört das Kriterium auf zu passen?</p><p>Die Antwort ist nicht die fertige Sortierung, sondern die Begründung. Deshalb wird zu zweit oder zu dritt gelegt und dabei geredet. Die Lernenden müssen sich einigen, ihr Vorgehen prüfen und es notfalls umwerfen – genau das, was in der Fachsprache selbstreguliertes Lernen heisst.</p><p>Alles läuft im Browser. Kein Konto, keine Installation.</p></div></div></div></div><div class="rand" style="padding-top:36px;padding-bottom:4px"><p class="balken">Entwurf 3 — Zweispaltig</p></div><div style="border:1px solid var(--linie);margin:0 30px 46px;background:var(--papier)"><div class="rand" style="padding-top:52px"><div class="zweispalt" style="grid-template-columns:1fr 1fr;margin-top:0;align-items:center"><div><div class="titelzeile"><div class="schrift"><h1 class="sort">SORT</h1><p class="aufloesung"><b>S</b>ortieren · <b>O</b>rdnen · <b>R</b>eflektieren · <b>T</b>ransfer</p></div><div class="danebentext"><p class="untertitel">Kärtchensortieraufgaben für selbstreguliertes Lernen im Mathematikunterricht</p></div></div><div style="margin-top:20px"><div class="blick"><h2>Worum es geht</h2><p>Eine Klasse bekommt einen Satz Karten – Terme, Figuren, Begriffe, Aussagen – und soll sie ordnen. Welche gehören zusammen? Wonach eigentlich? Und wo hört das Kriterium auf zu passen?</p><p>Die Antwort ist nicht die fertige Sortierung, sondern die Begründung. Deshalb wird zu zweit oder zu dritt gelegt und dabei geredet. Die Lernenden müssen sich einigen, ihr Vorgehen prüfen und es notfalls umwerfen – genau das, was in der Fachsprache selbstreguliertes Lernen heisst.</p><p>Alles läuft im Browser. Kein Konto, keine Installation.</p></div></div></div><div class="banner"><img src="bilder/in-aktion3.jpg" alt="Jugendliche ordnen Termkarten auf einem Tisch." width="1200" height="800"></div></div><div class="zweispalt" style="grid-template-columns:repeat(4,1fr);gap:14px"><div class="fakten" style="padding:16px 16px 2px"><div class="fakt"><b>Klasse 7 und 9</b><span>Sekundarstufe I. Weitere Themen kommen dazu.</span></div></div><div class="fakten" style="padding:16px 16px 2px"><div class="fakt"><b>Im Browser</b><span>Ohne Anmeldung, ohne Installation, auf jedem Gerät.</span></div></div><div class="fakten" style="padding:16px 16px 2px"><div class="fakt"><b>In Gruppen</b><span>Drei bis vier Lernende an einem Gerät.</span></div></div><div class="fakten" style="padding:16px 16px 2px"><div class="fakt"><b>Frei nutzbar</b><span>Veröffentlichung als Open Educational Resources.</span></div></div></div></div></div>
+<footer><div class="rand"><div class="spalten"><div><b>Hochschule</b><p>Pädagogische Hochschule Luzern</p><p>Institut für Fachdidaktik MINT und Nachhaltigkeit</p></div><div><b>Förderung und Erprobung</b><p>Gefördert von der Milton Ray Hartmann Stiftung</p><p>Erprobt an der Kantonsschule Reussbühl und der Sekundarschule Hochdorf</p></div><div><b>Kontakt</b><p>Dr. Henrike Allmendinger</p><p><a href="mailto:henrike.allmendinger@phlu.ch">henrike.allmendinger@phlu.ch</a></p><p><a href="https://www.phlu.ch/henrike-allmendinger.html">Profil an der PH Luzern</a></p></div></div></div></footer>
+</body>
+</html>

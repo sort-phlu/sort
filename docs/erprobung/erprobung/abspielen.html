@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SORT – Sortierung abspielen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Patrick+Hand&display=swap" rel="stylesheet">
+<style>
+:root{
+  --papier:#fbf8f3; --creme:#f6ecdf; --karte:#fffefb;
+  --tinte:#2d2924;  --hell:#6c6357;  --braun:#935100;
+  --linie:#e4d9c7;  --gruen:#4f7a3a; --rot:#b4474f;
+  --druck:'Fira Sans','Segoe UI',-apple-system,sans-serif;
+  --hand:'Patrick Hand',cursive;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--papier);color:var(--tinte);font-family:var(--druck);
+  font-size:16px;line-height:1.55}
+.rand{max-width:1180px;margin:0 auto;padding:0 26px}
+.leiste{border-bottom:1px solid var(--linie);background:#fff;padding:15px 0}
+.leiste .rand{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
+.marke{font-weight:700;font-size:1.2rem;letter-spacing:.06em;color:var(--braun)}
+.ort{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;font-weight:700;
+  color:var(--hell);border-left:1px solid var(--linie);padding-left:16px}
+
+h1{font-size:1.7rem;margin:34px 0 8px}
+.vor{color:var(--hell);margin:0 0 24px;max-width:62ch}
+
+/* ---------- Einlesen ---------- */
+#ablage{border:2px dashed var(--linie);border-radius:8px;background:var(--karte);
+  padding:38px 26px;text-align:center;transition:border-color .2s,background .2s}
+#ablage.drueber{border-color:var(--braun);background:var(--creme)}
+#ablage h2{margin:0 0 8px;font-size:1.12rem}
+#ablage p{margin:0 0 16px;color:var(--hell);font-size:.93rem}
+button{font:inherit;font-weight:600;font-size:.93rem;padding:10px 20px;border:none;
+  border-radius:3px;background:var(--braun);color:#fff;cursor:pointer}
+button:hover{background:#7d4500}
+button:disabled{background:#c9c0b4;cursor:default}
+button.neben{background:none;color:var(--braun);border:1px solid var(--linie);}
+button.neben:hover{background:var(--creme)}
+.stand{margin-top:14px;font-size:.88rem;min-height:1.3em}
+.stand.fehler{color:var(--rot)}
+.stand.gut{color:var(--gruen);font-weight:600}
+
+/* ---------- Kopfdaten ---------- */
+#angaben{display:none;margin:26px 0 0;background:var(--creme);
+  border-top:3px solid var(--braun);padding:18px 22px;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:18px}
+#angaben div b{display:block;font-size:.68rem;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--hell);margin-bottom:3px}
+#angaben div span{font-size:.98rem;font-weight:600}
+
+/* ---------- Bühne ---------- */
+#buehne{display:none;margin-top:22px}
+.flaeche{position:relative;background:#fff;border:1px solid var(--linie);
+  overflow:hidden;min-height:120px}
+.flaeche .inner{position:absolute;top:0;left:0;transform-origin:top left}
+#grund{position:absolute;inset:0;pointer-events:none;z-index:0}
+.k{position:absolute;transition:none;box-shadow:0 1px 3px rgba(90,70,35,.18)}
+.k.greift{box-shadow:0 6px 18px rgba(147,81,0,.45);outline:2px solid var(--braun)}
+
+/* ---------- Steuerung ---------- */
+.pult{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:14px;
+  background:#fff;border:1px solid var(--linie);padding:12px 16px}
+.pult .zeit{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.9rem;color:var(--hell);
+  min-width:104px}
+#schiene{flex:1;min-width:220px;position:relative;height:26px;cursor:pointer}
+#schiene .bahn{position:absolute;top:11px;left:0;right:0;height:4px;background:var(--linie);
+  border-radius:2px}
+#schiene .fuell{position:absolute;top:11px;left:0;height:4px;background:var(--braun);
+  border-radius:2px;width:0}
+#schiene .griff{position:absolute;top:6px;width:14px;height:14px;border-radius:50%;
+  background:var(--braun);margin-left:-7px;left:0}
+#schiene .marke{position:absolute;top:4px;width:2px;height:18px;background:var(--hell);
+  opacity:.55}
+#schiene .marke.runde{background:var(--gruen);opacity:.9}
+#schiene .marke.pruef{background:var(--rot);opacity:.9}
+select{font:inherit;font-size:.9rem;padding:7px 9px;border:1px solid var(--linie);
+  border-radius:3px;background:#fff;color:var(--tinte)}
+
+/* ---------- Unten ---------- */
+.unten{display:grid;grid-template-columns:1.1fr .9fr;gap:24px;margin-top:24px;
+  align-items:start}
+.kasten{background:#fff;border:1px solid var(--linie);padding:16px 18px}
+.kasten h3{margin:0 0 10px;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--braun)}
+#lauf{max-height:290px;overflow:auto;font-size:.86rem}
+#lauf .z{display:flex;gap:10px;padding:3px 0;border-bottom:1px solid #f2ece2;color:var(--hell)}
+#lauf .z.jetzt{color:var(--tinte);font-weight:600;background:var(--creme)}
+#lauf .z i{font-family:ui-monospace,Menlo,Consolas,monospace;font-style:normal;
+  min-width:52px;flex:none}
+#zahlen table{width:100%;border-collapse:collapse;font-size:.9rem}
+#zahlen td{padding:4px 0;border-bottom:1px solid #f2ece2}
+#zahlen td:last-child{text-align:right;font-weight:600;
+  font-family:ui-monospace,Menlo,Consolas,monospace}
+#bilder{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+#bilder a{display:block;border:1px solid var(--linie);padding:4px;background:#fff}
+#bilder img{display:block;height:70px;width:auto}
+#bilder span{display:block;font-size:.72rem;color:var(--hell);text-align:center;margin-top:3px}
+.hand{font-family:var(--hand);font-size:1.15rem;color:var(--braun)}
+@media (max-width:900px){.unten{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="leiste"><div class="rand">
+  <span class="marke">SORT</span>
+  <span class="ort">Sortierung abspielen</span>
+</div></div>
+
+<div class="rand">
+  <h1>Eine Sitzung ansehen</h1>
+  <p class="vor">Zieht das Sitzungspaket und die zugehörige Sortierfläche zusammen
+    hierher. Aus dem Ereignisprotokoll wird der Sortierverlauf rekonstruiert und
+    zusammen mit der Tonaufnahme abgespielt.</p>
+
+  <div id="ablage">
+    <h2>Dateien hierher ziehen</h2>
+    <p>Das Sitzungspaket <code>SORT_….zip</code> und die passende
+       <code>index.html</code> aus dem Erprobungsordner.</p>
+    <button id="waehlen">Dateien auswählen</button>
+    <input type="file" id="datei" multiple accept=".zip,.html,.htm" hidden>
+    <p class="stand" id="stand"></p>
+  </div>
+
+  <div id="angaben"></div>
+
+  <div id="buehne">
+    <div class="flaeche" id="flaeche"><div class="inner" id="inner"><div id="grund"></div></div></div>
+
+    <div class="pult">
+      <button id="spielen">Abspielen</button>
+      <span class="zeit" id="zeit">00:00 / 00:00</span>
+      <div id="schiene">
+        <div class="bahn"></div><div class="fuell" id="fuell"></div>
+        <div class="griff" id="griff"></div>
+      </div>
+      <select id="tempo">
+        <option value="0.5">0,5×</option>
+        <option value="1" selected>1×</option>
+        <option value="2">2×</option>
+        <option value="4">4×</option>
+      </select>
+    </div>
+
+    <audio id="ton" preload="auto"></audio>
+
+    <div class="unten">
+      <div class="kasten">
+        <h3>Verlauf</h3>
+        <div id="lauf"></div>
+      </div>
+      <div class="kasten">
+        <h3>Zahlen</h3>
+        <div id="zahlen"></div>
+        <h3 style="margin-top:18px">Bilder</h3>
+        <div id="bilder"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   Zip lesen (nur was wir selbst schreiben: gespeichert oder deflate)
+   ============================================================ */
+async function zipLesen(puffer){
+  const d = new DataView(puffer), tx = new TextDecoder('utf-8');
+  const raus = {};
+  let i = 0;
+  while (i < d.byteLength - 4){
+    if (d.getUint32(i, true) !== 0x04034b50) { i++; continue; }
+    const methode = d.getUint16(i + 8, true);
+    const komp    = d.getUint32(i + 18, true);
+    const roh     = d.getUint32(i + 22, true);
+    const nlen    = d.getUint16(i + 26, true);
+    const elen    = d.getUint16(i + 28, true);
+    const name    = tx.decode(new Uint8Array(puffer, i + 30, nlen));
+    const start   = i + 30 + nlen + elen;
+    let daten = new Uint8Array(puffer, start, komp);
+    if (methode === 8){
+      const str = new Blob([daten]).stream()
+        .pipeThrough(new DecompressionStream('deflate-raw'));
+      daten = new Uint8Array(await new Response(str).arrayBuffer());
+    }
+    raus[name] = daten;
+    i = start + komp;
+    if (!komp && !roh) i = start;   // Sicherheitsnetz
+  }
+  return raus;
+}
+
+/* ============================================================
+   Zustand
+   ============================================================ */
+const Z = {
+  angaben: null, ereignisse: null, karten: {},   // code -> data-URI
+  gruppen: {}, breite: 110, tisch: [1200, 700],
+  dauer: 0, laeuft: false, tempo: 1, tonDa: false,
+  knoten: {}, letzterIndex: -1, uhr0: 0, standZeit: 0
+};
+
+const $ = id => document.getElementById(id);
+const zeitText = ms => {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  return String(Math.floor(s / 60)).padStart(2,'0') + ':' + String(s % 60).padStart(2,'0');
+};
+
+/* ============================================================
+   Dateien annehmen
+   ============================================================ */
+const ablage = $('ablage'), stand = $('stand');
+$('waehlen').onclick = () => $('datei').click();
+$('datei').onchange = e => annehmen([...e.target.files]);
+['dragenter','dragover'].forEach(t => ablage.addEventListener(t, e => {
+  e.preventDefault(); ablage.classList.add('drueber');
+}));
+['dragleave','drop'].forEach(t => ablage.addEventListener(t, e => {
+  e.preventDefault(); ablage.classList.remove('drueber');
+}));
+ablage.addEventListener('drop', e => annehmen([...e.dataTransfer.files]));
+
+async function annehmen(dateien){
+  stand.className = 'stand';
+  stand.textContent = 'Wird gelesen …';
+  try {
+    for (const f of dateien){
+      if (/\.zip$/i.test(f.name))            await paketLesen(f);
+      else if (/\.html?$/i.test(f.name))     await flaecheLesen(f);
+    }
+    pruefen();
+  } catch(fehler){
+    stand.className = 'stand fehler';
+    stand.textContent = 'Das hat nicht geklappt: ' + fehler.message;
+  }
+}
+
+async function paketLesen(f){
+  const inhalt = await zipLesen(await f.arrayBuffer());
+  const txt = n => new TextDecoder('utf-8').decode(inhalt[n]);
+  if (!inhalt['protokoll.json']) throw new Error('Im Paket fehlt protokoll.json.');
+  Z.ereignisse = JSON.parse(txt('protokoll.json'));
+  Z.angaben    = inhalt['angaben.json'] ? JSON.parse(txt('angaben.json')) : {};
+
+  const ton = Object.keys(inhalt).find(n => /^ton\./.test(n));
+  if (ton){
+    $('ton').src = URL.createObjectURL(new Blob([inhalt[ton]]));
+    Z.tonDa = true;
+  }
+  Z.bilder = Object.keys(inhalt)
+    .filter(n => /\.png$/i.test(n)).sort()
+    .map(n => ({ name: n, url: URL.createObjectURL(new Blob([inhalt[n]], {type:'image/png'})) }));
+}
+
+async function flaecheLesen(f){
+  const doc = new DOMParser().parseFromString(await f.text(), 'text/html');
+  const ks = doc.querySelectorAll('.karte');
+  if (!ks.length) throw new Error('In der HTML sind keine Karten zu finden.');
+  ks.forEach(k => {
+    const code = k.dataset.code;
+    const img = k.querySelector('img');
+    if (code && img) Z.karten[code] = img.getAttribute('src');
+    if (code) Z.gruppen[code] = k.dataset.gruppe || '';
+  });
+  Z.titelFlaeche = (doc.querySelector('title') || {}).textContent || '';
+
+  // Die Vorstrukturierung steckt als zwei Konstanten im Quelltext.
+  const roh = doc.documentElement.innerHTML;
+  const hol = (name) => {
+    const m = roh.match(new RegExp('const ' + name + ' = ([\\s\\S]*?);\\s*//'));
+    if (!m) return null;
+    try { return JSON.parse(m[1]); } catch(e){ return null; }
+  };
+  Z.haelften = hol('HAELFTEN');
+  Z.raster   = hol('RASTER');
+  const farbe = (v, ersatz) => {
+    const m = roh.match(new RegExp('\\' + v + ':\\s*([^;]+);'));
+    return m ? m[1].trim() : ersatz;
+  };
+  Z.farben = {
+    rand:  farbe('--feld-rand',  '#c9bda6'),
+    fuell: farbe('--feld-fuell', 'rgba(147,81,0,.045)'),
+    akzent:farbe('--akzent',     '#9b8ac4'),
+    linie: farbe('--linie',      '#e4d9c7'),
+    hell:  farbe('--tinte-hell', '#6c6357')
+  };
+}
+
+function pruefen(){
+  const p = !!Z.ereignisse, k = Object.keys(Z.karten).length > 0;
+  if (p && k){
+    stand.className = 'stand gut';
+    stand.textContent = 'Bereit.';
+    aufbauen();
+  } else if (p){
+    stand.textContent = 'Paket gelesen. Es fehlt noch die Sortierfläche (index.html).';
+  } else if (k){
+    stand.textContent = 'Sortierfläche gelesen. Es fehlt noch das Sitzungspaket (.zip).';
+  }
+}
+
+/* ============================================================
+   Aufbauen
+   ============================================================ */
+function aufbauen(){
+  const start = Z.ereignisse.find(e => e.was === 'start');
+  if (!start) { stand.className='stand fehler';
+    stand.textContent = 'Im Protokoll fehlt der Anfangszustand.'; return; }
+  Z.breite = start.breite || 110;
+  Z.tisch  = start.tisch  || [1200, 700];
+  Z.dauer  = Z.ereignisse[Z.ereignisse.length - 1].t;
+  Z.hoehe  = noetigeHoehe();
+
+  /* Kopfdaten */
+  const a = Z.angaben || {};
+  const zeilen = [
+    ['Aufgabe', a.titel || Z.titelFlaeche || '–'],
+    ['Klasse',  a.klasse || '–'],
+    ['Wer',     (a.namen || []).join(', ') || '–'],
+    ['Dauer',   zeitText(Z.dauer)],
+    ['Wann',    a.beginn ? new Date(a.beginn).toLocaleString('de-CH') : '–']
+  ];
+  $('angaben').innerHTML = zeilen
+    .map(([b, w]) => `<div><b>${b}</b><span>${w}</span></div>`).join('');
+  $('angaben').style.display = 'grid';
+
+  /* Karten anlegen */
+  const inner = $('inner');
+  inner.innerHTML = '<div id="grund"></div>';
+  Z.knoten = {};
+  inner.style.width  = Z.tisch[0] + 'px';
+  inner.style.height = (Z.hoehe || Z.tisch[1]) + 'px';
+  start.karten.forEach(k => {
+    const im = document.createElement('img');
+    im.className = 'k';
+    im.src = Z.karten[k.karte] || '';
+    im.alt = k.karte;
+    inner.appendChild(im);
+    Z.knoten[k.karte] = im;
+  });
+  // Erst sichtbar machen, dann messen: eine versteckte Fläche ist 0 breit.
+  $('buehne').style.display = 'block';
+  passen();
+  addEventListener('resize', passen);
+  if (window.ResizeObserver) new ResizeObserver(passen).observe($('flaeche'));
+
+  marken();
+  zustandBei(0);
+
+  /* Bilder aus dem Paket */
+  $('bilder').innerHTML = (Z.bilder || []).map(b =>
+    `<a href="${b.url}" target="_blank"><img src="${b.url}" alt="${b.name}">` +
+    `<span>${b.name.replace('.png','')}</span></a>`).join('') || '<span class="hand">keine</span>';
+
+  zahlen();
+}
+
+function noetigeHoehe(){
+  let tief = Z.tisch[1];
+  const kh = Z.breite * 0.844;
+  Z.ereignisse.forEach(e => {
+    if (e.karten) e.karten.forEach(k => tief = Math.max(tief, (k.y || 0) + kh));
+    if (e.y != null) tief = Math.max(tief, e.y + kh);
+  });
+  const R = Z.raster;
+  if (R){
+    const fw = Z.breite * R.breite, fh = Z.breite * 0.844 * R.hoehe;
+    const zx0 = Z.haelften ? Z.tisch[0] * Z.haelften.teiler + 10 : 8;
+    const spalten = Math.max(1, Math.floor((Z.tisch[0] - zx0 - 6) / (fw + 10)));
+    const r = Math.floor((R.anzahl - 1) / spalten);
+    let unten = 26 + (r + 1) * (fh + 10);
+    if (R.extra) unten += Z.breite * 0.844 * (R.extra.hoehe || R.hoehe);
+    tief = Math.max(tief, unten);
+  }
+  return Math.ceil(tief + 16);
+}
+
+function passen(){
+  const f = $('flaeche');
+  const breit = f.clientWidth || f.parentElement.clientWidth || 900;
+  const s = Math.max(0.15, Math.min(1, breit / Z.tisch[0]));
+  $('inner').style.transform = 'scale(' + s + ')';
+  f.style.height = Math.round((Z.hoehe || Z.tisch[1]) * s) + 'px';
+}
+
+/* ============================================================
+   Vorstrukturierung: Hälften und Felder wie auf der Sortierfläche
+   ============================================================ */
+function strukturZeichnen(breite, rasterAn){
+  const grund = $('grund');
+  grund.innerHTML = '';
+  const F = Z.farben || {};
+  const B = Z.tisch[0];
+
+  if (Z.haelften){
+    const x = B * Z.haelften.teiler;
+    const t = document.createElement('div');
+    Object.assign(t.style, { position:'absolute', top:0, bottom:0, left:x + 'px',
+      borderLeft:'1.5px dashed ' + (F.linie || '#e4d9c7') });
+    grund.appendChild(t);
+    [[Z.haelften.links, 14], [Z.haelften.rechts, x + 14]].forEach(([txt, px]) => {
+      const d = document.createElement('div');
+      Object.assign(d.style, { position:'absolute', top:'8px', left:px + 'px',
+        fontFamily:'var(--hand)', fontSize:'1.1rem', color:F.hell || '#6c6357' });
+      d.textContent = txt;
+      grund.appendChild(d);
+    });
+  }
+
+  if (!rasterAn || !Z.raster) return;
+  const R = Z.raster;
+  const fw = breite * R.breite, fh = breite * 0.844 * R.hoehe;
+  const zx0 = Z.haelften ? B * Z.haelften.teiler + 10 : 8;
+  const zx1 = B;
+  const spalten = Math.max(1, Math.floor((zx1 - zx0 - 6) / (fw + 10)));
+
+  const feld = (x, y, w, hh, text, zusatz) => {
+    const d = document.createElement('div');
+    Object.assign(d.style, { position:'absolute', left:x + 'px', top:y + 'px',
+      width:w + 'px', height:hh + 'px', display:'flex', alignItems:'flex-start',
+      justifyContent:'center',
+      border:'1.5px ' + (zusatz ? 'solid ' + (F.akzent || '#9b8ac4')
+                                : 'dashed ' + (F.rand || '#c9bda6')),
+      background: zusatz ? (F.fuell || 'rgba(147,81,0,.045)') : 'transparent' });
+    const sp = document.createElement('span');
+    Object.assign(sp.style, { fontFamily:'var(--hand)', fontSize:'1.02rem',
+      color:F.hell || '#6c6357', marginTop:'5px' });
+    sp.textContent = text;
+    d.appendChild(sp);
+    grund.appendChild(d);
+  };
+
+  let r = 0;
+  for (let i = 0; i < R.anzahl; i++){
+    r = Math.floor(i / spalten);
+    feld(zx0 + (i % spalten) * (fw + 10), 26 + r * (fh + 10), fw, fh,
+         R.beschriftung, false);
+  }
+  if (R.extra){
+    const y = 26 + (r + 1) * (fh + 10);
+    const hh = breite * 0.844 * (R.extra.hoehe || R.hoehe);
+    feld(zx0, y, zx1 - zx0 - 8, hh, R.extra.beschriftung, true);
+  }
+}
+
+/* ============================================================
+   Zustand zu einem Zeitpunkt herstellen
+   ============================================================ */
+function zustandBei(t){
+  const lage = {};
+  let breite = Z.breite, greift = null, letzte = -1;
+  let rasterAn = !!(Z.raster && Z.raster.an !== false);
+
+  // Der Anfangszustand gilt immer, auch wenn er erst nach wenigen
+  // Millisekunden protokolliert wurde.
+  const anfang = Z.ereignisse.find(e => e.was === 'start');
+  if (anfang) anfang.karten.forEach(k => lage[k.karte] = Object.assign({}, k));
+
+  for (let i = 0; i < Z.ereignisse.length; i++){
+    const e = Z.ereignisse[i];
+    if (e.t > t) break;
+    letzte = i;
+    if (e.karten) e.karten.forEach(k => lage[k.karte] = Object.assign({}, k));
+    if (e.breite) breite = e.breite;
+    if (e.was === 'raster') rasterAn = !rasterAn;
+    if (e.was === 'greifen'){ greift = e.karte; }
+    if (e.was === 'ziehen' || e.was === 'ablegen'){
+      lage[e.karte] = Object.assign(lage[e.karte] || {}, e);
+      if (e.was === 'ablegen') greift = null;
+    }
+  }
+
+  strukturZeichnen(breite, rasterAn);
+
+  const h = breite * 0.844;
+  for (const code in Z.knoten){
+    const im = Z.knoten[code], l = lage[code];
+    if (!l){ im.style.display = 'none'; continue; }
+    im.style.display = '';
+    im.style.width  = breite + 'px';
+    im.style.height = h + 'px';
+    im.style.left   = (l.x || 0) + 'px';
+    im.style.top    = (l.y || 0) + 'px';
+    im.style.transform = l.dreh ? `rotate(${l.dreh}deg)` : '';
+    im.style.zIndex = (l.z || 1) + 1;
+    im.classList.toggle('greift', code === greift);
+  }
+  if (letzte !== Z.letzterIndex){ Z.letzterIndex = letzte; laufMarkieren(letzte); }
+
+  $('zeit').textContent = zeitText(t) + ' / ' + zeitText(Z.dauer);
+  const anteil = Z.dauer ? Math.min(1, t / Z.dauer) : 0;
+  $('fuell').style.width = (anteil * 100) + '%';
+  $('griff').style.left  = (anteil * 100) + '%';
+}
+
+/* ============================================================
+   Verlaufsliste
+   ============================================================ */
+const WORTE = {
+  start:'Anfangszustand', greifen:'nimmt', ziehen:'zieht', ablegen:'legt ab',
+  pruefen:'Prüfen gedrückt', raster:'Raster', zurueck:'Zurück',
+  'zoom-kleiner':'kleiner', 'zoom-groesser':'grösser', 'neue-runde':'neue Runde',
+  'zufaellig-fuellen':'zufällig gefüllt', 'bild-gespeichert':'Bild gespeichert',
+  rundenbild:'Runde beendet', felderanzahl:'Felderzahl geändert',
+  fenster:'Fenster geändert', weggeklickt:'Fenster verlassen',
+  'zurueck-im-fenster':'wieder da', abgabefenster:'Abgabe geöffnet',
+  abgegeben:'abgegeben', ende:'Ende'
+};
+
+function laufBauen(){
+  const teile = [];
+  Z.ereignisse.forEach((e, i) => {
+    if (e.was === 'ziehen') return;              // zu kleinteilig für die Liste
+    const was = WORTE[e.was] || e.was;
+    const karte = e.karte ? ' ' + e.karte : '';
+    const wohin = e.haelfte ? ' → ' + e.haelfte : (e.feld != null ? ' → Feld ' + e.feld : '');
+    const extra = e.meldung ? ' · ' + e.meldung : '';
+    teile.push(`<div class="z" data-i="${i}" data-t="${e.t}">` +
+      `<i>${zeitText(e.t)}</i><span>${was}${karte}${wohin}${extra}</span></div>`);
+  });
+  $('lauf').innerHTML = teile.join('');
+  $('lauf').querySelectorAll('.z').forEach(z => {
+    z.onclick = () => springen(+z.dataset.t);
+  });
+}
+
+function laufMarkieren(index){
+  const liste = $('lauf').querySelectorAll('.z');
+  let treffer = null;
+  liste.forEach(z => {
+    const an = +z.dataset.i <= index;
+    z.classList.toggle('jetzt', false);
+    if (an) treffer = z;
+  });
+  if (treffer){
+    treffer.classList.add('jetzt');
+    const k = $('lauf');
+    if (treffer.offsetTop < k.scrollTop ||
+        treffer.offsetTop > k.scrollTop + k.clientHeight - 30){
+      k.scrollTop = treffer.offsetTop - k.clientHeight / 2;
+    }
+  }
+}
+
+function marken(){
+  const s = $('schiene');
+  s.querySelectorAll('.marke').forEach(m => m.remove());
+  Z.ereignisse.forEach(e => {
+    let art = null;
+    if (e.was === 'pruefen') art = 'pruef';
+    else if (e.was === 'rundenbild' || e.was === 'neue-runde') art = 'runde';
+    if (!art) return;
+    const m = document.createElement('div');
+    m.className = 'marke ' + art;
+    m.style.left = (Z.dauer ? (e.t / Z.dauer) * 100 : 0) + '%';
+    s.appendChild(m);
+  });
+  laufBauen();
+}
+
+/* ============================================================
+   Zahlen
+   ============================================================ */
+function zahlen(){
+  const bewegt = {};
+  let zuege = 0, ersteAblage = null;
+  Z.ereignisse.forEach(e => {
+    if (e.was !== 'ablegen') return;
+    zuege++;
+    bewegt[e.karte] = (bewegt[e.karte] || 0) + 1;
+    if (ersteAblage === null) ersteAblage = e.t;
+  });
+  const oft = Object.entries(bewegt).sort((a,b) => b[1]-a[1]).slice(0, 5);
+  const angefasst = Object.keys(bewegt).length;
+  const gesamt = Object.keys(Z.knoten).length;
+
+  $('zahlen').innerHTML = '<table>' + [
+    ['Dauer', zeitText(Z.dauer)],
+    ['Ablagen insgesamt', zuege],
+    ['Karten bewegt', angefasst + ' von ' + gesamt],
+    ['Erste Ablage nach', ersteAblage === null ? '–' : zeitText(ersteAblage)],
+    ['Runden', (Z.angaben && Z.angaben.runden) || 0]
+  ].map(([a,b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join('')
+  + (oft.length ? '<tr><td colspan="2" style="padding-top:10px;color:var(--hell)">'
+     + 'Am häufigsten umgelegt</td></tr>'
+     + oft.map(([k,n]) => `<tr><td>${k}</td><td>${n}×</td></tr>`).join('') : '')
+  + '</table>';
+}
+
+/* ============================================================
+   Abspielen
+   ============================================================ */
+const ton = $('ton');
+
+function jetztZeit(){
+  if (Z.tonDa) return ton.currentTime * 1000;
+  return Z.standZeit + (Z.laeuft ? (performance.now() - Z.uhr0) * Z.tempo : 0);
+}
+
+function schritt(){
+  if (!Z.laeuft) return;
+  const t = jetztZeit();
+  zustandBei(t);
+  if (t >= Z.dauer){ anhalten(); zustandBei(Z.dauer); return; }
+  requestAnimationFrame(schritt);
+}
+
+function starten(){
+  Z.laeuft = true;
+  Z.uhr0 = performance.now();
+  $('spielen').textContent = 'Pause';
+  if (Z.tonDa){ ton.playbackRate = Z.tempo; ton.play().catch(()=>{}); }
+  requestAnimationFrame(schritt);
+}
+
+function anhalten(){
+  Z.laeuft = false;
+  Z.standZeit = jetztZeit();
+  $('spielen').textContent = 'Abspielen';
+  if (Z.tonDa) ton.pause();
+}
+
+function springen(t){
+  t = Math.max(0, Math.min(Z.dauer, t));
+  Z.standZeit = t;
+  Z.uhr0 = performance.now();
+  if (Z.tonDa) ton.currentTime = t / 1000;
+  zustandBei(t);
+}
+
+$('spielen').onclick = () => Z.laeuft ? anhalten() : starten();
+$('tempo').onchange = e => {
+  Z.tempo = parseFloat(e.target.value);
+  if (Z.tonDa) ton.playbackRate = Z.tempo;
+  if (Z.laeuft){ Z.standZeit = jetztZeit(); Z.uhr0 = performance.now(); }
+};
+$('schiene').onclick = e => {
+  const r = $('schiene').getBoundingClientRect();
+  springen(((e.clientX - r.left) / r.width) * Z.dauer);
+};
+addEventListener('keydown', e => {
+  if ($('buehne').style.display !== 'block') return;
+  if (e.code === 'Space'){ e.preventDefault(); Z.laeuft ? anhalten() : starten(); }
+  if (e.code === 'ArrowLeft')  springen(jetztZeit() - 5000);
+  if (e.code === 'ArrowRight') springen(jetztZeit() + 5000);
+});
+</script>
+</body>
+</html>
