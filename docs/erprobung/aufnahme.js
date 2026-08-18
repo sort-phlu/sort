@@ -16,27 +16,21 @@ const CFG = Object.assign({
   abgabe:   null,
   // Bei SWITCHdrive der Code aus dem Freigabelink (der Teil hinter /s/)
   schluessel: '',
-  // Freigabelink der Ablage, den die Gruppe zum Abgeben oeffnet
-  ablage:   null,
   ziehrate: 50          // Millisekunden zwischen zwei Positionsmeldungen beim Ziehen
 }, window.SORT_ABGABE || {});
 
 /* ---------- Woher kommt diese Aufgabe? ---------- */
-const pfad = location.pathname.split('/').filter(Boolean);
-// Endet die Adresse auf einen Dateinamen, faellt der weg: der letzte
-// echte Abschnitt ist die Variante, der davor das Thema.
-if (pfad.length && pfad[pfad.length - 1].indexOf('.') >= 0) pfad.pop();
-const variante = pfad.length >= 1 ? pfad[pfad.length - 1] : 'unbekannt';
-const thema    = pfad.length >= 2 ? pfad[pfad.length - 2] : 'unbekannt';
+const pfad     = location.pathname.split('/').filter(Boolean);
+const variante = pfad.length >= 2 ? pfad[pfad.length - 2] : 'unbekannt';
+const thema    = pfad.length >= 3 ? pfad[pfad.length - 3] : 'unbekannt';
 const titel    = document.title || '';
 
 /* ---------- Zustand ---------- */
 const S = {
-  sitzung: null, klasse: '', namen: [],
+  sitzung: null, klasse: '', gruppe: '', kennziffern: [],
   beginn: null, t0: 0,
   ereignisse: [], spur: null, aufnehmer: null, brocken: [],
-  laeuft: false, zuletztGezogen: {}, uhr: null, pegel: 0,
-  zwischenbilder: [], runde: 0, fenster: null, rueckmeldung: ''
+  laeuft: false, zuletztGezogen: {}, uhr: null, pegel: 0
 };
 
 /* ============================================================
@@ -69,28 +63,6 @@ function dauerText(ms){
   return String(Math.floor(s / 60)).padStart(2,'0') + ':' + String(s % 60).padStart(2,'0');
 }
 
-/* Wo der Browser heruntergeladene Dateien anzeigt. Absichtlich knapp:
-   lieber eine Beschreibung, die fast immer stimmt, als eine falsche. */
-function fundort(){
-  const u = navigator.userAgent;
-  const chrome  = /Chrome|CriOS|Chromium/.test(u) && !/Edg|OPR/.test(u);
-  const edge    = /Edg/.test(u);
-  const firefox = /Firefox|FxiOS/.test(u);
-  const safari  = /Safari/.test(u) && !chrome && !edge && !firefox;
-  const ipad    = /iPad|iPhone/.test(u);
-
-  if (ipad)    return 'Tippt oben rechts auf den Pfeil nach unten – '
-                    + 'dort steht eure Datei.';
-  if (safari)  return 'Oben rechts blinkt kurz ein Pfeil nach unten. '
-                    + 'Klickt ihn an – dort steht eure Datei.';
-  if (chrome || edge)
-               return 'Oben rechts erscheint ein Pfeil nach unten. '
-                    + 'Klickt ihn an – dort steht eure Datei.';
-  if (firefox) return 'Oben rechts erscheint ein Pfeil nach unten. '
-                    + 'Klickt ihn an – dort steht eure Datei.';
-  return 'Der Browser zeigt heruntergeladene Dateien meist oben rechts an.';
-}
-
 function el(tag, klasse, text){
   const e = document.createElement(tag);
   if (klasse) e.className = klasse;
@@ -107,8 +79,6 @@ function lage(k){
   };
   const w = parseFloat(k._rot || 0);
   if (w) l.dreh = Math.round(w * 10) / 10;
-  const z = parseInt(k.style.zIndex, 10);
-  if (!isNaN(z)) l.z = z;
   if (k._feld !== undefined && k._feld !== null) l.feld = k._feld;
   const ort = k.parentElement && k.parentElement.id;
   if (ort && ort !== 'tisch') l.ort = ort;
@@ -214,7 +184,7 @@ function mitschreibenStarten(){
 /* ============================================================
    Endbild der Sortierfläche
    ============================================================ */
-async function flaechenbild(){
+async function endbild(){
   try {
     if (typeof tisch === 'undefined' || !tisch) return null;
     const b = (typeof breite !== 'undefined' ? breite : 170);
@@ -252,25 +222,6 @@ async function flaechenbild(){
     }
     return await new Promise(f => c.toBlob(f, 'image/png'));
   } catch(e){ return null; }
-}
-
-/* ============================================================
-   Rundenwechsel: das Zwischenbild kommt ins Paket statt in
-   den Download-Ordner. Die Sortierfläche ruft dafür bild(true).
-   ============================================================ */
-function rundenbilderAbfangen(){
-  if (typeof window.bild !== 'function') return;
-  const original = window.bild;
-  window.bild = async function(still){
-    if (still && S.laeuft){
-      S.runde++;
-      const b = await flaechenbild();
-      if (b) S.zwischenbilder.push({ nr: S.runde, blob: b });
-      merken('rundenbild', { nr: S.runde, gespeichert: !!b });
-      return;
-    }
-    return original.apply(this, arguments);
-  };
 }
 
 /* ============================================================
@@ -340,7 +291,7 @@ const textBytes = s => new TextEncoder().encode(s);
 function kopfdaten(){
   return {
     sitzung: S.sitzung, thema: thema, variante: variante, titel: titel,
-    klasse: S.klasse, namen: S.namen,
+    klasse: S.klasse, gruppe: S.gruppe, kennziffern: S.kennziffern,
     beginn: S.beginn, adresse: location.href,
     geraet: {
       browser: navigator.userAgent,
@@ -367,46 +318,41 @@ function bildschirm(inhalt){
 /* ---------- 1. Wer sortiert hier? ---------- */
 function bildschirmStart(){
   const f = document.createDocumentFragment();
-  f.appendChild(el('p', 'sortauf-hand', 'Bevor es losgeht'));
+  f.appendChild(el('p', 'sortauf-augen', 'Sortieraufgabe'));
   f.appendChild(el('h2', null, titel));
   f.appendChild(el('p', 'sortauf-lauf',
-    'Diese Sortierung wird aufgezeichnet: euer Gespräch und die Bewegung der '
-    + 'Karten auf dem Bildschirm.'));
-  const kamera = el('div', 'sortauf-kamera');
-  kamera.appendChild(el('b', null, 'Keine Kamera.'));
-  kamera.appendChild(el('span', null,
-    ' Die Webcam bleibt aus. Niemand sieht euch, es gibt kein Bild von euch – '
-    + 'nur den Ton und die Karten.'));
-  f.appendChild(kamera);
+    'Diese Sortierung wird für die Forschung aufgezeichnet: der Ton eures Gesprächs '
+    + 'und die Bewegung der Karten. Kein Bild von euch, keine Namen.'));
 
-  const kf = el('div', 'sortauf-feld');
-  kf.appendChild(el('label', null, 'Klasse'));
+  const reihe = el('div', 'sortauf-reihe');
   const klasse = el('input'); klasse.type = 'text'; klasse.placeholder = 'z. B. 7a';
-  klasse.autocomplete = 'off';
-  kf.appendChild(klasse);
-  f.appendChild(kf);
+  const gruppe = el('input'); gruppe.type = 'text'; gruppe.placeholder = 'z. B. 3';
+  [['Klasse', klasse], ['Gruppe', gruppe]].forEach(([t, inp]) => {
+    const s = el('div', 'sortauf-feld');
+    s.appendChild(el('label', null, t)); s.appendChild(inp);
+    reihe.appendChild(s);
+  });
+  f.appendChild(reihe);
 
-  const nf = el('div', 'sortauf-feld');
-  nf.appendChild(el('label', null, 'Wer sortiert mit?'));
-  nf.appendChild(el('p', 'sortauf-klein',
-    'Vornamen von allen, die mitmachen. Gibt es den Vornamen in eurer Klasse '
-    + 'zweimal, hängt den ersten Buchstaben des Nachnamens an – also «Steffi B.».'));
+  const kz = el('div', 'sortauf-feld');
+  kz.appendChild(el('label', null, 'Eure Kennwörter'));
+  kz.appendChild(el('p', 'sortauf-klein',
+    'Jede und jeder trägt das eigene, selbst ausgedachte Kennwort ein. Keine Namen.'));
   const gitter = el('div', 'sortauf-gitter');
   const felder = [];
   for (let i = 0; i < 4; i++){
-    const inp = el('input'); inp.type = 'text'; inp.autocomplete = 'off';
-    inp.placeholder = i < 2 ? 'Vorname' : 'falls dabei';
+    const inp = el('input'); inp.type = 'text';
+    inp.placeholder = i < 2 ? 'Kennwort' : 'falls vorhanden';
     felder.push(inp); gitter.appendChild(inp);
   }
-  nf.appendChild(gitter);
-  f.appendChild(nf);
+  kz.appendChild(gitter);
+  f.appendChild(kz);
 
   const ein = el('label', 'sortauf-haken');
   const box = el('input'); box.type = 'checkbox';
   ein.appendChild(box);
   ein.appendChild(el('span', null,
-    'Wir wissen, dass Ton und Kartenbewegungen aufgezeichnet werden und '
-    + 'dass keine Kamera läuft.'));
+    'Für alle hier ist die Einwilligung abgegeben worden.'));
   f.appendChild(ein);
 
   const warn = el('p', 'sortauf-warn');
@@ -415,13 +361,12 @@ function bildschirmStart(){
   const w = el('button', 'sortauf-knopf', 'Weiter zur Tonprüfung');
   w.onclick = () => {
     S.klasse = klasse.value.trim();
-    S.namen = felder.map(i => i.value.trim()).filter(Boolean);
-    if (!S.klasse){ warn.textContent = 'Die Klasse fehlt noch.'; return; }
-    if (S.namen.length < 2){
-      warn.textContent = 'Tragt bitte alle ein, die mitsortieren.'; return; }
-    if (!box.checked){ warn.textContent = 'Bitte das Kästchen ankreuzen.'; return; }
-    const kuerzel = S.namen.map(n => n.replace(/\W/g, '')).join('-');
-    S.sitzung = zeitcode() + '-' + S.klasse.replace(/\W/g, '') + '-' + kuerzel;
+    S.gruppe = gruppe.value.trim();
+    S.kennziffern = felder.map(i => i.value.trim()).filter(Boolean);
+    if (!S.klasse || !S.gruppe){ warn.textContent = 'Klasse und Gruppe fehlen noch.'; return; }
+    if (S.kennziffern.length < 1){ warn.textContent = 'Mindestens ein Kennwort eintragen.'; return; }
+    if (!box.checked){ warn.textContent = 'Ohne bestätigte Einwilligung geht es nicht weiter.'; return; }
+    S.sitzung = zeitcode() + '-' + S.klasse.replace(/\W/g,'') + '-g' + S.gruppe.replace(/\W/g,'');
     bildschirmTon();
   };
   f.appendChild(w);
@@ -433,7 +378,7 @@ function bildschirmStart(){
 /* ---------- 2. Hört das Mikrofon uns? ---------- */
 function bildschirmTon(){
   const f = document.createDocumentFragment();
-  f.appendChild(el('p', 'sortauf-hand', 'Fast geschafft'));
+  f.appendChild(el('p', 'sortauf-augen', 'Schritt 2 von 2'));
   f.appendChild(el('h2', null, 'Hört euch das Mikrofon?'));
   f.appendChild(el('p', 'sortauf-lauf',
     'Der Browser fragt gleich um Erlaubnis. Dann sagt bitte etwas – der Balken muss ausschlagen.'));
@@ -531,7 +476,6 @@ function starten(){
   huelle.style.display = 'none';
   leiste();
   mitschreibenStarten();
-  rundenbilderAbfangen();
 
   addEventListener('beforeunload', e => {
     if (!S.laeuft) return;
@@ -541,37 +485,21 @@ function starten(){
 }
 
 function leiste(){
-  const bar = document.querySelector('.leiste');
-  const ziel = bar || document.body;
-
-  const gruppe = el('span', 'sortauf-gruppe');
+  const b = el('div', 'sortauf-leiste');
   const punkt = el('span', 'sortauf-punkt');
   const zeit = el('span', 'sortauf-zeit', '00:00');
+  const wer = el('span', 'sortauf-wer',
+    'Klasse ' + S.klasse + ' · Gruppe ' + S.gruppe);
   const mini = el('span', 'sortauf-mini');
   const minifuell = el('i');
   mini.appendChild(minifuell);
-  gruppe.appendChild(punkt);
-  gruppe.appendChild(el('span', 'sortauf-etikett', 'Aufnahme läuft'));
-  gruppe.appendChild(zeit);
-  gruppe.appendChild(mini);
-
   const schluss = el('button', 'sortauf-schluss', 'Aufnahme beenden');
-  schluss.id = 'aufnahmeEnde';
   schluss.onclick = beenden;
 
-  if (bar){
-    const tr = el('div', 'trenner');
-    bar.appendChild(tr);
-    bar.appendChild(gruppe);
-    bar.appendChild(schluss);
-    const m = document.getElementById('meldung');
-    if (m) bar.appendChild(m);          // Meldung bleibt am Ende
-  } else {
-    const notleiste = el('div', 'sortauf-notleiste');
-    notleiste.appendChild(gruppe);
-    notleiste.appendChild(schluss);
-    document.body.insertBefore(notleiste, document.body.firstChild);
-  }
+  b.appendChild(punkt); b.appendChild(el('span', 'sortauf-etikett', 'Aufnahme läuft'));
+  b.appendChild(zeit); b.appendChild(mini); b.appendChild(wer); b.appendChild(schluss);
+  document.body.appendChild(b);
+  document.body.classList.add('sortauf-platz');
 
   const an = new (window.AudioContext || window.webkitAudioContext)();
   const a = an.createAnalyser(); a.fftSize = 512;
@@ -581,9 +509,9 @@ function leiste(){
   S.uhr = setInterval(() => {
     zeit.textContent = dauerText(performance.now() - S.t0);
     a.getByteTimeDomainData(d);
-    let sm = 0;
-    for (let i = 0; i < d.length; i++){ const v = (d[i]-128)/128; sm += v*v; }
-    minifuell.style.width = Math.min(100, Math.sqrt(sm/d.length) * 600) + '%';
+    let s = 0;
+    for (let i = 0; i < d.length; i++){ const v = (d[i]-128)/128; s += v*v; }
+    minifuell.style.width = Math.min(100, Math.sqrt(s/d.length) * 600) + '%';
   }, 500);
 }
 
@@ -600,30 +528,23 @@ async function beenden(){
   await fertig;
   S.spur.getTracks().forEach(t => t.stop());
 
-  document.querySelectorAll('.sortauf-gruppe, .sortauf-schluss, .sortauf-notleiste')
-          .forEach(e => e.remove());
-
-  // Ton und Endbild laufen im Hintergrund, während die Gruppe schreibt.
-  const vorbereitet = (async () => ({
-    ton: new Blob(S.brocken, { type: S.brocken[0] ? S.brocken[0].type : 'audio/webm' }),
-    bild: await flaechenbild()
-  }))();
-
-  await rueckmeldungFragen();
+  const leisteEl = document.querySelector('.sortauf-leiste');
+  if (leisteEl) leisteEl.remove();
+  document.body.classList.remove('sortauf-platz');
 
   const f = document.createDocumentFragment();
-  f.appendChild(el('p', 'sortauf-hand', 'Fertig'));
+  f.appendChild(el('p', 'sortauf-augen', 'Fertig'));
   f.appendChild(el('h2', null, 'Danke – das Paket wird geschnürt.'));
-  f.appendChild(el('p', 'sortauf-lauf', 'Einen Moment …'));
+  const stand = el('p', 'sortauf-lauf', 'Einen Moment …');
+  f.appendChild(stand);
   bildschirm(f);
 
-  const { ton, bild } = await vorbereitet;
+  const ton = new Blob(S.brocken, { type: S.brocken[0] ? S.brocken[0].type : 'audio/webm' });
+  const bild = await endbild();
   const kopf = kopfdaten();
   kopf.ende = new Date().toISOString();
   kopf.dauer_s = Math.round((performance.now() - S.t0) / 1000);
   kopf.ereignisse = S.ereignisse.length;
-  kopf.runden = S.zwischenbilder.length;
-  kopf.rueckmeldung = S.rueckmeldung || '';
 
   const dateien = [
     { name: 'angaben.json',   daten: textBytes(JSON.stringify(kopf, null, 2)) },
@@ -631,12 +552,6 @@ async function beenden(){
     { name: 'ton.webm',       daten: await zuBytes(ton) }
   ];
   if (bild) dateien.push({ name: 'ergebnis.png', daten: await zuBytes(bild) });
-  if (S.rueckmeldung)
-    dateien.push({ name: 'rueckmeldung.txt', daten: textBytes(S.rueckmeldung) });
-  for (const zb of S.zwischenbilder){
-    dateien.push({ name: 'runde-' + String(zb.nr).padStart(2, '0') + '.png',
-                   daten: await zuBytes(zb.blob) });
-  }
 
   const paket = zip(dateien);
   const name = 'SORT_' + thema + '_' + variante + '_' + S.sitzung + '.zip';
@@ -657,172 +572,30 @@ async function beenden(){
   }
 
   const g = document.createDocumentFragment();
-  g.appendChild(el('p', 'sortauf-hand', 'Fertig'));
-
+  g.appendChild(el('p', 'sortauf-augen', 'Fertig'));
   if (hoch){
     g.appendChild(el('h2', null, 'Abgegeben. Danke!'));
     g.appendChild(el('p', 'sortauf-lauf',
       'Eure Aufnahme ist angekommen. Ihr könnt das Fenster schliessen.'));
-    g.appendChild(el('p', 'sortauf-klein', 'Sitzungscode:'));
-    g.appendChild(el('p', 'sortauf-code', S.sitzung));
-    bildschirm(g);
-    try { localStorage.removeItem('sort-protokoll-' + S.sitzung); } catch(e){}
-    return;
-  }
-
-  g.appendChild(el('h2', null, 'Noch zwei Schritte'));
-  g.appendChild(el('p', 'sortauf-lauf',
-    'Eure Aufnahme ist fertig. Speichert sie und legt sie danach ab – '
-    + 'dann seid ihr durch.'));
-
-  /* Schritt 1 --------------------------------------------------- */
-  const s1 = el('div', 'sortauf-schritt');
-  s1.appendChild(el('span', 'sortauf-zahl', '1'));
-  const s1t = el('div', 'sortauf-schritttext');
-  s1t.appendChild(el('b', null, 'Aufnahme speichern'));
-  s1t.appendChild(el('p', null, 'Sie landet in eurem Download-Ordner.'));
-  s1.appendChild(s1t);
-  g.appendChild(s1);
-
-  const speichern = el('button', 'sortauf-knopf', 'Aufnahme speichern (' + mb + ' MB)');
-  g.appendChild(speichern);
-
-  /* Schritt 2 --------------------------------------------------- */
-  const s2 = el('div', 'sortauf-schritt aus');
-  s2.appendChild(el('span', 'sortauf-zahl', '2'));
-  const s2t = el('div', 'sortauf-schritttext');
-  s2t.appendChild(el('b', null, 'Datei abgeben'));
-  s2t.appendChild(el('p', null,
-    'Es öffnet sich ein neues Fenster. Zieht eure Datei hinein.'));
-  const wo = el('p', 'sortauf-fundort', fundort());
-  s2t.appendChild(wo);
-  s2.appendChild(s2t);
-  g.appendChild(s2);
-
-  const abgeben = el('button', 'sortauf-knopf', 'Abgabefenster öffnen');
-  abgeben.disabled = true;
-  g.appendChild(abgeben);
-
-  g.appendChild(el('p', 'sortauf-klein', 'So heisst eure Datei:'));
-  g.appendChild(el('p', 'sortauf-code', name));
-
-  speichern.onclick = () => {
-    const a = el('a');
-    a.href = URL.createObjectURL(paket); a.download = name; a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 6000);
-    speichern.textContent = 'Gespeichert ✓ – nochmals speichern';
-    speichern.classList.add('sortauf-erledigt');
-    s2.classList.remove('aus');
-    if (CFG.ablage) abgeben.disabled = false;
-  };
-
-  /* Schritt 3 --------------------------------------------------- */
-  const s3 = el('div', 'sortauf-schritt aus');
-  s3.appendChild(el('span', 'sortauf-zahl', '3'));
-  const s3t = el('div', 'sortauf-schritttext');
-  s3t.appendChild(el('b', null, 'Bestätigen'));
-  s3t.appendChild(el('p', null,
-    'Wenn die Datei drüben angekommen ist, drückt hier.'));
-  s3.appendChild(s3t);
-  g.appendChild(s3);
-
-  const bestaetigen = el('button', 'sortauf-knopf', 'Wir haben abgegeben');
-  bestaetigen.disabled = true;
-  g.appendChild(bestaetigen);
-
-  if (CFG.ablage){
-    abgeben.onclick = () => {
-      // kleines Fenster, damit die Sortierung dahinter sichtbar bleibt
-      const b = Math.min(900, Math.round(screen.width * 0.62));
-      const h = Math.min(720, Math.round(screen.height * 0.72));
-      const l = Math.round((screen.width - b) / 2);
-      const o = Math.round((screen.height - h) / 2.6);
-      S.fenster = window.open(CFG.ablage, 'sortabgabe',
-        `width=${b},height=${h},left=${l},top=${o},resizable=yes,scrollbars=yes`);
-      if (!S.fenster) window.open(CFG.ablage, '_blank', 'noopener');
-      abgeben.textContent = 'Abgabefenster nochmals öffnen';
-      abgeben.classList.add('sortauf-erledigt');
-      s3.classList.remove('aus');
-      bestaetigen.disabled = false;
-      merken('abgabefenster');
-    };
   } else {
-    abgeben.textContent = 'Kein Abgabeort eingerichtet';
-    s2t.querySelector('p').textContent =
-      'Gebt die gespeicherte Datei eurer Lehrperson.';
-    s2t.querySelector('.sortauf-fundort').remove();
-    s3.classList.remove('aus');
-    bestaetigen.disabled = false;
+    g.appendChild(el('h2', null, 'Bitte die Datei abgeben'));
+    g.appendChild(el('p', 'sortauf-lauf',
+      'Die Aufnahme konnte nicht direkt verschickt werden. Speichert sie und gebt sie '
+      + 'der Lehrperson – so, wie es abgemacht ist.'));
+    const s = el('button', 'sortauf-knopf', 'Aufnahme speichern (' + mb + ' MB)');
+    s.onclick = () => {
+      const a = el('a');
+      a.href = URL.createObjectURL(paket); a.download = name; a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+      s.textContent = 'Gespeichert – nochmals speichern';
+    };
+    g.appendChild(s);
   }
-
-  bestaetigen.onclick = () => {
-    if (S.fenster && !S.fenster.closed){ try { S.fenster.close(); } catch(e){} }
-    merken('abgegeben');
-    danke();
-  };
-
+  const code = el('p', 'sortauf-code', S.sitzung);
+  g.appendChild(el('p', 'sortauf-klein', 'Sitzungscode, bitte notieren:'));
+  g.appendChild(code);
   bildschirm(g);
 
-  try { localStorage.removeItem('sort-protokoll-' + S.sitzung); } catch(e){}
-}
-
-function rueckmeldungFragen(){
-  return new Promise(fertig => {
-    const f = document.createDocumentFragment();
-    f.appendChild(el('p', 'sortauf-hand', 'Eine letzte Frage'));
-    f.appendChild(el('h2', null, 'Was nehmt ihr mit?'));
-    f.appendChild(el('p', 'sortauf-lauf',
-      'Worum ging es bei dieser Aufgabe eurer Meinung nach? Habt ihr etwas '
-      + 'Neues gemerkt oder gab es einen Moment, in dem euch etwas '
-      + 'aufgegangen ist? Schreibt in eigenen Worten – zwei, drei Sätze '
-      + 'genügen. Es gibt kein Richtig oder Falsch.'));
-
-    const feld = document.createElement('textarea');
-    feld.className = 'sortauf-antwort';
-    feld.rows = 5;
-    feld.placeholder = 'Uns ist aufgefallen, dass …';
-    f.appendChild(feld);
-
-    const warn = el('p', 'sortauf-warn');
-    f.appendChild(warn);
-
-    const weiter = el('button', 'sortauf-knopf', 'Weiter');
-    weiter.onclick = () => {
-      const txt = feld.value.trim();
-      if (txt.length < 10){
-        warn.textContent = 'Schreibt bitte noch etwas mehr – ein Satz reicht schon.';
-        feld.focus();
-        return;
-      }
-      S.rueckmeldung = txt;
-      merken('rueckmeldung', { zeichen: txt.length });
-      fertig();
-    };
-    f.appendChild(weiter);
-
-    const ohne = el('button', 'sortauf-neben', 'Uns fällt gerade nichts ein');
-    ohne.onclick = () => {
-      S.rueckmeldung = '';
-      merken('rueckmeldung', { zeichen: 0 });
-      fertig();
-    };
-    f.appendChild(ohne);
-
-    bildschirm(f);
-    setTimeout(() => feld.focus(), 120);
-  });
-}
-
-function danke(){
-  const d = document.createDocumentFragment();
-  d.appendChild(el('p', 'sortauf-hand', 'Geschafft'));
-  d.appendChild(el('h2', null, 'Danke für eure Arbeit!'));
-  d.appendChild(el('p', 'sortauf-lauf',
-    'Eure Sortierung ist bei uns angekommen. Ihr könnt das Fenster jetzt '
-    + 'schliessen – einen schönen Tag noch.'));
-  d.appendChild(el('p', 'sortauf-klein', 'Sitzungscode:'));
-  d.appendChild(el('p', 'sortauf-code', S.sitzung));
-  bildschirm(d);
   try { localStorage.removeItem('sort-protokoll-' + S.sitzung); } catch(e){}
 }
 
@@ -831,96 +604,64 @@ function danke(){
    ============================================================ */
 const stil = document.createElement('style');
 stil.textContent = `
-:root{
-  --sa-papier:#fbf8f3; --sa-creme:#f6ecdf; --sa-karte:#fffefb;
-  --sa-tinte:#2d2924;  --sa-hell:#6c6357;  --sa-braun:#935100;
-  --sa-linie:#e4d9c7;  --sa-gruen:#4f7a3a; --sa-rot:#b4474f;
-  --sa-druck:'Fira Sans','Segoe UI',-apple-system,sans-serif;
-  --sa-hand:'Patrick Hand','Bradley Hand',cursive;
-}
 .sortauf-huelle{position:fixed;inset:0;z-index:99998;display:grid;place-items:center;
-  background:rgba(45,41,36,.78);backdrop-filter:blur(3px);padding:20px;overflow:auto;
-  font-family:var(--sa-druck);color:var(--sa-tinte);}
-.sortauf-karte{background:var(--sa-papier);max-width:480px;width:100%;
-  padding:28px 32px 26px;border-top:4px solid var(--sa-braun);
-  box-shadow:0 26px 60px rgba(45,35,20,.4);}
-.sortauf-hand{font-family:var(--sa-hand);font-size:1.34rem;color:var(--sa-braun);
-  margin:0 0 4px;transform:rotate(-1deg);display:inline-block;}
-.sortauf-karte h2{margin:0 0 12px;font-size:1.34rem;font-weight:700;line-height:1.24;
+  background:rgba(28,26,23,.82);backdrop-filter:blur(3px);padding:20px;overflow:auto;
+  font-family:"Source Sans 3","Segoe UI",-apple-system,sans-serif;color:#1c1a17;}
+.sortauf-karte{background:#faf8f5;max-width:470px;width:100%;padding:30px 32px 26px;
+  border-radius:4px;box-shadow:0 24px 60px rgba(0,0,0,.35);
+  border-top:5px solid #935100;}
+.sortauf-augen{margin:0 0 6px;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;
+  color:#9a8f82;font-weight:700;}
+.sortauf-karte h2{margin:0 0 12px;font-size:1.35rem;font-weight:600;line-height:1.25;
   letter-spacing:-.01em;}
-.sortauf-lauf{margin:0 0 20px;font-size:.95rem;line-height:1.55;color:#463f36;}
-.sortauf-kamera{background:var(--sa-creme);border-left:3px solid var(--sa-gruen);
-  padding:11px 14px;margin:0 0 18px;font-size:.89rem;line-height:1.5;}
-.sortauf-kamera b{color:var(--sa-gruen);}
-.sortauf-klein{margin:2px 0 9px;font-size:.83rem;color:var(--sa-hell);line-height:1.45;}
-.sortauf-feld{margin-bottom:17px;}
-.sortauf-feld label{display:block;font-size:.8rem;font-weight:700;margin-bottom:5px;}
-.sortauf-huelle input[type=text]{width:100%;padding:10px 12px;font-size:.96rem;
-  font-family:inherit;border:1px solid var(--sa-linie);border-radius:3px;
-  background:#fff;color:var(--sa-tinte);}
-.sortauf-huelle input[type=text]:focus{outline:2px solid var(--sa-braun);
-  outline-offset:1px;border-color:var(--sa-braun);}
-.sortauf-antwort{width:100%;padding:11px 13px;font-size:.96rem;font-family:inherit;
-  line-height:1.5;border:1px solid var(--sa-linie);border-radius:3px;background:#fff;
-  color:var(--sa-tinte);resize:vertical;margin-bottom:12px;}
-.sortauf-antwort:focus{outline:2px solid var(--sa-braun);outline-offset:1px;
-  border-color:var(--sa-braun);}
+.sortauf-lauf{margin:0 0 20px;font-size:.94rem;line-height:1.5;color:#4d4841;}
+.sortauf-klein{margin:2px 0 8px;font-size:.8rem;color:#8b8177;line-height:1.4;}
+.sortauf-reihe{display:flex;gap:12px;}
+.sortauf-feld{flex:1;margin-bottom:16px;}
+.sortauf-feld label{display:block;font-size:.78rem;font-weight:700;margin-bottom:5px;
+  letter-spacing:.02em;}
+.sortauf-huelle input[type=text]{width:100%;padding:9px 11px;font-size:.95rem;font-family:inherit;
+  border:1px solid #d8d0c4;border-radius:3px;background:#fff;color:#1c1a17;}
+.sortauf-huelle input[type=text]:focus{outline:2px solid #935100;outline-offset:1px;border-color:#935100;}
 .sortauf-gitter{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.sortauf-haken{display:flex;gap:10px;align-items:flex-start;margin:4px 0 18px;
-  font-size:.89rem;line-height:1.45;cursor:pointer;}
-.sortauf-haken input{margin-top:3px;width:17px;height:17px;accent-color:var(--sa-braun);
-  flex:none;}
+.sortauf-haken{display:flex;gap:10px;align-items:flex-start;margin:6px 0 18px;
+  font-size:.88rem;line-height:1.4;cursor:pointer;}
+.sortauf-haken input{margin-top:3px;width:17px;height:17px;accent-color:#935100;flex:none;}
 .sortauf-knopf{width:100%;padding:13px;font-family:inherit;font-size:1rem;font-weight:600;
-  border:none;border-radius:3px;background:var(--sa-braun);color:#fff;cursor:pointer;}
+  border:none;border-radius:3px;background:#935100;color:#fff;cursor:pointer;}
 .sortauf-knopf:hover{background:#7d4500;}
-.sortauf-knopf:disabled{background:#c9c0b4;cursor:default;}
+.sortauf-knopf:disabled{background:#c3bab0;cursor:default;}
 .sortauf-neben{display:block;width:100%;margin-top:10px;padding:8px;font-family:inherit;
-  font-size:.85rem;background:none;border:none;color:var(--sa-hell);cursor:pointer;
+  font-size:.83rem;background:none;border:none;color:#8b8177;cursor:pointer;
   text-decoration:underline;text-underline-offset:3px;}
-.sortauf-warn{margin:0 0 13px;font-size:.87rem;color:var(--sa-rot);min-height:1.2em;
-  line-height:1.45;}
-.sortauf-hinweis{margin:0 0 13px;font-size:.87rem;color:var(--sa-hell);min-height:1.2em;}
-.sortauf-gut{margin:0 0 13px;font-size:.87rem;color:var(--sa-gruen);font-weight:600;
-  min-height:1.2em;}
-.sortauf-balken{height:17px;background:var(--sa-creme);border-radius:9px;overflow:hidden;
-  margin:0 0 13px;border:1px solid var(--sa-linie);}
-.sortauf-fuell{height:100%;width:0;background:#cdbfa9;transition:width .08s linear;}
-.sortauf-fuell.gut{background:var(--sa-gruen);}
-.sortauf-schritt{display:flex;gap:12px;align-items:flex-start;margin:18px 0 10px;
-  transition:opacity .25s;}
-.sortauf-schritt.aus{opacity:.4;}
-.sortauf-zahl{flex:none;width:26px;height:26px;border-radius:50%;background:var(--sa-braun);
-  color:#fff;display:grid;place-items:center;font-weight:700;font-size:.88rem;}
-.sortauf-schritttext b{display:block;font-size:1rem;margin-bottom:2px;}
-.sortauf-schritttext p{margin:0;font-size:.87rem;color:var(--sa-hell);line-height:1.45;}
-.sortauf-fundort{margin:7px 0 0!important;font-family:var(--sa-hand);
-  font-size:1.06rem!important;color:var(--sa-braun)!important;line-height:1.3!important;}
-.sortauf-erledigt{background:var(--sa-gruen)!important;}
-.sortauf-erledigt:hover{background:#3f6330!important;}
+.sortauf-warn{margin:0 0 14px;font-size:.86rem;color:#a32b1f;min-height:1.2em;line-height:1.4;}
+.sortauf-hinweis{margin:0 0 14px;font-size:.86rem;color:#6f6862;min-height:1.2em;line-height:1.4;}
+.sortauf-gut{margin:0 0 14px;font-size:.86rem;color:#2f6b3c;font-weight:600;min-height:1.2em;}
+.sortauf-balken{height:16px;background:#eae4da;border-radius:8px;overflow:hidden;margin:0 0 14px;}
+.sortauf-fuell{height:100%;width:0;background:#c4b8a8;transition:width .08s linear;}
+.sortauf-fuell.gut{background:#2f6b3c;}
 .sortauf-code{margin:2px 0 0;font-family:ui-monospace,Menlo,Consolas,monospace;
-  font-size:.95rem;font-weight:600;color:var(--sa-braun);background:var(--sa-creme);
-  padding:9px 11px;border-radius:3px;word-break:break-all;}
+  font-size:1rem;font-weight:600;letter-spacing:.02em;color:#935100;
+  background:#f0ebe4;padding:9px 11px;border-radius:3px;word-break:break-all;}
 
-/* --- in der Werkzeugleiste der Sortierfläche --- */
-.sortauf-gruppe{display:inline-flex;align-items:center;gap:7px;
-  font-family:var(--sa-druck);font-size:.8rem;color:var(--sa-hell);}
-.sortauf-punkt{width:8px;height:8px;border-radius:50%;background:var(--sa-rot);flex:none;
+.sortauf-leiste{position:fixed;top:0;left:0;right:0;height:40px;z-index:99999;
+  display:flex;align-items:center;gap:12px;padding:0 14px;background:#1c1a17;color:#f3efe9;
+  font-family:"Source Sans 3","Segoe UI",sans-serif;font-size:.83rem;
+  box-shadow:0 2px 12px rgba(0,0,0,.25);}
+.sortauf-punkt{width:9px;height:9px;border-radius:50%;background:#e03b2c;flex:none;
   animation:sortauf-puls 1.6s ease-in-out infinite;}
-@keyframes sortauf-puls{0%,100%{opacity:1}50%{opacity:.22}}
-.sortauf-etikett{font-weight:600;color:var(--sa-tinte);}
-.sortauf-zeit{font-family:ui-monospace,Menlo,Consolas,monospace;}
-.sortauf-mini{width:44px;height:5px;background:var(--sa-linie);border-radius:3px;
-  overflow:hidden;flex:none;}
-.sortauf-mini i{display:block;height:100%;width:0;background:var(--sa-gruen);
-  transition:width .25s;}
-.sortauf-schluss{font-family:var(--sa-druck);font-size:.85rem;font-weight:600;
-  padding:7px 14px;border:1px solid var(--sa-braun);border-radius:3px;
-  background:var(--sa-braun);color:#fff;cursor:pointer;}
-.sortauf-schluss:hover{background:#7d4500;border-color:#7d4500;}
-.sortauf-notleiste{display:flex;align-items:center;gap:12px;padding:8px 14px;
-  background:var(--sa-creme);border-bottom:1px solid var(--sa-linie);}
+@keyframes sortauf-puls{0%,100%{opacity:1}50%{opacity:.25}}
+.sortauf-etikett{font-weight:600;letter-spacing:.02em;}
+.sortauf-zeit{font-family:ui-monospace,Menlo,Consolas,monospace;color:#c8bfb2;}
+.sortauf-mini{width:52px;height:5px;background:#3a352f;border-radius:3px;overflow:hidden;flex:none;}
+.sortauf-mini i{display:block;height:100%;width:0;background:#7fae8a;transition:width .25s;}
+.sortauf-wer{margin-left:auto;color:#9a938a;}
+.sortauf-schluss{font-family:inherit;font-size:.83rem;font-weight:600;padding:6px 14px;
+  border:1px solid #5b544b;border-radius:3px;background:none;color:#f3efe9;cursor:pointer;}
+.sortauf-schluss:hover{background:#935100;border-color:#935100;}
+body.sortauf-platz{padding-top:40px;}
 @media (prefers-reduced-motion:reduce){.sortauf-punkt{animation:none}}
-@media (max-width:520px){.sortauf-karte{padding:22px 20px}}
+@media (max-width:520px){.sortauf-wer{display:none}.sortauf-karte{padding:24px 20px}}
 `;
 document.head.appendChild(stil);
 
