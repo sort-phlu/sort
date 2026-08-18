@@ -36,7 +36,7 @@ const S = {
   beginn: null, t0: 0,
   ereignisse: [], spur: null, aufnehmer: null, brocken: [],
   laeuft: false, zuletztGezogen: {}, uhr: null, pegel: 0,
-  zwischenbilder: [], runde: 0, fenster: null
+  zwischenbilder: [], runde: 0, fenster: null, rueckmeldung: ''
 };
 
 /* ============================================================
@@ -371,7 +371,13 @@ function bildschirmStart(){
   f.appendChild(el('h2', null, titel));
   f.appendChild(el('p', 'sortauf-lauf',
     'Diese Sortierung wird aufgezeichnet: euer Gespräch und die Bewegung der '
-    + 'Karten. Kein Bild von euch.'));
+    + 'Karten auf dem Bildschirm.'));
+  const kamera = el('div', 'sortauf-kamera');
+  kamera.appendChild(el('b', null, 'Keine Kamera.'));
+  kamera.appendChild(el('span', null,
+    ' Die Webcam bleibt aus. Niemand sieht euch, es gibt kein Bild von euch – '
+    + 'nur den Ton und die Karten.'));
+  f.appendChild(kamera);
 
   const kf = el('div', 'sortauf-feld');
   kf.appendChild(el('label', null, 'Klasse'));
@@ -399,7 +405,8 @@ function bildschirmStart(){
   const box = el('input'); box.type = 'checkbox';
   ein.appendChild(box);
   ein.appendChild(el('span', null,
-    'Wir wissen, dass Ton und Kartenbewegungen aufgezeichnet werden.'));
+    'Wir wissen, dass Ton und Kartenbewegungen aufgezeichnet werden und '
+    + 'dass keine Kamera läuft.'));
   f.appendChild(ein);
 
   const warn = el('p', 'sortauf-warn');
@@ -596,20 +603,27 @@ async function beenden(){
   document.querySelectorAll('.sortauf-gruppe, .sortauf-schluss, .sortauf-notleiste')
           .forEach(e => e.remove());
 
+  // Ton und Endbild laufen im Hintergrund, während die Gruppe schreibt.
+  const vorbereitet = (async () => ({
+    ton: new Blob(S.brocken, { type: S.brocken[0] ? S.brocken[0].type : 'audio/webm' }),
+    bild: await flaechenbild()
+  }))();
+
+  await rueckmeldungFragen();
+
   const f = document.createDocumentFragment();
   f.appendChild(el('p', 'sortauf-hand', 'Fertig'));
   f.appendChild(el('h2', null, 'Danke – das Paket wird geschnürt.'));
-  const stand = el('p', 'sortauf-lauf', 'Einen Moment …');
-  f.appendChild(stand);
+  f.appendChild(el('p', 'sortauf-lauf', 'Einen Moment …'));
   bildschirm(f);
 
-  const ton = new Blob(S.brocken, { type: S.brocken[0] ? S.brocken[0].type : 'audio/webm' });
-  const bild = await flaechenbild();
+  const { ton, bild } = await vorbereitet;
   const kopf = kopfdaten();
   kopf.ende = new Date().toISOString();
   kopf.dauer_s = Math.round((performance.now() - S.t0) / 1000);
   kopf.ereignisse = S.ereignisse.length;
   kopf.runden = S.zwischenbilder.length;
+  kopf.rueckmeldung = S.rueckmeldung || '';
 
   const dateien = [
     { name: 'angaben.json',   daten: textBytes(JSON.stringify(kopf, null, 2)) },
@@ -617,6 +631,8 @@ async function beenden(){
     { name: 'ton.webm',       daten: await zuBytes(ton) }
   ];
   if (bild) dateien.push({ name: 'ergebnis.png', daten: await zuBytes(bild) });
+  if (S.rueckmeldung)
+    dateien.push({ name: 'rueckmeldung.txt', daten: textBytes(S.rueckmeldung) });
   for (const zb of S.zwischenbilder){
     dateien.push({ name: 'runde-' + String(zb.nr).padStart(2, '0') + '.png',
                    daten: await zuBytes(zb.blob) });
@@ -750,6 +766,53 @@ async function beenden(){
   try { localStorage.removeItem('sort-protokoll-' + S.sitzung); } catch(e){}
 }
 
+function rueckmeldungFragen(){
+  return new Promise(fertig => {
+    const f = document.createDocumentFragment();
+    f.appendChild(el('p', 'sortauf-hand', 'Eine letzte Frage'));
+    f.appendChild(el('h2', null, 'Was nehmt ihr mit?'));
+    f.appendChild(el('p', 'sortauf-lauf',
+      'Worum ging es bei dieser Aufgabe eurer Meinung nach? Habt ihr etwas '
+      + 'Neues gemerkt oder gab es einen Moment, in dem euch etwas '
+      + 'aufgegangen ist? Schreibt in eigenen Worten – zwei, drei Sätze '
+      + 'genügen. Es gibt kein Richtig oder Falsch.'));
+
+    const feld = document.createElement('textarea');
+    feld.className = 'sortauf-antwort';
+    feld.rows = 5;
+    feld.placeholder = 'Uns ist aufgefallen, dass …';
+    f.appendChild(feld);
+
+    const warn = el('p', 'sortauf-warn');
+    f.appendChild(warn);
+
+    const weiter = el('button', 'sortauf-knopf', 'Weiter');
+    weiter.onclick = () => {
+      const txt = feld.value.trim();
+      if (txt.length < 10){
+        warn.textContent = 'Schreibt bitte noch etwas mehr – ein Satz reicht schon.';
+        feld.focus();
+        return;
+      }
+      S.rueckmeldung = txt;
+      merken('rueckmeldung', { zeichen: txt.length });
+      fertig();
+    };
+    f.appendChild(weiter);
+
+    const ohne = el('button', 'sortauf-neben', 'Uns fällt gerade nichts ein');
+    ohne.onclick = () => {
+      S.rueckmeldung = '';
+      merken('rueckmeldung', { zeichen: 0 });
+      fertig();
+    };
+    f.appendChild(ohne);
+
+    bildschirm(f);
+    setTimeout(() => feld.focus(), 120);
+  });
+}
+
 function danke(){
   const d = document.createDocumentFragment();
   d.appendChild(el('p', 'sortauf-hand', 'Geschafft'));
@@ -786,6 +849,9 @@ stil.textContent = `
 .sortauf-karte h2{margin:0 0 12px;font-size:1.34rem;font-weight:700;line-height:1.24;
   letter-spacing:-.01em;}
 .sortauf-lauf{margin:0 0 20px;font-size:.95rem;line-height:1.55;color:#463f36;}
+.sortauf-kamera{background:var(--sa-creme);border-left:3px solid var(--sa-gruen);
+  padding:11px 14px;margin:0 0 18px;font-size:.89rem;line-height:1.5;}
+.sortauf-kamera b{color:var(--sa-gruen);}
 .sortauf-klein{margin:2px 0 9px;font-size:.83rem;color:var(--sa-hell);line-height:1.45;}
 .sortauf-feld{margin-bottom:17px;}
 .sortauf-feld label{display:block;font-size:.8rem;font-weight:700;margin-bottom:5px;}
@@ -794,6 +860,11 @@ stil.textContent = `
   background:#fff;color:var(--sa-tinte);}
 .sortauf-huelle input[type=text]:focus{outline:2px solid var(--sa-braun);
   outline-offset:1px;border-color:var(--sa-braun);}
+.sortauf-antwort{width:100%;padding:11px 13px;font-size:.96rem;font-family:inherit;
+  line-height:1.5;border:1px solid var(--sa-linie);border-radius:3px;background:#fff;
+  color:var(--sa-tinte);resize:vertical;margin-bottom:12px;}
+.sortauf-antwort:focus{outline:2px solid var(--sa-braun);outline-offset:1px;
+  border-color:var(--sa-braun);}
 .sortauf-gitter{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .sortauf-haken{display:flex;gap:10px;align-items:flex-start;margin:4px 0 18px;
   font-size:.89rem;line-height:1.45;cursor:pointer;}
