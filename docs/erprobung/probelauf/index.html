@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Probelauf</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
+<style>
+:root{
+  --papier:#fbf8f3; --creme:#f6ecdf; --karte:#fffefb;
+  --tinte:#2d2924;  --tinte-hell:#6c6357; --braun:#935100;
+  --linie:#e4d9c7;  --akzent:#9b8ac4; --feld-rand:#c9bda6;
+  --feld-fuell:rgba(147,81,0,.045);
+  --druck:'Fira Sans','Segoe UI',-apple-system,sans-serif;
+  --hand:'Patrick Hand',cursive;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--papier);color:var(--tinte);font-family:var(--druck);
+  font-size:16px;line-height:1.5;-webkit-user-select:none;user-select:none}
+header{padding:18px 24px 0}
+h1{font-size:1.35rem;margin:0 0 4px}
+.auftrag{margin:0 0 4px;max-width:78ch;color:#463f36}
+.reden{font-family:var(--hand);font-size:1.3rem;color:var(--braun);margin:6px 0 0}
+
+.leiste{display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+  padding:12px 24px;border-bottom:1px solid var(--linie);margin-top:12px;background:#fff}
+.leiste button{font:inherit;font-size:.86rem;font-weight:600;padding:7px 13px;
+  border:1px solid var(--linie);border-radius:3px;background:#fff;color:var(--tinte);
+  cursor:pointer}
+.leiste button:hover{border-color:var(--braun);color:var(--braun)}
+.trenner{width:1px;height:22px;background:var(--linie);margin:0 3px}
+#meldung{font-size:.85rem;color:var(--tinte-hell)}
+
+#tisch{position:relative;margin:0;padding:0;height:640px;overflow:hidden;background:var(--papier)}
+#teiler{position:absolute;top:0;bottom:0;border-left:1.5px dashed var(--linie)}
+.zonentitel{position:absolute;top:8px;font-family:var(--hand);font-size:1.2rem;
+  color:var(--tinte-hell)}
+.feld{position:absolute;border:1.5px dashed var(--feld-rand);display:flex;
+  align-items:flex-start;justify-content:center}
+.feld span{font-family:var(--hand);font-size:1.05rem;color:var(--tinte-hell);margin-top:5px}
+.karte{position:absolute;cursor:grab;touch-action:none}
+.karte img{display:block;width:100%;height:100%;pointer-events:none;
+  filter:drop-shadow(0 1px 2px rgba(90,70,35,.2))}
+.karte.aktiv{cursor:grabbing}
+.karte.aktiv img{filter:drop-shadow(0 8px 16px rgba(90,70,35,.32))}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Probelauf – wir üben den Ablauf</h1>
+  <p class="auftrag">Legt die zehn Karten in eine Reihenfolge: ganz oben das,
+     was ihr am liebsten macht, ganz unten das, was ihr am wenigsten mögt.
+     Ihr müsst euch als Gruppe einigen.</p>
+  <p class="reden">Wichtig: redet dabei miteinander! Sagt laut, warum ihr eine
+     Karte dorthin legt – das Mikrofon soll etwas zu hören bekommen.</p>
+</header>
+
+<div class="leiste">
+  <button id="kleiner">Kleiner &minus;</button>
+  <button id="groesser">Grösser &plus;</button>
+  <div class="trenner"></div>
+  <button id="raster">Felder einblenden</button>
+  <button id="zurueck">Zurück zum Ursprung</button>
+  <div class="trenner"></div>
+  <button id="bild">Bild speichern</button>
+  <span id="meldung"></span>
+</div>
+
+<div id="tisch"></div>
+
+<script>
+const HAELFTEN = {"links":"noch nicht einsortiert","rechts":"unsere Reihenfolge","teiler":0.42}; // Zonen
+const RASTER = {"anzahl":5,"breite":2.6,"hoehe":1.1,"beschriftung":"hierhin"}; // Felder
+const KARTENDATEN = `<div class="karte" data-code="P01"><img alt="Schlafen" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNzAiIGhlaWdodD0iMTQ0IiB2aWV3Qm94PSIwIDAgMTcwIDE0NCI+CjxyZWN0IHg9IjMiIHk9IjMiIHdpZHRoPSIxNjQiIGhlaWdodD0iMTM4IiByeD0iOSIgZmlsbD0iI2ZmZmRmOSIKICAgICAgc3Ryb2tlPSIjNmY5ZGM0IiBzdHJva2Utd2lkdGg9IjIuNSIgc3Ryb2tlLWRhc2hhcnJheT0iNyA1Ii8+CjxnIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOSIgZm9udC13ZWlnaHQ9IjYwMCIKICAgZmlsbD0iIzJkMjkyNCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRleHQgeD0iODUiIHk9IjgwIj5TY2hsYWZlbjwvdGV4dD48L2c+Cjwvc3ZnPg=="></div><div class="karte" data-code="P02"><img alt="Musik hören" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNzAiIGhlaWdodD0iMTQ0IiB2aWV3Qm94PSIwIDAgMTcwIDE0NCI+CjxyZWN0IHg9IjMiIHk9IjMiIHdpZHRoPSIxNjQiIGhlaWdodD0iMTM4IiByeD0iOSIgZmlsbD0iI2ZmZmRmOSIKICAgICAgc3Ryb2tlPSIjODVhODYyIiBzdHJva2Utd2lkdGg9IjIuNSIgc3Ryb2tlLWRhc2hhcnJheT0iNyA1Ii8+CjxnIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOSIgZm9udC13ZWlnaHQ9IjYwMCIKICAgZmlsbD0iIzJkMjkyNCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRleHQgeD0iODUiIHk9IjgwIj5NdXNpayBow7ZyZW48L3RleHQ+PC9nPgo8L3N2Zz4="></div><div class="karte" data-code="P03"><img alt="Fussball" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNzAiIGhlaWdodD0iMTQ0IiB2aWV3Qm94PSIwIDAgMTcwIDE0NCI+CjxyZWN0IHg9IjMiIHk9IjMiIHdpZHRoPSIxNjQiIGhlaWdodD0iMTM4IiByeD0iOSIgZmlsbD0iI2ZmZmRmOSIKICAgICAgc3Ryb2tlPSIjZDNhMDNmIiBzdHJva2Utd2lkdGg9IjIuNSIgc3Ryb2tlLWRhc2hhcnJheT0iNyA1Ii8+CjxnIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOSIgZm9udC13ZWlnaHQ9IjYwMCIKICAgZmlsbD0iIzJkMjkyNCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRleHQgeD0iODUiIHk9IjgwIj5GdXNzYmFsbDwvdGV4dD48L2c+Cjwvc3ZnPg=="></div><div class="karte" data-code="P04"><img alt="Kochen" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNzAiIGhlaWdodD0iMTQ0IiB2aWV3Qm94PSIwIDAgMTcwIDE0NCI+CjxyZWN0IHg9IjMiIHk9IjMiIHdpZHRoPSIxNjQiIGhlaWdodD0iMTM4IiByeD0iOSIgZmlsbD0iI2ZmZmRmOSIKICAgICAgc3Ryb2tlPSIjOWI4YWM0IiBzdHJva2Utd2lkdGg9IjIuNSIgc3Ryb2tlLWRhc2hhcnJheT0iNyA1Ii8+CjxnIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOSIgZm9udC13ZWlnaHQ9IjYwMCIKICAgZmlsbD0iIzJkMjkyNCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRleHQgeD0iODUiIHk9IjgwIj5Lb2NoZW48L3RleHQ+PC9nPgo8L3N2Zz4="></div><div class="karte" data-code="P05"><img alt="Lesen" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNzAiIGhlaWdodD0iMTQ0IiB2aWV3Qm94PSIwIDAgMTcwIDE0NCI+CjxyZWN0IHg9IjMiIHk9IjMiIHdpZHRoPSIxNjQiIGhlaWdodD0iMTM4IiByeD0iOSIgZmlsbD0iI2ZmZmRmOSIKICAgICAgc3Ryb2tlPSIjY2Y4MTg4IiBzdHJva2Utd2lkdGg9IjIuNSIgc3Ryb2tlLWRhc2hhcnJheT0iNyA1Ii8+CjxnIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOSIgZm9udC13ZWlnaHQ9IjYwMCIKICAgZmlsbD0iIzJkMjkyNCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRleHQgeD0iODUiIHk9IjgwIj5MZXNlbjwvdGV4dD48L2c+Cjwvc3ZnPg=="></div><div class="karte" data-code="P06"><img alt="Zeichnen" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNzAiIGhlaWdodD0iMTQ0IiB2aWV3Qm94PSIwIDAgMTcwIDE0NCI+CjxyZWN0IHg9IjMiIHk9IjMiIHdpZHRoPSIxNjQiIGhlaWdodD0iMTM4IiByeD0iOSIgZmlsbD0iI2ZmZmRmOSIKICAgICAgc3Ryb2tlPSIjNmZhYTljIiBzdHJva2Utd2lkdGg9IjIuNSIgc3Ryb2tlLWRhc2hhcnJheT0iNyA1Ii8+CjxnIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOSIgZm9udC13ZWlnaHQ9IjYwMCIKICAgZmlsbD0iIzJkMjkyNCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRleHQgeD0iODUiIHk9IjgwIj5aZWljaG5lbjwvdGV4dD48L2c+Cjwvc3ZnPg=="></div><div class="karte" data-code="P07"><img alt="Velo fahren" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNzAiIGhlaWdodD0iMTQ0IiB2aWV3Qm94PSIwIDAgMTcwIDE0NCI+CjxyZWN0IHg9IjMiIHk9IjMiIHdpZHRoPSIxNjQiIGhlaWdodD0iMTM4IiByeD0iOSIgZmlsbD0iI2ZmZmRmOSIKICAgICAgc3Ryb2tlPSIjNmY5ZGM0IiBzdHJva2Utd2lkdGg9IjIuNSIgc3Ryb2tlLWRhc2hhcnJheT0iNyA1Ii8+CjxnIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOSIgZm9udC13ZWlnaHQ9IjYwMCIKICAgZmlsbD0iIzJkMjkyNCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRleHQgeD0iODUiIHk9IjgwIj5WZWxvIGZhaHJlbjwvdGV4dD48L2c+Cjwvc3ZnPg=="></div><div class="karte" data-code="P08"><img alt="Gamen" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNzAiIGhlaWdodD0iMTQ0IiB2aWV3Qm94PSIwIDAgMTcwIDE0NCI+CjxyZWN0IHg9IjMiIHk9IjMiIHdpZHRoPSIxNjQiIGhlaWdodD0iMTM4IiByeD0iOSIgZmlsbD0iI2ZmZmRmOSIKICAgICAgc3Ryb2tlPSIjODVhODYyIiBzdHJva2Utd2lkdGg9IjIuNSIgc3Ryb2tlLWRhc2hhcnJheT0iNyA1Ii8+CjxnIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOSIgZm9udC13ZWlnaHQ9IjYwMCIKICAgZmlsbD0iIzJkMjkyNCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRleHQgeD0iODUiIHk9IjgwIj5HYW1lbjwvdGV4dD48L2c+Cjwvc3ZnPg=="></div><div class="karte" data-code="P09"><img alt="Tanzen" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNzAiIGhlaWdodD0iMTQ0IiB2aWV3Qm94PSIwIDAgMTcwIDE0NCI+CjxyZWN0IHg9IjMiIHk9IjMiIHdpZHRoPSIxNjQiIGhlaWdodD0iMTM4IiByeD0iOSIgZmlsbD0iI2ZmZmRmOSIKICAgICAgc3Ryb2tlPSIjZDNhMDNmIiBzdHJva2Utd2lkdGg9IjIuNSIgc3Ryb2tlLWRhc2hhcnJheT0iNyA1Ii8+CjxnIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOSIgZm9udC13ZWlnaHQ9IjYwMCIKICAgZmlsbD0iIzJkMjkyNCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRleHQgeD0iODUiIHk9IjgwIj5UYW56ZW48L3RleHQ+PC9nPgo8L3N2Zz4="></div><div class="karte" data-code="P10"><img alt="Baden" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNzAiIGhlaWdodD0iMTQ0IiB2aWV3Qm94PSIwIDAgMTcwIDE0NCI+CjxyZWN0IHg9IjMiIHk9IjMiIHdpZHRoPSIxNjQiIGhlaWdodD0iMTM4IiByeD0iOSIgZmlsbD0iI2ZmZmRmOSIKICAgICAgc3Ryb2tlPSIjOWI4YWM0IiBzdHJva2Utd2lkdGg9IjIuNSIgc3Ryb2tlLWRhc2hhcnJheT0iNyA1Ii8+CjxnIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOSIgZm9udC13ZWlnaHQ9IjYwMCIKICAgZmlsbD0iIzJkMjkyNCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRleHQgeD0iODUiIHk9IjgwIj5CYWRlbjwvdGV4dD48L2c+Cjwvc3ZnPg=="></div>`; // Kartenbilder
+
+const tisch = document.getElementById('tisch');
+const meldung = document.getElementById('meldung');
+let z = 1, breite = 170, rasterAn = false;
+const ABL = 1;
+
+/* ---------- Karten anlegen ---------- */
+tisch.innerHTML = KARTENDATEN;
+const karten = [...document.querySelectorAll('.karte')];
+
+function setzen(k, x, y){
+  k._x = x; k._y = y;
+  k.style.left = x + 'px';
+  k.style.top  = y + 'px';
+  k.style.width  = breite + 'px';
+  k.style.height = (breite * 0.844) + 'px';
+}
+
+function streuen(){
+  const zone = tisch.clientWidth * HAELFTEN.teiler - breite - 16;
+  karten.forEach((k, i) => {
+    const spalte = i % 2, reihe = Math.floor(i / 2);
+    const x = 14 + spalte * (zone / 2) + Math.random() * 18;
+    const y = 40 + reihe * (breite * 0.844 * 0.62) + Math.random() * 14;
+    k.style.zIndex = ++z;
+    setzen(k, Math.round(x), Math.round(y));
+  });
+}
+
+/* ---------- Ziehen ---------- */
+karten.forEach(k => {
+  k.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    k.setPointerCapture(e.pointerId);
+    k.classList.add('aktiv');
+    k.style.zIndex = ++z;
+    const ax = e.clientX - k._x, ay = e.clientY - k._y;
+    const zieh = ev => {
+      const r = tisch.getBoundingClientRect();
+      let x = ev.clientX - ax, y = ev.clientY - ay;
+      x = Math.max(0, Math.min(x, r.width  - breite));
+      y = Math.max(0, Math.min(y, r.height - breite * 0.844));
+      setzen(k, Math.round(x), Math.round(y));
+    };
+    const los = () => {
+      k.classList.remove('aktiv');
+      k.removeEventListener('pointermove', zieh);
+      k.removeEventListener('pointerup', los);
+      k.removeEventListener('pointercancel', los);
+    };
+    k.addEventListener('pointermove', zieh);
+    k.addEventListener('pointerup', los);
+    k.addEventListener('pointercancel', los);
+  });
+});
+
+/* ---------- Zonen und Felder ---------- */
+function grundZeichnen(){
+  tisch.querySelectorAll('#teiler, .zonentitel, .feld').forEach(e => e.remove());
+  const x = tisch.clientWidth * HAELFTEN.teiler;
+
+  const t = document.createElement('div');
+  t.id = 'teiler'; t.style.left = x + 'px';
+  tisch.appendChild(t);
+
+  [[HAELFTEN.links, 14], [HAELFTEN.rechts, x + 14]].forEach(([txt, px]) => {
+    const d = document.createElement('div');
+    d.className = 'zonentitel'; d.style.left = px + 'px'; d.textContent = txt;
+    tisch.appendChild(d);
+  });
+
+  if (!rasterAn) return;
+  const fw = breite * RASTER.breite, fh = breite * 0.844 * RASTER.hoehe;
+  for (let i = 0; i < RASTER.anzahl; i++){
+    const f = document.createElement('div');
+    f.className = 'feld';
+    f.style.left = (x + 14) + 'px';
+    f.style.top  = (34 + i * (fh + 8)) + 'px';
+    f.style.width = fw + 'px'; f.style.height = fh + 'px';
+    f.innerHTML = '<span>' + RASTER.beschriftung + '</span>';
+    tisch.appendChild(f);
+  }
+}
+
+/* ---------- Knöpfe ---------- */
+document.getElementById('kleiner').onclick = () => {
+  breite = Math.max(90, breite - 20); karten.forEach(k => setzen(k, k._x, k._y));
+  grundZeichnen();
+};
+document.getElementById('groesser').onclick = () => {
+  breite = Math.min(240, breite + 20); karten.forEach(k => setzen(k, k._x, k._y));
+  grundZeichnen();
+};
+document.getElementById('raster').onclick = e => {
+  rasterAn = !rasterAn;
+  e.target.textContent = rasterAn ? 'Felder ausblenden' : 'Felder einblenden';
+  grundZeichnen();
+};
+document.getElementById('zurueck').onclick = () => { streuen(); meldung.textContent = ''; };
+
+async function bild(still){
+  const s = 2, h = breite * 0.844;
+  let bx = 0, by = 0;
+  karten.forEach(k => { bx = Math.max(bx, k._x + breite); by = Math.max(by, k._y + h); });
+  const c = document.createElement('canvas');
+  c.width = (bx + 24) * s; c.height = (by + 24) * s;
+  const g = c.getContext('2d'); g.scale(s, s);
+  g.fillStyle = '#fff'; g.fillRect(0, 0, bx + 24, by + 24);
+  const sortiert = karten.slice().sort((a, b) => (+a.style.zIndex) - (+b.style.zIndex));
+  for (const k of sortiert){
+    const im = k.querySelector('img');
+    await im.decode().catch(() => {});
+    g.drawImage(im, k._x + 12, k._y + 12, breite, h);
+  }
+  const blob = await new Promise(f => c.toBlob(f, 'image/png'));
+  if (still) return blob;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'probelauf.png'; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  meldung.textContent = 'Bild gespeichert.';
+}
+document.getElementById('bild').onclick = () => bild(false);
+
+addEventListener('resize', grundZeichnen);
+streuen();
+grundZeichnen();
+</script>
+<script>window.SORT_ABGABE={abgabe:null,schluessel:"",ablage:"https://drive.switch.ch/index.php/s/204hacMFbNKBEMs"};</script>
+<script src="../aufnahme.js"></script>
+</body>
+</html>
