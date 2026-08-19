@@ -43,9 +43,10 @@ button:hover{background:var(--creme);border-color:var(--braun-hell)}
 #tisch{flex:1 1 auto;background:var(--karte);border:1px solid var(--linie);
        border-top:4px solid var(--akzent);position:relative;overflow:auto;
        margin:0 22px 22px}
-#teiler{position:absolute;top:0;bottom:0;border-left:1.5px dashed var(--linie)}
-.zonentitel{position:absolute;top:9px;font-family:var(--hand);font-size:1.16rem;
+#teiler{position:absolute;left:0;right:0;border-top:1.5px dashed var(--linie)}
+.zonentitel{position:absolute;font-family:var(--hand);font-size:1.16rem;
             color:var(--tinte-hell)}
+.pfeil{font-family:var(--hand);font-size:1.1rem;color:var(--braun)}
 .feld{position:absolute;border:1.5px dashed var(--feld-rand);display:flex;
       align-items:flex-start;justify-content:center}
 .feld span{font-family:var(--hand);font-size:1.04rem;color:var(--tinte-hell);margin-top:5px}
@@ -63,8 +64,8 @@ button:hover{background:var(--creme);border-color:var(--braun-hell)}
 
 <header>
   <h1>Probelauf &ndash; wir üben den Ablauf</h1>
-  <p class="auftrag">Legt die zehn Karten in eine Reihenfolge: ganz links das,
-     was ihr am wenigsten macht, ganz rechts das, was ihr am liebsten mögt.
+  <p class="auftrag">Legt die zehn Karten unten in eine Reihe: ganz links das,
+     was ihr am wenigsten mögt, ganz rechts das, was ihr am liebsten macht.
      Ihr müsst euch als Gruppe einigen.</p>
   <p class="reden">Wichtig: redet dabei miteinander! Sagt laut, warum ihr eine
      Karte dorthin legt &ndash; das Mikrofon soll etwas zu hören bekommen.</p>
@@ -84,8 +85,8 @@ button:hover{background:var(--creme);border-color:var(--braun-hell)}
 <div id="tisch"></div>
 
 <script>
-const HAELFTEN = {"links":"noch nicht einsortiert","rechts":"unsere Reihenfolge","teiler":0.42}; // Zonen
-const RASTER = {"anzahl":5,"breite":2.6,"hoehe":1.05,"beschriftung":"hierhin"}; // Felder
+const HAELFTEN = {"links":"noch nicht einsortiert","rechts":"unsere Reihenfolge","teiler":0.42,"achse":"y"}; // Zonen
+const RASTER = {"anzahl":10,"beschriftung":"","reihe":true}; // Felder
 const KARTENDATEN = `<div class="karte" data-code="P01"><img alt="Schlafen" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNzAiIGhlaWdodD0iMTQzIiB2aWV3Qm94PSIwIDAgMTcwIDE0MyI+PHJlY3QgeD0iMS41IiB5PSIxLjUiIHdpZHRoPSIxNjciIGhlaWdodD0iMTQwIiByeD0iNyIgZmlsbD0iI2ZmZmVmYiIgc3Ryb2tlPSIjNmY5ZGM0IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1kYXNoYXJyYXk9IjYgNCIvPjxyZWN0IHg9IjEuNSIgeT0iMS41IiB3aWR0aD0iMTY3IiBoZWlnaHQ9IjI2IiByeD0iNyIgZmlsbD0iIzZmOWRjNCIgZmlsbC1vcGFjaXR5PSIuMTYiLz48dGV4dCB4PSIxMiIgeT0iMTkiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMCIgZm9udC13ZWlnaHQ9IjcwMCIgbGV0dGVyLXNwYWNpbmc9IjEuNCIgZmlsbD0iIzZmOWRjNCI+UFJPQkVMQVVGPC90ZXh0PjxnIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyMCIgZm9udC13ZWlnaHQ9IjYwMCIgZmlsbD0iIzJkMjkyNCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRleHQgeD0iODUiIHk9IjkwIj5TY2hsYWZlbjwvdGV4dD48L2c+PC9zdmc+"></div><div class="karte" data-code="P02"><img alt="Musik hören" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNzAiIGhlaWdodD0iMTQzIiB2aWV3Qm94PSIwIDAgMTcwIDE0MyI+PHJlY3QgeD0iMS41IiB5PSIxLjUiIHdpZHRoPSIxNjciIGhlaWdodD0iMTQwIiByeD0iNyIgZmlsbD0iI2ZmZmVmYiIgc3Ryb2tlPSIjODVhODYyIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1kYXNoYXJyYXk9IjYgNCIvPjxyZWN0IHg9IjEuNSIgeT0iMS41IiB3aWR0aD0iMTY3IiBoZWlnaHQ9IjI2IiByeD0iNyIgZmlsbD0iIzg1YTg2MiIgZmlsbC1vcGFjaXR5PSIuMTYiLz48dGV4dCB4PSIxMiIgeT0iMTkiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMCIgZm9udC13ZWlnaHQ9IjcwMCIgbGV0dGVyLXNwYWNpbmc9IjEuNCIgZmlsbD0iIzg1YTg2MiI+UFJPQkVMQVVGPC90ZXh0PjxnIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyMCIgZm9udC13ZWlnaHQ9IjYwMCIgZmlsbD0iIzJkMjkyNCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRleHQgeD0iODUiIHk9Ijc2Ij5NdXNpazwvdGV4dD48dGV4dCB4PSI4NSIgeT0iMTA0Ij5ow7ZyZW48L3RleHQ+PC9nPjwvc3ZnPg=="></div><div class="karte" data-code="P03"><img alt="Fussball" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNzAiIGhlaWdodD0iMTQzIiB2aWV3Qm94PSIwIDAgMTcwIDE0MyI+PHJlY3QgeD0iMS41IiB5PSIxLjUiIHdpZHRoPSIxNjciIGhlaWdodD0iMTQwIiByeD0iNyIgZmlsbD0iI2ZmZmVmYiIgc3Ryb2tlPSIjZDNhMDNmIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1kYXNoYXJyYXk9IjYgNCIvPjxyZWN0IHg9IjEuNSIgeT0iMS41IiB3aWR0aD0iMTY3IiBoZWlnaHQ9IjI2IiByeD0iNyIgZmlsbD0iI2QzYTAzZiIgZmlsbC1vcGFjaXR5PSIuMTYiLz48dGV4dCB4PSIxMiIgeT0iMTkiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMCIgZm9udC13ZWlnaHQ9IjcwMCIgbGV0dGVyLXNwYWNpbmc9IjEuNCIgZmlsbD0iI2QzYTAzZiI+UFJPQkVMQVVGPC90ZXh0PjxnIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyMCIgZm9udC13ZWlnaHQ9IjYwMCIgZmlsbD0iIzJkMjkyNCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRleHQgeD0iODUiIHk9IjkwIj5GdXNzYmFsbDwvdGV4dD48L2c+PC9zdmc+"></div><div class="karte" data-code="P04"><img alt="Kochen" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNzAiIGhlaWdodD0iMTQzIiB2aWV3Qm94PSIwIDAgMTcwIDE0MyI+PHJlY3QgeD0iMS41IiB5PSIxLjUiIHdpZHRoPSIxNjciIGhlaWdodD0iMTQwIiByeD0iNyIgZmlsbD0iI2ZmZmVmYiIgc3Ryb2tlPSIjOWI4YWM0IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1kYXNoYXJyYXk9IjYgNCIvPjxyZWN0IHg9IjEuNSIgeT0iMS41IiB3aWR0aD0iMTY3IiBoZWlnaHQ9IjI2IiByeD0iNyIgZmlsbD0iIzliOGFjNCIgZmlsbC1vcGFjaXR5PSIuMTYiLz48dGV4dCB4PSIxMiIgeT0iMTkiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMCIgZm9udC13ZWlnaHQ9IjcwMCIgbGV0dGVyLXNwYWNpbmc9IjEuNCIgZmlsbD0iIzliOGFjNCI+UFJPQkVMQVVGPC90ZXh0PjxnIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyMCIgZm9udC13ZWlnaHQ9IjYwMCIgZmlsbD0iIzJkMjkyNCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRleHQgeD0iODUiIHk9IjkwIj5Lb2NoZW48L3RleHQ+PC9nPjwvc3ZnPg=="></div><div class="karte" data-code="P05"><img alt="Lesen" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNzAiIGhlaWdodD0iMTQzIiB2aWV3Qm94PSIwIDAgMTcwIDE0MyI+PHJlY3QgeD0iMS41IiB5PSIxLjUiIHdpZHRoPSIxNjciIGhlaWdodD0iMTQwIiByeD0iNyIgZmlsbD0iI2ZmZmVmYiIgc3Ryb2tlPSIjY2Y4MTg4IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1kYXNoYXJyYXk9IjYgNCIvPjxyZWN0IHg9IjEuNSIgeT0iMS41IiB3aWR0aD0iMTY3IiBoZWlnaHQ9IjI2IiByeD0iNyIgZmlsbD0iI2NmODE4OCIgZmlsbC1vcGFjaXR5PSIuMTYiLz48dGV4dCB4PSIxMiIgeT0iMTkiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMCIgZm9udC13ZWlnaHQ9IjcwMCIgbGV0dGVyLXNwYWNpbmc9IjEuNCIgZmlsbD0iI2NmODE4OCI+UFJPQkVMQVVGPC90ZXh0PjxnIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyMCIgZm9udC13ZWlnaHQ9IjYwMCIgZmlsbD0iIzJkMjkyNCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRleHQgeD0iODUiIHk9IjkwIj5MZXNlbjwvdGV4dD48L2c+PC9zdmc+"></div><div class="karte" data-code="P06"><img alt="Zeichnen" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNzAiIGhlaWdodD0iMTQzIiB2aWV3Qm94PSIwIDAgMTcwIDE0MyI+PHJlY3QgeD0iMS41IiB5PSIxLjUiIHdpZHRoPSIxNjciIGhlaWdodD0iMTQwIiByeD0iNyIgZmlsbD0iI2ZmZmVmYiIgc3Ryb2tlPSIjNmZhYTljIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1kYXNoYXJyYXk9IjYgNCIvPjxyZWN0IHg9IjEuNSIgeT0iMS41IiB3aWR0aD0iMTY3IiBoZWlnaHQ9IjI2IiByeD0iNyIgZmlsbD0iIzZmYWE5YyIgZmlsbC1vcGFjaXR5PSIuMTYiLz48dGV4dCB4PSIxMiIgeT0iMTkiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMCIgZm9udC13ZWlnaHQ9IjcwMCIgbGV0dGVyLXNwYWNpbmc9IjEuNCIgZmlsbD0iIzZmYWE5YyI+UFJPQkVMQVVGPC90ZXh0PjxnIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyMCIgZm9udC13ZWlnaHQ9IjYwMCIgZmlsbD0iIzJkMjkyNCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRleHQgeD0iODUiIHk9IjkwIj5aZWljaG5lbjwvdGV4dD48L2c+PC9zdmc+"></div><div class="karte" data-code="P07"><img alt="Velo fahren" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNzAiIGhlaWdodD0iMTQzIiB2aWV3Qm94PSIwIDAgMTcwIDE0MyI+PHJlY3QgeD0iMS41IiB5PSIxLjUiIHdpZHRoPSIxNjciIGhlaWdodD0iMTQwIiByeD0iNyIgZmlsbD0iI2ZmZmVmYiIgc3Ryb2tlPSIjNmY5ZGM0IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1kYXNoYXJyYXk9IjYgNCIvPjxyZWN0IHg9IjEuNSIgeT0iMS41IiB3aWR0aD0iMTY3IiBoZWlnaHQ9IjI2IiByeD0iNyIgZmlsbD0iIzZmOWRjNCIgZmlsbC1vcGFjaXR5PSIuMTYiLz48dGV4dCB4PSIxMiIgeT0iMTkiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMCIgZm9udC13ZWlnaHQ9IjcwMCIgbGV0dGVyLXNwYWNpbmc9IjEuNCIgZmlsbD0iIzZmOWRjNCI+UFJPQkVMQVVGPC90ZXh0PjxnIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyMCIgZm9udC13ZWlnaHQ9IjYwMCIgZmlsbD0iIzJkMjkyNCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRleHQgeD0iODUiIHk9Ijc2Ij5WZWxvPC90ZXh0Pjx0ZXh0IHg9Ijg1IiB5PSIxMDQiPmZhaHJlbjwvdGV4dD48L2c+PC9zdmc+"></div><div class="karte" data-code="P08"><img alt="Gamen" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNzAiIGhlaWdodD0iMTQzIiB2aWV3Qm94PSIwIDAgMTcwIDE0MyI+PHJlY3QgeD0iMS41IiB5PSIxLjUiIHdpZHRoPSIxNjciIGhlaWdodD0iMTQwIiByeD0iNyIgZmlsbD0iI2ZmZmVmYiIgc3Ryb2tlPSIjODVhODYyIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1kYXNoYXJyYXk9IjYgNCIvPjxyZWN0IHg9IjEuNSIgeT0iMS41IiB3aWR0aD0iMTY3IiBoZWlnaHQ9IjI2IiByeD0iNyIgZmlsbD0iIzg1YTg2MiIgZmlsbC1vcGFjaXR5PSIuMTYiLz48dGV4dCB4PSIxMiIgeT0iMTkiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMCIgZm9udC13ZWlnaHQ9IjcwMCIgbGV0dGVyLXNwYWNpbmc9IjEuNCIgZmlsbD0iIzg1YTg2MiI+UFJPQkVMQVVGPC90ZXh0PjxnIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyMCIgZm9udC13ZWlnaHQ9IjYwMCIgZmlsbD0iIzJkMjkyNCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRleHQgeD0iODUiIHk9IjkwIj5HYW1lbjwvdGV4dD48L2c+PC9zdmc+"></div><div class="karte" data-code="P09"><img alt="Tanzen" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNzAiIGhlaWdodD0iMTQzIiB2aWV3Qm94PSIwIDAgMTcwIDE0MyI+PHJlY3QgeD0iMS41IiB5PSIxLjUiIHdpZHRoPSIxNjciIGhlaWdodD0iMTQwIiByeD0iNyIgZmlsbD0iI2ZmZmVmYiIgc3Ryb2tlPSIjZDNhMDNmIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1kYXNoYXJyYXk9IjYgNCIvPjxyZWN0IHg9IjEuNSIgeT0iMS41IiB3aWR0aD0iMTY3IiBoZWlnaHQ9IjI2IiByeD0iNyIgZmlsbD0iI2QzYTAzZiIgZmlsbC1vcGFjaXR5PSIuMTYiLz48dGV4dCB4PSIxMiIgeT0iMTkiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMCIgZm9udC13ZWlnaHQ9IjcwMCIgbGV0dGVyLXNwYWNpbmc9IjEuNCIgZmlsbD0iI2QzYTAzZiI+UFJPQkVMQVVGPC90ZXh0PjxnIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyMCIgZm9udC13ZWlnaHQ9IjYwMCIgZmlsbD0iIzJkMjkyNCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRleHQgeD0iODUiIHk9IjkwIj5UYW56ZW48L3RleHQ+PC9nPjwvc3ZnPg=="></div><div class="karte" data-code="P10"><img alt="Baden" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNzAiIGhlaWdodD0iMTQzIiB2aWV3Qm94PSIwIDAgMTcwIDE0MyI+PHJlY3QgeD0iMS41IiB5PSIxLjUiIHdpZHRoPSIxNjciIGhlaWdodD0iMTQwIiByeD0iNyIgZmlsbD0iI2ZmZmVmYiIgc3Ryb2tlPSIjOWI4YWM0IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1kYXNoYXJyYXk9IjYgNCIvPjxyZWN0IHg9IjEuNSIgeT0iMS41IiB3aWR0aD0iMTY3IiBoZWlnaHQ9IjI2IiByeD0iNyIgZmlsbD0iIzliOGFjNCIgZmlsbC1vcGFjaXR5PSIuMTYiLz48dGV4dCB4PSIxMiIgeT0iMTkiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMCIgZm9udC13ZWlnaHQ9IjcwMCIgbGV0dGVyLXNwYWNpbmc9IjEuNCIgZmlsbD0iIzliOGFjNCI+UFJPQkVMQVVGPC90ZXh0PjxnIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyMCIgZm9udC13ZWlnaHQ9IjYwMCIgZmlsbD0iIzJkMjkyNCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRleHQgeD0iODUiIHk9IjkwIj5CYWRlbjwvdGV4dD48L2c+PC9zdmc+"></div>`; // Kartenbilder
 
 const tisch = document.getElementById('tisch');
@@ -107,13 +108,15 @@ function groesse(){
 }
 
 function streuen(){
-  const zone = Math.max(200, tisch.clientWidth * HAELFTEN.teiler - 24);
+  const h = breite * 0.844;
+  const oben = tisch.clientHeight * HAELFTEN.teiler;
+  const platz = Math.max(60, oben - h - 40);
+  const spalten = Math.max(1, Math.floor((tisch.clientWidth - 28) / (breite * 0.62)));
   karten.forEach((k, i) => {
-    const spalte = i % 2, reihe = Math.floor(i / 2);
-    const x = 14 + spalte * (zone / 2 - 6) + Math.random() * 16;
-    const y = 42 + reihe * (breite * 0.844 * 0.58) + Math.random() * 12;
+    const x = 14 + (i % spalten) * (breite * 0.62) + Math.random() * 14;
+    const y = 34 + Math.floor(i / spalten) * (platz / 2) + Math.random() * platz * 0.35;
     k.style.zIndex = ++z;
-    setzen(k, Math.round(x), Math.round(y));
+    setzen(k, Math.round(x), Math.round(Math.min(y, oben - h * 0.6)));
   });
 }
 
@@ -144,28 +147,42 @@ karten.forEach(k => {
 });
 
 function grundZeichnen(){
-  tisch.querySelectorAll('#teiler, .zonentitel, .feld').forEach(e => e.remove());
-  const x = tisch.clientWidth * HAELFTEN.teiler;
+  tisch.querySelectorAll('#teiler, .zonentitel, .feld, .pfeil').forEach(e => e.remove());
+  const B = tisch.clientWidth, H = tisch.clientHeight;
+  const y = H * HAELFTEN.teiler;
 
   const t = document.createElement('div');
-  t.id = 'teiler'; t.style.left = x + 'px';
+  t.id = 'teiler'; t.style.top = y + 'px';
   tisch.appendChild(t);
 
-  [[HAELFTEN.links, 14], [HAELFTEN.rechts, x + 14]].forEach(([txt, px]) => {
+  [[HAELFTEN.links, 9], [HAELFTEN.rechts, y + 9]].forEach(([txt, py]) => {
     const d = document.createElement('div');
-    d.className = 'zonentitel'; d.style.left = px + 'px'; d.textContent = txt;
+    d.className = 'zonentitel'; d.style.top = py + 'px'; d.style.left = '14px';
+    d.textContent = txt;
     tisch.appendChild(d);
   });
 
+  // Die Richtung der Reihe: links am wenigsten, rechts am liebsten
+  [['am wenigsten \u2190', 'left:14px'], ['\u2192 am liebsten', 'right:14px']]
+    .forEach(([txt, pos]) => {
+      const d = document.createElement('div');
+      d.className = 'pfeil';
+      d.style.cssText = 'position:absolute;top:' + (y + 36) + 'px;' + pos;
+      d.textContent = txt;
+      tisch.appendChild(d);
+    });
+
   if (!rasterAn) return;
-  const fw = breite * RASTER.breite, fh = breite * 0.844 * RASTER.hoehe;
+  const h = breite * 0.844;
+  const rand = 14, luecke = 6;
+  const fw = (B - 2 * rand - (RASTER.anzahl - 1) * luecke) / RASTER.anzahl;
   for (let i = 0; i < RASTER.anzahl; i++){
     const f = document.createElement('div');
     f.className = 'feld';
-    f.style.left = (x + 14) + 'px';
-    f.style.top  = (38 + i * (fh + 8)) + 'px';
-    f.style.width = fw + 'px'; f.style.height = fh + 'px';
-    f.innerHTML = '<span>' + RASTER.beschriftung + '</span>';
+    f.style.left = (rand + i * (fw + luecke)) + 'px';
+    f.style.top  = (y + 66) + 'px';
+    f.style.width = fw + 'px';
+    f.style.height = Math.min(h, H - y - 80) + 'px';
     tisch.appendChild(f);
   }
 }

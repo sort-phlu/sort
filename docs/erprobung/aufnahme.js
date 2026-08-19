@@ -115,8 +115,12 @@ function lage(k){
   try {
     if (typeof HAELFTEN !== 'undefined' && HAELFTEN && typeof tisch !== 'undefined'){
       const b = (typeof breite !== 'undefined' ? breite : 170);
-      l.haelfte = (l.x + b / 2) < tisch.clientWidth * HAELFTEN.teiler
-                ? HAELFTEN.links : HAELFTEN.rechts;
+      const quer = HAELFTEN.achse === 'y';   // waagrechte Trennlinie
+      l.haelfte = quer
+        ? ((l.y + b * 0.844 / 2) < tisch.clientHeight * HAELFTEN.teiler
+             ? HAELFTEN.links : HAELFTEN.rechts)
+        : ((l.x + b / 2) < tisch.clientWidth * HAELFTEN.teiler
+             ? HAELFTEN.links : HAELFTEN.rechts);
     }
   } catch(e){}
   return l;

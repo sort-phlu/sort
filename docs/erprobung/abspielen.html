@@ -395,18 +395,34 @@ function strukturZeichnen(breite, rasterAn){
   const B = Z.tisch[0];
 
   if (Z.haelften){
-    const x = B * Z.haelften.teiler;
+    const quer = Z.haelften.achse === 'y';
+    const H = Z.hoehe || Z.tisch[1];
     const t = document.createElement('div');
-    Object.assign(t.style, { position:'absolute', top:0, bottom:0, left:x + 'px',
-      borderLeft:'1.5px dashed ' + (F.linie || '#e4d9c7') });
-    grund.appendChild(t);
-    [[Z.haelften.links, 14], [Z.haelften.rechts, x + 14]].forEach(([txt, px]) => {
-      const d = document.createElement('div');
-      Object.assign(d.style, { position:'absolute', top:'8px', left:px + 'px',
-        fontFamily:'var(--hand)', fontSize:'1.1rem', color:F.hell || '#6c6357' });
-      d.textContent = txt;
-      grund.appendChild(d);
-    });
+    if (quer){
+      const y = H * Z.haelften.teiler;
+      Object.assign(t.style, { position:'absolute', left:0, right:0, top:y + 'px',
+        borderTop:'1.5px dashed ' + (F.linie || '#e4d9c7') });
+      grund.appendChild(t);
+      [[Z.haelften.links, 9], [Z.haelften.rechts, y + 9]].forEach(([txt, py]) => {
+        const d = document.createElement('div');
+        Object.assign(d.style, { position:'absolute', top:py + 'px', left:'14px',
+          fontFamily:'var(--hand)', fontSize:'1.1rem', color:F.hell || '#6c6357' });
+        d.textContent = txt;
+        grund.appendChild(d);
+      });
+    } else {
+      const x = B * Z.haelften.teiler;
+      Object.assign(t.style, { position:'absolute', top:0, bottom:0, left:x + 'px',
+        borderLeft:'1.5px dashed ' + (F.linie || '#e4d9c7') });
+      grund.appendChild(t);
+      [[Z.haelften.links, 14], [Z.haelften.rechts, x + 14]].forEach(([txt, px]) => {
+        const d = document.createElement('div');
+        Object.assign(d.style, { position:'absolute', top:'8px', left:px + 'px',
+          fontFamily:'var(--hand)', fontSize:'1.1rem', color:F.hell || '#6c6357' });
+        d.textContent = txt;
+        grund.appendChild(d);
+      });
+    }
   }
 
   if (!rasterAn || !Z.raster) return;
