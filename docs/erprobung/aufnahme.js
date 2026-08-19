@@ -21,7 +21,15 @@ const CFG = Object.assign({
   ziehrate: 50          // Millisekunden zwischen zwei Positionsmeldungen beim Ziehen
 }, window.SORT_ABGABE || {});
 
+// Hat die Klasse eine eigene Ablage, geht ihre Abgabe dorthin.
+if (KLASSE && KLASSE.ablage) CFG.ablage = KLASSE.ablage;
+
 /* ---------- Woher kommt diese Aufgabe? ---------- */
+/* Zum blossen Anschauen: ...?ansehen haengt das Aufnahmemodul aus.
+   Fuer das Projektteam gedacht, das die Kaertchen pruefen will, ohne
+   dass dabei eine Sitzung entsteht. */
+if (new URLSearchParams(location.search).has('ansehen')) return;
+
 const pfad = location.pathname.split('/').filter(Boolean);
 // Endet die Adresse auf einen Dateinamen, faellt der weg: der letzte
 // echte Abschnitt ist die Variante, der davor das Thema.
@@ -29,6 +37,17 @@ if (pfad.length && pfad[pfad.length - 1].indexOf('.') >= 0) pfad.pop();
 const variante = pfad.length >= 1 ? pfad[pfad.length - 1] : 'unbekannt';
 const thema    = pfad.length >= 2 ? pfad[pfad.length - 2] : 'unbekannt';
 const titel    = document.title || '';
+
+/* Welche Klasse? Das Kuerzel steht in der Adresse (?k=r7a) und wird in
+   der gemeinsamen Klassentabelle nachgeschlagen. Damit gibt es nur eine
+   Kopie jeder Sortierflaeche, egal wie viele Klassen dazukommen. */
+const KLASSENKUERZEL = new URLSearchParams(location.search).get('k') || '';
+const KLASSEN = window.SORT_KLASSEN || {};
+const KLASSE = KLASSEN[KLASSENKUERZEL] || null;
+
+/* Thema und Variante als Nummern - sie machen den Dateinamen kurz
+   und trotzdem eindeutig. Alles Weitere steht in angaben.json. */
+const AUFGABE = window.SORT_AUFGABE || null;
 
 /* ---------- Zustand ---------- */
 const S = {
@@ -278,6 +297,40 @@ function rundenbilderAbfangen(){
 }
 
 /* ============================================================
+   Die Sortierfläche beschreiben - damit das Paket für sich
+   allein wiedergegeben werden kann und niemand die passende
+   index.html dazusuchen muss.
+   ============================================================ */
+function flaechenbeschreibung(){
+  const karten = {}, gruppen = {};
+  document.querySelectorAll('.karte').forEach(k => {
+    const code = k.dataset.code;
+    const im = k.querySelector('img');
+    if (!code || !im) return;
+    karten[code] = im.getAttribute('src');
+    if (k.dataset.gruppe) gruppen[code] = k.dataset.gruppe;
+  });
+
+  const stil = getComputedStyle(document.documentElement);
+  const farbe = n => (stil.getPropertyValue(n) || '').trim();
+
+  return {
+    titel: titel,
+    karten: karten,
+    gruppen: gruppen,
+    haelften: (typeof HAELFTEN !== 'undefined') ? HAELFTEN : null,
+    raster:   (typeof RASTER   !== 'undefined') ? RASTER   : null,
+    farben: {
+      rand:   farbe('--feld-rand')  || '#c9bda6',
+      fuell:  farbe('--feld-fuell') || 'rgba(147,81,0,.045)',
+      akzent: farbe('--akzent')     || '#9b8ac4',
+      linie:  farbe('--linie')      || '#e4d9c7',
+      hell:   farbe('--tinte-hell') || '#6c6357'
+    }
+  };
+}
+
+/* ============================================================
    Paket schnüren (Zip ohne Komprimierung)
    ============================================================ */
 const CRC = (() => {
@@ -344,7 +397,7 @@ const textBytes = s => new TextEncoder().encode(s);
 function kopfdaten(){
   return {
     sitzung: S.sitzung, thema: thema, variante: variante, titel: titel,
-    klasse: S.klasse, namen: S.namen,
+    klasse: S.klasse, klassenkuerzel: KLASSENKUERZEL, namen: S.namen,
     beginn: S.beginn, adresse: location.href,
     geraet: {
       browser: navigator.userAgent,
@@ -369,6 +422,22 @@ function bildschirm(inhalt){
 }
 
 /* ---------- 1. Wer sortiert hier? ---------- */
+function bildschirmOhneKlasse(){
+  const f = document.createDocumentFragment();
+  f.appendChild(el('p', 'sortauf-hand', 'Kurzer Halt'));
+  f.appendChild(el('h2', null, 'Diesem Link fehlt die Klasse'));
+  f.appendChild(el('p', 'sortauf-lauf',
+    'Damit eure Aufnahme später zugeordnet werden kann, muss die Klasse in '
+    + 'der Adresse stehen. Benutzt bitte den Link, den ihr von eurer '
+    + 'Lehrperson bekommen habt – am besten über den QR-Code.'));
+  f.appendChild(el('p', 'sortauf-klein',
+    'Ihr könnt hier trotzdem sortieren, es wird nur nichts aufgezeichnet.'));
+  const w = el('button', 'sortauf-knopf', 'Ohne Aufnahme sortieren');
+  w.onclick = () => huelle.remove();
+  f.appendChild(w);
+  bildschirm(f);
+}
+
 function bildschirmStart(){
   const f = document.createDocumentFragment();
   f.appendChild(el('p', 'sortauf-hand', 'Bevor es losgeht'));
@@ -383,11 +452,9 @@ function bildschirmStart(){
     + 'nur den Ton und die Karten.'));
   f.appendChild(kamera);
 
-  const kf = el('div', 'sortauf-feld');
-  kf.appendChild(el('label', null, 'Klasse'));
-  const klasse = el('input'); klasse.type = 'text'; klasse.placeholder = 'z. B. 7a';
-  klasse.autocomplete = 'off';
-  kf.appendChild(klasse);
+  const kf = el('div', 'sortauf-klasse');
+  kf.appendChild(el('span', null, 'Klasse'));
+  kf.appendChild(el('b', null, KLASSE.name));
   f.appendChild(kf);
 
   const nf = el('div', 'sortauf-feld');
@@ -418,20 +485,19 @@ function bildschirmStart(){
 
   const w = el('button', 'sortauf-knopf', 'Weiter zur Tonprüfung');
   w.onclick = () => {
-    S.klasse = klasse.value.trim();
+    S.klasse = KLASSE.name;
     S.namen = felder.map(i => i.value.trim()).filter(Boolean);
-    if (!S.klasse){ warn.textContent = 'Die Klasse fehlt noch.'; return; }
     if (S.namen.length < 2){
       warn.textContent = 'Tragt bitte alle ein, die mitsortieren.'; return; }
     if (!box.checked){ warn.textContent = 'Bitte das Kästchen ankreuzen.'; return; }
     const kuerzel = S.namen.map(n => n.replace(/\W/g, '')).join('-');
-    S.sitzung = zeitcode() + '-' + S.klasse.replace(/\W/g, '') + '-' + kuerzel;
+    S.sitzung = zeitcode() + '-' + KLASSENKUERZEL + '-' + kuerzel;
     bildschirmTon();
   };
   f.appendChild(w);
 
   bildschirm(f);
-  setTimeout(() => klasse.focus(), 100);
+  setTimeout(() => felder[0].focus(), 100);
 }
 
 /* ---------- 2. Hört das Mikrofon uns? ---------- */
@@ -631,6 +697,7 @@ async function beenden(){
 
   const dateien = [
     { name: 'angaben.json',   daten: textBytes(JSON.stringify(kopf, null, 2)) },
+    { name: 'flaeche.json',   daten: textBytes(JSON.stringify(flaechenbeschreibung())) },
     { name: 'protokoll.json', daten: textBytes(JSON.stringify(S.ereignisse)) },
     { name: 'ton.webm',       daten: await zuBytes(ton) }
   ];
@@ -643,7 +710,14 @@ async function beenden(){
   }
 
   const paket = zip(dateien);
-  const name = 'SORT_' + thema + '_' + variante + '_' + S.sitzung + '.zip';
+  // Kurz halten: Thema.Variante, wer sortiert hat, und die Uhrzeit
+  // gegen Namensgleichheit, wenn eine Gruppe dieselbe Aufgabe wiederholt.
+  const nummer = AUFGABE ? AUFGABE.thema + '.' + AUFGABE.variante
+                         : thema + '_' + variante;
+  const wer = S.namen.map(n => n.replace(/\W/g, '')).join('-').slice(0, 40);
+  const d = new Date();
+  const uhr = String(d.getHours()).padStart(2,'0') + String(d.getMinutes()).padStart(2,'0');
+  const name = nummer + '_' + wer + '_' + uhr + '.zip';
   const mb = (paket.size / 1048576).toFixed(1);
 
   let hoch = false;
@@ -857,6 +931,11 @@ stil.textContent = `
   padding:11px 14px;margin:0 0 18px;font-size:.89rem;line-height:1.5;}
 .sortauf-kamera b{color:var(--sa-gruen);}
 .sortauf-klein{margin:2px 0 9px;font-size:.83rem;color:var(--sa-hell);line-height:1.45;}
+.sortauf-klasse{background:var(--sa-creme);border-left:3px solid var(--sa-braun);
+  padding:9px 13px;margin:0 0 17px;}
+.sortauf-klasse span{display:block;font-size:.72rem;letter-spacing:.12em;
+  text-transform:uppercase;font-weight:700;color:var(--sa-hell);}
+.sortauf-klasse b{font-size:1rem;}
 .sortauf-feld{margin-bottom:17px;}
 .sortauf-feld label{display:block;font-size:.8rem;font-weight:700;margin-bottom:5px;}
 .sortauf-huelle input[type=text]{width:100%;padding:10px 12px;font-size:.96rem;
@@ -929,8 +1008,9 @@ stil.textContent = `
 document.head.appendChild(stil);
 
 /* ---------- Los ---------- */
+const anfang = () => KLASSE ? bildschirmStart() : bildschirmOhneKlasse();
 if (document.readyState === 'loading')
-  document.addEventListener('DOMContentLoaded', bildschirmStart);
-else bildschirmStart();
+  document.addEventListener('DOMContentLoaded', anfang);
+else anfang();
 
 })();

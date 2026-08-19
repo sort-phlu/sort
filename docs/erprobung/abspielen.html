@@ -3,72 +3,92 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SORT – Sortierung abspielen</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Patrick+Hand&display=swap" rel="stylesheet">
+<title>SORT – Sitzungen ansehen</title>
 <style>
+/* Bewusst ohne Schriften aus dem Netz: diese Seite stellt keine einzige
+   Anfrage nach draussen. Die Pakete bleiben auf dem eigenen Rechner. */
 :root{
   --papier:#fbf8f3; --creme:#f6ecdf; --karte:#fffefb;
   --tinte:#2d2924;  --hell:#6c6357;  --braun:#935100;
-  --linie:#e4d9c7;  --gruen:#4f7a3a; --rot:#b4474f;
-  --druck:'Fira Sans','Segoe UI',-apple-system,sans-serif;
-  --hand:'Patrick Hand',cursive;
+  --linie:#e4d9c7;  --gruen:#4f7a3a; --rot:#b4474f; --gelb:#b8860b;
+  --druck:"Fira Sans","Segoe UI",-apple-system,BlinkMacSystemFont,sans-serif;
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--papier);color:var(--tinte);font-family:var(--druck);
   font-size:16px;line-height:1.55}
-.rand{max-width:1180px;margin:0 auto;padding:0 26px}
-.leiste{border-bottom:1px solid var(--linie);background:#fff;padding:15px 0}
+.rand{max-width:1240px;margin:0 auto;padding:0 24px}
+.leiste{border-bottom:1px solid var(--linie);background:#fff;padding:14px 0}
 .leiste .rand{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
 .marke{font-weight:700;font-size:1.2rem;letter-spacing:.06em;color:var(--braun)}
 .ort{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;font-weight:700;
   color:var(--hell);border-left:1px solid var(--linie);padding-left:16px}
-
-h1{font-size:1.7rem;margin:34px 0 8px}
-.vor{color:var(--hell);margin:0 0 24px;max-width:62ch}
-
-/* ---------- Einlesen ---------- */
-#ablage{border:2px dashed var(--linie);border-radius:8px;background:var(--karte);
-  padding:38px 26px;text-align:center;transition:border-color .2s,background .2s}
-#ablage.drueber{border-color:var(--braun);background:var(--creme)}
-#ablage h2{margin:0 0 8px;font-size:1.12rem}
-#ablage p{margin:0 0 16px;color:var(--hell);font-size:.93rem}
-button{font:inherit;font-weight:600;font-size:.93rem;padding:10px 20px;border:none;
+h1{font-size:1.65rem;margin:30px 0 6px}
+.vor{color:var(--hell);margin:0 0 22px;max-width:66ch}
+button{font:inherit;font-weight:600;font-size:.92rem;padding:10px 18px;border:none;
   border-radius:3px;background:var(--braun);color:#fff;cursor:pointer}
 button:hover{background:#7d4500}
 button:disabled{background:#c9c0b4;cursor:default}
-button.neben{background:none;color:var(--braun);border:1px solid var(--linie);}
+button.neben{background:none;color:var(--braun);border:1px solid var(--linie)}
 button.neben:hover{background:var(--creme)}
-.stand{margin-top:14px;font-size:.88rem;min-height:1.3em}
-.stand.fehler{color:var(--rot)}
-.stand.gut{color:var(--gruen);font-weight:600}
 
-/* ---------- Kopfdaten ---------- */
-#angaben{display:none;margin:26px 0 0;background:var(--creme);
-  border-top:3px solid var(--braun);padding:18px 22px;
-  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:18px}
-#angaben div b{display:block;font-size:.68rem;letter-spacing:.13em;text-transform:uppercase;
-  color:var(--hell);margin-bottom:3px}
-#angaben div span{font-size:.98rem;font-weight:600}
+#ablage{border:2px dashed var(--linie);border-radius:8px;background:var(--karte);
+  padding:34px 24px;text-align:center;transition:border-color .2s,background .2s}
+#ablage.drueber{border-color:var(--braun);background:var(--creme)}
+#ablage h2{margin:0 0 6px;font-size:1.1rem}
+#ablage p{margin:0 0 14px;color:var(--hell);font-size:.92rem}
+.stand{margin-top:12px;font-size:.88rem;min-height:1.3em}
+.schritte{counter-reset:sr;list-style:none;padding:0;margin:0 0 22px;max-width:72ch}
+.schritte li{counter-increment:sr;position:relative;padding-left:34px;
+  margin-bottom:11px;font-size:.95rem;line-height:1.55}
+.schritte li::before{content:counter(sr);position:absolute;left:0;top:1px;
+  width:23px;height:23px;background:var(--braun);color:#fff;border-radius:50%;
+  font-size:.8rem;font-weight:700;display:flex;align-items:center;
+  justify-content:center}
+.schritte code{background:var(--creme);padding:1px 5px;font-size:.88em}
+.fussnote{margin:14px 0 0;font-size:.86rem;color:var(--hell);max-width:72ch}
+.stand.fehler{color:var(--rot)} .stand.gut{color:var(--gruen);font-weight:600}
+
+h3.balken{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--braun);margin:30px 0 10px;border-bottom:2px solid var(--braun);
+  padding-bottom:7px}
+
+/* ---------- Übersicht ---------- */
+#uebersicht{display:none}
+table{width:100%;border-collapse:collapse;font-size:.9rem;background:#fff}
+th{text-align:left;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--hell);font-weight:700;padding:9px 10px;border-bottom:2px solid var(--linie)}
+td{padding:9px 10px;border-bottom:1px solid #f2ece2;vertical-align:top}
+tr.waehlbar{cursor:pointer}
+tr.waehlbar:hover td{background:var(--creme)}
+tr.aktiv td{background:var(--creme);font-weight:600}
+td.zahl{text-align:right;font-family:ui-monospace,Menlo,Consolas,monospace}
+.merk{display:inline-block;font-size:.72rem;font-weight:700;padding:2px 7px;
+  border-radius:10px;margin:0 4px 3px 0;white-space:nowrap}
+.merk.kurz{background:#fdf0e6;color:var(--gelb)}
+.merk.wenig{background:#fdeeee;color:var(--rot)}
+.merk.viel{background:#eef5ea;color:var(--gruen)}
+.merk.ohne{background:#f0ece6;color:var(--hell)}
+.rueck{font-size:.86rem;color:#463f36;max-width:36ch}
 
 /* ---------- Bühne ---------- */
-#buehne{display:none;margin-top:22px}
+#buehne{display:none;margin-top:8px}
+.kopfzeile{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:10px}
+.kopfzeile b{font-size:1.1rem}
+.kopfzeile span{color:var(--hell);font-size:.9rem}
 .flaeche{position:relative;background:#fff;border:1px solid var(--linie);
   overflow:hidden;min-height:120px}
 .flaeche .inner{position:absolute;top:0;left:0;transform-origin:top left}
 #grund{position:absolute;inset:0;pointer-events:none;z-index:0}
-.k{position:absolute;transition:none;box-shadow:0 1px 3px rgba(90,70,35,.18)}
+.k{position:absolute;box-shadow:0 1px 3px rgba(90,70,35,.18)}
 .k.greift{box-shadow:0 6px 18px rgba(147,81,0,.45);outline:2px solid var(--braun)}
 
-/* ---------- Steuerung ---------- */
-.pult{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:14px;
-  background:#fff;border:1px solid var(--linie);padding:12px 16px}
-.pult .zeit{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.9rem;color:var(--hell);
-  min-width:104px}
-#schiene{flex:1;min-width:220px;position:relative;height:26px;cursor:pointer}
-#schiene .bahn{position:absolute;top:11px;left:0;right:0;height:4px;background:var(--linie);
-  border-radius:2px}
+.pult{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:12px;
+  background:#fff;border:1px solid var(--linie);padding:11px 15px}
+.zeit{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.9rem;
+  color:var(--hell);min-width:104px}
+#schiene{flex:1;min-width:200px;position:relative;height:26px;cursor:pointer}
+#schiene .bahn{position:absolute;top:11px;left:0;right:0;height:4px;
+  background:var(--linie);border-radius:2px}
 #schiene .fuell{position:absolute;top:11px;left:0;height:4px;background:var(--braun);
   border-radius:2px;width:0}
 #schiene .griff{position:absolute;top:6px;width:14px;height:14px;border-radius:50%;
@@ -80,83 +100,121 @@ button.neben:hover{background:var(--creme)}
 select{font:inherit;font-size:.9rem;padding:7px 9px;border:1px solid var(--linie);
   border-radius:3px;background:#fff;color:var(--tinte)}
 
-/* ---------- Unten ---------- */
-.unten{display:grid;grid-template-columns:1.1fr .9fr;gap:24px;margin-top:24px;
+.unten{display:grid;grid-template-columns:1.15fr .85fr;gap:22px;margin-top:20px;
   align-items:start}
-.kasten{background:#fff;border:1px solid var(--linie);padding:16px 18px}
-.kasten h3{margin:0 0 10px;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
+.kasten{background:#fff;border:1px solid var(--linie);padding:15px 17px}
+.kasten h4{margin:0 0 9px;font-size:.7rem;letter-spacing:.13em;text-transform:uppercase;
   color:var(--braun)}
-#lauf{max-height:290px;overflow:auto;font-size:.86rem}
-#lauf .z{display:flex;gap:10px;padding:3px 0;border-bottom:1px solid #f2ece2;color:var(--hell)}
+#lauf{max-height:280px;overflow:auto;font-size:.85rem}
+#lauf .z{display:flex;gap:9px;padding:3px 0;border-bottom:1px solid #f2ece2;
+  color:var(--hell);cursor:pointer}
 #lauf .z.jetzt{color:var(--tinte);font-weight:600;background:var(--creme)}
 #lauf .z i{font-family:ui-monospace,Menlo,Consolas,monospace;font-style:normal;
-  min-width:52px;flex:none}
-#zahlen table{width:100%;border-collapse:collapse;font-size:.9rem}
-#zahlen td{padding:4px 0;border-bottom:1px solid #f2ece2}
-#zahlen td:last-child{text-align:right;font-weight:600;
-  font-family:ui-monospace,Menlo,Consolas,monospace}
-#bilder{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+  min-width:50px;flex:none}
+#bilder{display:flex;gap:9px;flex-wrap:wrap;margin-top:8px}
 #bilder a{display:block;border:1px solid var(--linie);padding:4px;background:#fff}
-#bilder img{display:block;height:70px;width:auto}
-#bilder span{display:block;font-size:.72rem;color:var(--hell);text-align:center;margin-top:3px}
-.hand{font-family:var(--hand);font-size:1.15rem;color:var(--braun)}
-@media (max-width:900px){.unten{grid-template-columns:1fr}}
+#bilder img{display:block;height:66px;width:auto}
+#bilder span{display:block;font-size:.7rem;color:var(--hell);text-align:center}
+.kacheln{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:12px;margin-bottom:6px}
+.kachel{background:#fff;border:1px solid var(--linie);border-top:3px solid var(--braun);
+  padding:12px 14px}
+.kachel b{display:block;font-size:1.35rem;line-height:1.1;color:var(--braun)}
+.kachel span{display:block;font-size:.82rem;color:var(--hell);margin-top:2px}
+.kachel i{display:block;font-style:normal;font-size:.8rem;color:var(--tinte);
+  margin-top:5px}
+.antwortblock{background:#fff;border:1px solid var(--linie);border-left:3px solid var(--braun);
+  padding:12px 15px;margin-bottom:10px;cursor:pointer}
+.antwortblock:hover{background:var(--creme)}
+.antwortblock b{font-size:.95rem}
+.antwortblock span{color:var(--hell);font-size:.85rem;margin-left:8px}
+.antwortblock p{margin:5px 0 0;font-size:.93rem;line-height:1.55;color:#463f36}
+.stelle{display:flex;gap:8px;align-items:baseline;padding:5px 0;
+  border-bottom:1px solid #f2ece2;font-size:.87rem;cursor:pointer}
+.stelle:hover{background:var(--creme)}
+.stelle i{font-family:ui-monospace,Menlo,Consolas,monospace;font-style:normal;
+  min-width:48px;flex:none;color:var(--braun);font-weight:600}
+.merk.ruhe{background:#eef2f7;color:#3f5b7a}
+.merk.streit{background:#fdeeee;color:var(--rot)}
+.merk.wechsel{background:#fdf4e6;color:var(--gelb)}
+.merk.pruef{background:#fdeeee;color:var(--rot)}
+.merk.runde{background:#eef5ea;color:var(--gruen)}
+.antwort{background:var(--creme);border-left:3px solid var(--braun);padding:11px 14px;
+  font-size:.92rem;line-height:1.55;margin-top:8px}
+@media (max-width:960px){.unten{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 
 <div class="leiste"><div class="rand">
-  <span class="marke">SORT</span>
-  <span class="ort">Sortierung abspielen</span>
+  <span class="marke">SORT</span><span class="ort">Sitzungen ansehen</span>
 </div></div>
 
 <div class="rand">
-  <h1>Eine Sitzung ansehen</h1>
-  <p class="vor">Zieht das Sitzungspaket und die zugehörige Sortierfläche zusammen
-    hierher. Aus dem Ereignisprotokoll wird der Sortierverlauf rekonstruiert und
-    zusammen mit der Tonaufnahme abgespielt.</p>
+  <h1>Aufnahmen ansehen</h1>
+  <p class="vor">Hier kannst du die Sortierungen deiner Gruppen anschauen und
+     anhören – so, wie sie entstanden sind. <b>Die Aufnahmen bleiben auf deinem
+     Rechner</b>; diese Seite lädt nichts ins Netz.</p>
+
+  <ol class="schritte">
+    <li><b>Pakete herunterladen.</b> Öffne den Ordner deiner Klasse in
+        SWITCHdrive und lade die Dateien auf deinen Rechner. Sie heissen zum
+        Beispiel <code>2.1_Emilie-Benni_1432.zip</code> – die Zahl vorne ist
+        Thema und Variante, dahinter stehen die Vornamen der Gruppe.</li>
+    <li><b>Alle auf einmal hierher ziehen.</b> Du kannst und solltest mehrere
+        gleichzeitig laden – dann siehst du die Gruppen im Vergleich.</li>
+    <li><b>Übersicht lesen, dann eine Gruppe anklicken.</b> Oben steht, was der
+        ganzen Klasse gemeinsam ist. Darunter jede Gruppe einzeln, mit dem, was
+        sie mitgenommen hat. Ein Klick auf eine Zeile spielt sie ab.</li>
+  </ol>
 
   <div id="ablage">
-    <h2>Dateien hierher ziehen</h2>
-    <p>Das Sitzungspaket <code>SORT_….zip</code> und die passende
-       <code>index.html</code> aus dem Erprobungsordner.</p>
+    <h2>Pakete hierher ziehen</h2>
+    <p>Die <code>.zip</code>-Dateien aus dem Ordner deiner Klasse.
+       Mehrere auf einmal gehen gut.</p>
     <button id="waehlen">Dateien auswählen</button>
     <input type="file" id="datei" multiple accept=".zip,.html,.htm" hidden>
     <p class="stand" id="stand"></p>
   </div>
 
-  <div id="angaben"></div>
+  <p class="fussnote">Leertaste startet und hält an, die Pfeiltasten springen
+     fünf Sekunden. Auf der Zeitleiste sind Prüfungen rot und Rundenwechsel
+     grün markiert.</p>
+
+  <div id="uebersicht">
+    <h3 class="balken">Die Klasse im Überblick</h3>
+    <div id="gesamt"></div>
+    <h3 class="balken">Die einzelnen Gruppen</h3>
+    <table id="tabelle"></table>
+    <h3 class="balken">Was die Gruppen mitnehmen</h3>
+    <div id="antworten"></div>
+  </div>
 
   <div id="buehne">
-    <div class="flaeche" id="flaeche"><div class="inner" id="inner"><div id="grund"></div></div></div>
+    <h3 class="balken">Wiedergabe</h3>
+    <div class="kopfzeile" id="kopfzeile"></div>
+    <div class="flaeche" id="flaeche"><div class="inner" id="inner">
+      <div id="grund"></div></div></div>
 
     <div class="pult">
       <button id="spielen">Abspielen</button>
       <span class="zeit" id="zeit">00:00 / 00:00</span>
-      <div id="schiene">
-        <div class="bahn"></div><div class="fuell" id="fuell"></div>
-        <div class="griff" id="griff"></div>
-      </div>
+      <div id="schiene"><div class="bahn"></div>
+        <div class="fuell" id="fuell"></div><div class="griff" id="griff"></div></div>
       <select id="tempo">
-        <option value="0.5">0,5×</option>
-        <option value="1" selected>1×</option>
-        <option value="2">2×</option>
-        <option value="4">4×</option>
+        <option value="0.5">0,5×</option><option value="1" selected>1×</option>
+        <option value="2">2×</option><option value="4">4×</option>
       </select>
     </div>
 
     <audio id="ton" preload="auto"></audio>
 
     <div class="unten">
+      <div class="kasten"><h4>Verlauf</h4><div id="lauf"></div></div>
       <div class="kasten">
-        <h3>Verlauf</h3>
-        <div id="lauf"></div>
-      </div>
-      <div class="kasten">
-        <h3>Zahlen</h3>
-        <div id="zahlen"></div>
-        <h3 style="margin-top:18px">Bilder</h3>
-        <div id="bilder"></div>
+        <h4>Hier genauer hinhören</h4><div id="stellen"></div>
+        <h4 style="margin-top:16px">Was nehmt ihr mit?</h4><div id="antwort"></div>
+        <h4 style="margin-top:16px">Bilder</h4><div id="bilder"></div>
       </div>
     </div>
   </div>
@@ -164,21 +222,20 @@ select{font:inherit;font-size:.9rem;padding:7px 9px;border:1px solid var(--linie
 
 <script>
 /* ============================================================
-   Zip lesen (nur was wir selbst schreiben: gespeichert oder deflate)
+   Zip lesen
    ============================================================ */
 async function zipLesen(puffer){
   const d = new DataView(puffer), tx = new TextDecoder('utf-8');
   const raus = {};
   let i = 0;
   while (i < d.byteLength - 4){
-    if (d.getUint32(i, true) !== 0x04034b50) { i++; continue; }
+    if (d.getUint32(i, true) !== 0x04034b50){ i++; continue; }
     const methode = d.getUint16(i + 8, true);
-    const komp    = d.getUint32(i + 18, true);
-    const roh     = d.getUint32(i + 22, true);
-    const nlen    = d.getUint16(i + 26, true);
-    const elen    = d.getUint16(i + 28, true);
-    const name    = tx.decode(new Uint8Array(puffer, i + 30, nlen));
-    const start   = i + 30 + nlen + elen;
+    const komp = d.getUint32(i + 18, true);
+    const nlen = d.getUint16(i + 26, true);
+    const elen = d.getUint16(i + 28, true);
+    const name = tx.decode(new Uint8Array(puffer, i + 30, nlen));
+    const start = i + 30 + nlen + elen;
     let daten = new Uint8Array(puffer, start, komp);
     if (methode === 8){
       const str = new Blob([daten]).stream()
@@ -187,20 +244,9 @@ async function zipLesen(puffer){
     }
     raus[name] = daten;
     i = start + komp;
-    if (!komp && !roh) i = start;   // Sicherheitsnetz
   }
   return raus;
 }
-
-/* ============================================================
-   Zustand
-   ============================================================ */
-const Z = {
-  angaben: null, ereignisse: null, karten: {},   // code -> data-URI
-  gruppen: {}, breite: 110, tisch: [1200, 700],
-  dauer: 0, laeuft: false, tempo: 1, tonDa: false,
-  knoten: {}, letzterIndex: -1, uhr0: 0, standZeit: 0
-};
 
 const $ = id => document.getElementById(id);
 const zeitText = ms => {
@@ -208,170 +254,346 @@ const zeitText = ms => {
   return String(Math.floor(s / 60)).padStart(2,'0') + ':' + String(s % 60).padStart(2,'0');
 };
 
+const S = { sitzungen: [], aktiv: null, ersatzflaeche: null,
+            laeuft:false, tempo:1, standZeit:0, uhr0:0, letzterIndex:-1, knoten:{} };
+
 /* ============================================================
-   Dateien annehmen
+   Einlesen
    ============================================================ */
 const ablage = $('ablage'), stand = $('stand');
 $('waehlen').onclick = () => $('datei').click();
 $('datei').onchange = e => annehmen([...e.target.files]);
 ['dragenter','dragover'].forEach(t => ablage.addEventListener(t, e => {
-  e.preventDefault(); ablage.classList.add('drueber');
-}));
+  e.preventDefault(); ablage.classList.add('drueber'); }));
 ['dragleave','drop'].forEach(t => ablage.addEventListener(t, e => {
-  e.preventDefault(); ablage.classList.remove('drueber');
-}));
+  e.preventDefault(); ablage.classList.remove('drueber'); }));
 ablage.addEventListener('drop', e => annehmen([...e.dataTransfer.files]));
 
 async function annehmen(dateien){
   stand.className = 'stand';
   stand.textContent = 'Wird gelesen …';
+  let neu = 0, ohneFlaeche = 0;
   try {
     for (const f of dateien){
-      if (/\.zip$/i.test(f.name))            await paketLesen(f);
-      else if (/\.html?$/i.test(f.name))     await flaecheLesen(f);
+      if (/\.html?$/i.test(f.name)){ await ersatzLesen(f); continue; }
+      if (!/\.zip$/i.test(f.name)) continue;
+      const sitz = await paketLesen(f);
+      if (sitz){ S.sitzungen.push(sitz); neu++; if (!sitz.flaeche) ohneFlaeche++; }
     }
-    pruefen();
   } catch(fehler){
     stand.className = 'stand fehler';
     stand.textContent = 'Das hat nicht geklappt: ' + fehler.message;
+    return;
   }
+  if (!S.sitzungen.length){
+    stand.className = 'stand fehler';
+    stand.textContent = 'Darin war kein Sitzungspaket.';
+    return;
+  }
+  S.sitzungen.sort((a,b) => (a.angaben.beginn||'').localeCompare(b.angaben.beginn||''));
+  stand.className = 'stand gut';
+  stand.textContent = neu + ' Paket(e) gelesen, ' + S.sitzungen.length + ' insgesamt.'
+    + (ohneFlaeche ? '  ' + ohneFlaeche + ' davon ohne Kartenbilder – bitte die '
+       + 'passende index.html dazuziehen.' : '');
+  uebersichtBauen();
+  if (S.aktiv === null) waehlen(0);
 }
 
 async function paketLesen(f){
   const inhalt = await zipLesen(await f.arrayBuffer());
+  if (!inhalt['protokoll.json']) return null;
   const txt = n => new TextDecoder('utf-8').decode(inhalt[n]);
-  if (!inhalt['protokoll.json']) throw new Error('Im Paket fehlt protokoll.json.');
-  Z.ereignisse = JSON.parse(txt('protokoll.json'));
-  Z.angaben    = inhalt['angaben.json'] ? JSON.parse(txt('angaben.json')) : {};
-
+  const sitz = {
+    datei: f.name,
+    ereignisse: JSON.parse(txt('protokoll.json')),
+    angaben: inhalt['angaben.json'] ? JSON.parse(txt('angaben.json')) : {},
+    flaeche: inhalt['flaeche.json'] ? JSON.parse(txt('flaeche.json')) : null,
+    rueckmeldung: inhalt['rueckmeldung.txt'] ? txt('rueckmeldung.txt') : ''
+  };
   const ton = Object.keys(inhalt).find(n => /^ton\./.test(n));
-  if (ton){
-    $('ton').src = URL.createObjectURL(new Blob([inhalt[ton]]));
-    Z.tonDa = true;
-  }
-  Z.bilder = Object.keys(inhalt)
-    .filter(n => /\.png$/i.test(n)).sort()
-    .map(n => ({ name: n, url: URL.createObjectURL(new Blob([inhalt[n]], {type:'image/png'})) }));
+  if (ton) sitz.ton = URL.createObjectURL(new Blob([inhalt[ton]]));
+  sitz.bilder = Object.keys(inhalt).filter(n => /\.png$/i.test(n)).sort()
+    .map(n => ({ name:n, url:URL.createObjectURL(new Blob([inhalt[n]],{type:'image/png'})) }));
+  sitz.probelauf = /^0\.0_/.test(f.name)
+                || /probelauf/i.test(sitz.angaben.variante || '');
+  sitz.zahlen = auswerten(sitz);
+  return sitz;
 }
 
-async function flaecheLesen(f){
+async function ersatzLesen(f){
   const doc = new DOMParser().parseFromString(await f.text(), 'text/html');
-  const ks = doc.querySelectorAll('.karte');
-  if (!ks.length) throw new Error('In der HTML sind keine Karten zu finden.');
-  ks.forEach(k => {
-    const code = k.dataset.code;
-    const img = k.querySelector('img');
-    if (code && img) Z.karten[code] = img.getAttribute('src');
-    if (code) Z.gruppen[code] = k.dataset.gruppe || '';
+  const karten = {}, gruppen = {};
+  doc.querySelectorAll('.karte').forEach(k => {
+    const im = k.querySelector('img');
+    if (k.dataset.code && im) karten[k.dataset.code] = im.getAttribute('src');
+    if (k.dataset.code) gruppen[k.dataset.code] = k.dataset.gruppe || '';
   });
-  Z.titelFlaeche = (doc.querySelector('title') || {}).textContent || '';
-
-  // Die Vorstrukturierung steckt als zwei Konstanten im Quelltext.
+  if (!Object.keys(karten).length) return;
   const roh = doc.documentElement.innerHTML;
-  const hol = (name) => {
+  const hol = name => {
     const m = roh.match(new RegExp('const ' + name + ' = ([\\s\\S]*?);\\s*//'));
     if (!m) return null;
     try { return JSON.parse(m[1]); } catch(e){ return null; }
   };
-  Z.haelften = hol('HAELFTEN');
-  Z.raster   = hol('RASTER');
-  const farbe = (v, ersatz) => {
-    const m = roh.match(new RegExp('\\' + v + ':\\s*([^;]+);'));
-    return m ? m[1].trim() : ersatz;
-  };
-  Z.farben = {
-    rand:  farbe('--feld-rand',  '#c9bda6'),
-    fuell: farbe('--feld-fuell', 'rgba(147,81,0,.045)'),
-    akzent:farbe('--akzent',     '#9b8ac4'),
-    linie: farbe('--linie',      '#e4d9c7'),
-    hell:  farbe('--tinte-hell', '#6c6357')
-  };
-}
-
-function pruefen(){
-  const p = !!Z.ereignisse, k = Object.keys(Z.karten).length > 0;
-  if (p && k){
-    stand.className = 'stand gut';
-    stand.textContent = 'Bereit.';
-    aufbauen();
-  } else if (p){
-    stand.textContent = 'Paket gelesen. Es fehlt noch die Sortierfläche (index.html).';
-  } else if (k){
-    stand.textContent = 'Sortierfläche gelesen. Es fehlt noch das Sitzungspaket (.zip).';
-  }
+  S.ersatzflaeche = { karten, gruppen, haelften: hol('HAELFTEN'), raster: hol('RASTER'),
+    farben:{ rand:'#c9bda6', fuell:'rgba(147,81,0,.045)', akzent:'#9b8ac4',
+             linie:'#e4d9c7', hell:'#6c6357' } };
+  S.sitzungen.forEach(s2 => { if (!s2.flaeche) s2.flaeche = S.ersatzflaeche; });
 }
 
 /* ============================================================
-   Aufbauen
+   Auswerten
    ============================================================ */
-function aufbauen(){
-  const start = Z.ereignisse.find(e => e.was === 'start');
-  if (!start) { stand.className='stand fehler';
-    stand.textContent = 'Im Protokoll fehlt der Anfangszustand.'; return; }
-  Z.breite = start.breite || 110;
-  Z.tisch  = start.tisch  || [1200, 700];
-  Z.dauer  = Z.ereignisse[Z.ereignisse.length - 1].t;
-  Z.hoehe  = noetigeHoehe();
+function auswerten(sitz){
+  const er = sitz.ereignisse;
+  const start = er.find(e => e.was === 'start');
+  const gesamt = start ? start.karten.length : 0;
+  const bewegt = {};
+  let ablagen = 0, erste = null, runden = 0, pruefungen = 0;
+  er.forEach(e => {
+    if (e.was === 'ablegen'){
+      ablagen++; bewegt[e.karte] = (bewegt[e.karte]||0) + 1;
+      if (erste === null) erste = e.t;
+    }
+    if (e.was === 'rundenbild' || e.was === 'neue-runde') runden++;
+    if (e.was === 'pruefen') pruefungen++;
+  });
+  const dauer = er.length ? er[er.length-1].t : 0;
+  const angefasst = Object.keys(bewegt).length;
+  const oft = Object.entries(bewegt).sort((a,b) => b[1]-a[1]).slice(0,5);
 
-  /* Kopfdaten */
-  const a = Z.angaben || {};
-  const zeilen = [
-    ['Aufgabe', a.titel || Z.titelFlaeche || '–'],
-    ['Klasse',  a.klasse || '–'],
-    ['Wer',     (a.namen || []).join(', ') || '–'],
-    ['Dauer',   zeitText(Z.dauer)],
-    ['Wann',    a.beginn ? new Date(a.beginn).toLocaleString('de-CH') : '–']
-  ];
-  $('angaben').innerHTML = zeilen
-    .map(([b, w]) => `<div><b>${b}</b><span>${w}</span></div>`).join('');
-  $('angaben').style.display = 'grid';
+  const merkmale = [];
+  if (dauer < 3*60*1000) merkmale.push(['kurz','unter 3 Minuten']);
+  if (gesamt && angefasst / gesamt < 0.5)
+    merkmale.push(['wenig','wenig Karten bewegt']);
+  if (gesamt && ablagen > gesamt * 2)
+    merkmale.push(['viel','viel umgelegt']);
+  if (!sitz.rueckmeldung) merkmale.push(['ohne','keine Rückmeldung']);
 
-  /* Karten anlegen */
+  return { dauer, ablagen, angefasst, gesamt, erste, runden, pruefungen, oft,
+           merkmale, stellen: stellenFinden(er) };
+}
+
+/* Aus dem Protokoll die Momente herauslesen, an denen genaueres
+   Hinhören lohnt. Alles rein rechnerisch - es ist ein Hinweis,
+   kein Urteil. */
+function stellenFinden(er){
+  const stellen = [];
+  const ablagen = er.filter(e => e.was === 'ablegen');
+
+  // 1. Lange Ruhe: nichts bewegt sich, aber geredet wird vermutlich schon
+  for (let i = 1; i < er.length; i++){
+    const luecke = er[i].t - er[i-1].t;
+    if (luecke >= 45000 && er[i-1].was !== 'start'){
+      stellen.push({ t: er[i-1].t, art:'ruhe',
+        text: Math.round(luecke/1000) + ' s ohne Kartenbewegung' });
+    }
+  }
+
+  // 2. Karten, die mehrfach neu abgelegt wurden
+  const wie = {};
+  ablagen.forEach(e => { wie[e.karte] = (wie[e.karte]||0) + 1; });
+  ablagen.forEach(e => {
+    if (wie[e.karte] >= 3 && e === ablagen.filter(x => x.karte === e.karte).pop()){
+      stellen.push({ t: e.t, art:'streit',
+        text: e.karte + ' wurde ' + wie[e.karte] + '-mal umgelegt' });
+    }
+  });
+
+  // 3. Zonenwechsel: eine Entscheidung wird zurückgenommen
+  const zuletzt = {};
+  ablagen.forEach(e => {
+    const z = e.haelfte || (e.feld != null ? 'Feld ' + e.feld : null);
+    if (z && zuletzt[e.karte] && zuletzt[e.karte] !== z){
+      stellen.push({ t: e.t, art:'wechsel',
+        text: e.karte + ': ' + zuletzt[e.karte] + ' → ' + z });
+    }
+    if (z) zuletzt[e.karte] = z;
+  });
+
+  // 4. Prüfen und Rundenwechsel sind ohnehin Einschnitte
+  er.forEach(e => {
+    if (e.was === 'pruefen')
+      stellen.push({ t:e.t, art:'pruef', text: e.meldung || 'Prüfen gedrückt' });
+    if (e.was === 'rundenbild')
+      stellen.push({ t:e.t, art:'runde', text: 'Runde ' + (e.nr||'') + ' beendet' });
+  });
+
+  return stellen.sort((a,b) => a.t - b.t).slice(0, 25);
+}
+
+/* ============================================================
+   Übersicht
+   ============================================================ */
+function uebersichtBauen(){
+  const kopf = '<tr><th>Wer</th><th>Aufgabe</th><th>Dauer</th><th>Ablagen</th>'
+             + '<th>Karten</th><th>Stellen</th><th>Hinweise</th></tr>';
+  const zeilen = S.sitzungen.map((s2, i) => {
+    const a = s2.angaben, z = s2.zahlen;
+    const wer = (a.namen || []).join(', ') || '–';
+    const merk = z.merkmale.map(([art, txt]) =>
+      `<span class="merk ${art}">${txt}</span>`).join('') || '–';
+    const stellen = z.stellen.length
+      ? `<span class="merk viel">${z.stellen.length}</span>`
+      : '<span style="color:#a49a8e">–</span>';
+    return `<tr class="waehlbar${S.aktiv === i ? ' aktiv' : ''}" data-i="${i}">`
+      + `<td><b>${wer}</b><br><span style="color:var(--hell);font-size:.82rem">`
+      + `${a.klasse || ''}</span></td>`
+      + `<td>${a.titel || '–'}`
+      + (s2.probelauf ? ' <span class="merk ohne">Probelauf</span>' : '') + '</td>'
+      + `<td class="zahl">${zeitText(z.dauer)}</td>`
+      + `<td class="zahl">${z.ablagen}</td>`
+      + `<td class="zahl">${z.angefasst}/${z.gesamt}</td>`
+      + `<td class="zahl">${stellen}</td><td>${merk}</td></tr>`;
+  }).join('');
+  $('tabelle').innerHTML = kopf + zeilen;
+  $('tabelle').querySelectorAll('tr.waehlbar').forEach(tr => {
+    tr.onclick = () => waehlen(+tr.dataset.i);
+  });
+  gesamtBauen();
+  $('antworten').innerHTML = S.sitzungen.map((s2, i) => {
+    const wer = (s2.angaben.namen || []).join(', ') || s2.datei;
+    const txt = s2.rueckmeldung
+      ? s2.rueckmeldung.replace(/</g,'&lt;')
+      : '<span style="color:#a49a8e">keine Antwort gegeben</span>';
+    return `<div class="antwortblock" data-i="${i}">`
+      + `<b>${wer}</b> <span>${s2.angaben.titel || ''}</span>`
+      + `<p>${txt}</p></div>`;
+  }).join('');
+  $('antworten').querySelectorAll('.antwortblock').forEach(b => {
+    b.onclick = () => waehlen(+b.dataset.i);
+  });
+  $('uebersicht').style.display = 'block';
+}
+
+/* Was über die ganze Klasse auffällt - nicht über eine Gruppe. */
+function gesamtBauen(){
+  // Probeläufe zählen nicht in den Klassenvergleich - sie verzerren ihn.
+  const echte = S.sitzungen.filter(x => !x.probelauf);
+  const n = echte.length;
+  if (!n){ $('gesamt').innerHTML = '<p style="color:var(--hell)">Nur Probeläufe '
+    + 'geladen – für den Klassenvergleich braucht es echte Sitzungen.</p>'; return; }
+  const z = echte.map(x => x.zahlen);
+  const summe = f => z.reduce((a, x) => a + f(x), 0);
+  const laengste = echte.reduce((a,b) => a.zahlen.dauer >= b.zahlen.dauer ? a : b);
+  const kuerzeste = echte.reduce((a,b) => a.zahlen.dauer <= b.zahlen.dauer ? a : b);
+  const fleissig = echte.reduce((a,b) => a.zahlen.ablagen >= b.zahlen.ablagen ? a : b);
+  const ohne = echte.filter(x => !x.rueckmeldung).length;
+  const runden = summe(x => x.runden);
+  const wer = x => (x.angaben.namen || []).join(', ') || x.datei;
+
+  const kachel = (wert, text, unten='') =>
+    `<div class="kachel"><b>${wert}</b><span>${text}</span>`
+    + (unten ? `<i>${unten}</i>` : '') + '</div>';
+
+  $('gesamt').innerHTML = '<div class="kacheln">'
+    + kachel(n, n === 1 ? 'Gruppe' : 'Gruppen')
+    + kachel(zeitText(summe(x => x.dauer)), 'zusammen gearbeitet',
+             'im Schnitt ' + zeitText(summe(x => x.dauer) / n))
+    + kachel(zeitText(laengste.zahlen.dauer), 'die längste', wer(laengste))
+    + kachel(zeitText(kuerzeste.zahlen.dauer), 'die kürzeste', wer(kuerzeste))
+    + kachel(fleissig.zahlen.ablagen, 'meiste Ablagen', wer(fleissig))
+    + (runden ? kachel(runden, 'Runden insgesamt',
+                       'im Schnitt ' + (runden / n).toFixed(1) + ' je Gruppe') : '')
+    + kachel(n - ohne + '/' + n, 'haben geantwortet',
+             ohne ? ohne + ' ohne Rückmeldung' : 'alle')
+    + '</div>';
+}
+
+/* ============================================================
+   Eine Sitzung wählen
+   ============================================================ */
+function waehlen(i){
+  anhalten();
+  S.aktiv = i;
+  const sitz = S.sitzungen[i];
+  if (!sitz.flaeche && S.ersatzflaeche) sitz.flaeche = S.ersatzflaeche;
+  uebersichtBauen();
+
+  const a = sitz.angaben;
+  $('kopfzeile').innerHTML =
+    `<b>${(a.namen||[]).join(', ') || sitz.datei}</b>`
+    + `<span>${a.klasse || ''} · ${a.titel || ''}`
+    + (a.beginn ? ' · ' + new Date(a.beginn).toLocaleString('de-CH') : '') + '</span>';
+
+  const start = sitz.ereignisse.find(e => e.was === 'start');
+  if (!start || !sitz.flaeche){
+    $('buehne').style.display = 'block';
+    $('inner').innerHTML = '<div id="grund"></div>';
+    $('flaeche').style.height = '90px';
+    $('lauf').innerHTML = '<p style="color:var(--hell)">Zu diesem Paket fehlen die '
+      + 'Kartenbilder. Zieh die passende index.html dazu.</p>';
+    return;
+  }
+
+  S.breite = start.breite || 110;
+  S.tisch  = start.tisch  || [1200, 700];
+  S.ereignisse = sitz.ereignisse;
+  S.dauer = sitz.ereignisse[sitz.ereignisse.length-1].t;
+  S.flaeche = sitz.flaeche;
+  S.hoehe = noetigeHoehe();
+
   const inner = $('inner');
   inner.innerHTML = '<div id="grund"></div>';
-  Z.knoten = {};
-  inner.style.width  = Z.tisch[0] + 'px';
-  inner.style.height = (Z.hoehe || Z.tisch[1]) + 'px';
+  inner.style.width = S.tisch[0] + 'px';
+  inner.style.height = S.hoehe + 'px';
+  S.knoten = {};
   start.karten.forEach(k => {
     const im = document.createElement('img');
     im.className = 'k';
-    im.src = Z.karten[k.karte] || '';
+    im.src = sitz.flaeche.karten[k.karte] || '';
     im.alt = k.karte;
     inner.appendChild(im);
-    Z.knoten[k.karte] = im;
+    S.knoten[k.karte] = im;
   });
-  // Erst sichtbar machen, dann messen: eine versteckte Fläche ist 0 breit.
+
+  $('ton').src = sitz.ton || '';
+  S.tonDa = !!sitz.ton;
+  S.standZeit = 0; S.letzterIndex = -1;
+
+  $('stellen').innerHTML = sitz.zahlen.stellen.length
+    ? sitz.zahlen.stellen.map(st =>
+        `<div class="stelle" data-t="${st.t}"><i>${zeitText(st.t)}</i>`
+        + `<span class="merk ${st.art}">${st.art}</span>`
+        + `<span>${st.text}</span></div>`).join('')
+    : '<p style="color:var(--hell);font-size:.9rem;margin:0">Nichts Auffälliges.</p>';
+  $('stellen').querySelectorAll('.stelle').forEach(d =>
+    d.onclick = () => { springen(+d.dataset.t); starten(); });
+
+  $('antwort').innerHTML = sitz.rueckmeldung
+    ? `<div class="antwort">${sitz.rueckmeldung.replace(/</g,'&lt;')}</div>`
+    : '<p style="color:var(--hell);font-size:.9rem;margin:0">Keine Antwort gegeben.</p>';
+  $('bilder').innerHTML = sitz.bilder.map(b =>
+    `<a href="${b.url}" target="_blank"><img src="${b.url}" alt="${b.name}">`
+    + `<span>${b.name.replace('.png','')}</span></a>`).join('')
+    || '<span style="color:var(--hell);font-size:.85rem">keine</span>';
+
   $('buehne').style.display = 'block';
   passen();
-  addEventListener('resize', passen);
-  if (window.ResizeObserver) new ResizeObserver(passen).observe($('flaeche'));
-
   marken();
+  laufBauen();
   zustandBei(0);
-
-  /* Bilder aus dem Paket */
-  $('bilder').innerHTML = (Z.bilder || []).map(b =>
-    `<a href="${b.url}" target="_blank"><img src="${b.url}" alt="${b.name}">` +
-    `<span>${b.name.replace('.png','')}</span></a>`).join('') || '<span class="hand">keine</span>';
-
-  zahlen();
 }
 
+/* ============================================================
+   Darstellung
+   ============================================================ */
 function noetigeHoehe(){
-  let tief = Z.tisch[1];
-  const kh = Z.breite * 0.844;
-  Z.ereignisse.forEach(e => {
-    if (e.karten) e.karten.forEach(k => tief = Math.max(tief, (k.y || 0) + kh));
+  let tief = S.tisch[1];
+  const kh = S.breite * 0.844;
+  S.ereignisse.forEach(e => {
+    if (e.karten) e.karten.forEach(k => tief = Math.max(tief, (k.y||0) + kh));
     if (e.y != null) tief = Math.max(tief, e.y + kh);
   });
-  const R = Z.raster;
-  if (R){
-    const fw = Z.breite * R.breite, fh = Z.breite * 0.844 * R.hoehe;
-    const zx0 = Z.haelften ? Z.tisch[0] * Z.haelften.teiler + 10 : 8;
-    const spalten = Math.max(1, Math.floor((Z.tisch[0] - zx0 - 6) / (fw + 10)));
+  const R = S.flaeche && S.flaeche.raster;
+  if (R && R.anzahl){
+    const fw = S.breite * (R.breite || 2), fh = S.breite * 0.844 * (R.hoehe || 2);
+    const H = S.flaeche.haelften;
+    const zx0 = (H && H.achse !== 'y') ? S.tisch[0] * H.teiler + 10 : 8;
+    const spalten = Math.max(1, Math.floor((S.tisch[0] - zx0 - 6) / (fw + 10)));
     const r = Math.floor((R.anzahl - 1) / spalten);
     let unten = 26 + (r + 1) * (fh + 10);
-    if (R.extra) unten += Z.breite * 0.844 * (R.extra.hoehe || R.hoehe);
+    if (R.extra) unten += S.breite * 0.844 * (R.extra.hoehe || R.hoehe);
     tief = Math.max(tief, unten);
   }
   return Math.ceil(tief + 16);
@@ -379,109 +601,99 @@ function noetigeHoehe(){
 
 function passen(){
   const f = $('flaeche');
-  const breit = f.clientWidth || f.parentElement.clientWidth || 900;
-  const s = Math.max(0.15, Math.min(1, breit / Z.tisch[0]));
+  const breit = f.clientWidth || 900;
+  const s = Math.max(0.15, Math.min(1, breit / S.tisch[0]));
   $('inner').style.transform = 'scale(' + s + ')';
-  f.style.height = Math.round((Z.hoehe || Z.tisch[1]) * s) + 'px';
+  f.style.height = Math.round((S.hoehe || S.tisch[1]) * s) + 'px';
 }
+addEventListener('resize', () => { if (S.aktiv !== null) passen(); });
 
-/* ============================================================
-   Vorstrukturierung: Hälften und Felder wie auf der Sortierfläche
-   ============================================================ */
 function strukturZeichnen(breite, rasterAn){
   const grund = $('grund');
+  if (!grund) return;
   grund.innerHTML = '';
-  const F = Z.farben || {};
-  const B = Z.tisch[0];
+  const F = (S.flaeche && S.flaeche.farben) || {};
+  const H = S.flaeche && S.flaeche.haelften;
+  const B = S.tisch[0], HH = S.hoehe || S.tisch[1];
 
-  if (Z.haelften){
-    const quer = Z.haelften.achse === 'y';
-    const H = Z.hoehe || Z.tisch[1];
+  if (H){
+    const quer = H.achse === 'y';
     const t = document.createElement('div');
     if (quer){
-      const y = H * Z.haelften.teiler;
-      Object.assign(t.style, { position:'absolute', left:0, right:0, top:y + 'px',
-        borderTop:'1.5px dashed ' + (F.linie || '#e4d9c7') });
+      const y = HH * H.teiler;
+      Object.assign(t.style, { position:'absolute', left:0, right:0, top:y+'px',
+        borderTop:'1.5px dashed ' + (F.linie||'#e4d9c7') });
       grund.appendChild(t);
-      [[Z.haelften.links, 9], [Z.haelften.rechts, y + 9]].forEach(([txt, py]) => {
+      [[H.links, 9],[H.rechts, y+9]].forEach(([txt, py]) => {
         const d = document.createElement('div');
-        Object.assign(d.style, { position:'absolute', top:py + 'px', left:'14px',
-          fontFamily:'var(--hand)', fontSize:'1.1rem', color:F.hell || '#6c6357' });
-        d.textContent = txt;
-        grund.appendChild(d);
+        Object.assign(d.style,{position:'absolute',top:py+'px',left:'14px',
+          fontSize:'15px',color:F.hell||'#6c6357'});
+        d.textContent = txt; grund.appendChild(d);
       });
     } else {
-      const x = B * Z.haelften.teiler;
-      Object.assign(t.style, { position:'absolute', top:0, bottom:0, left:x + 'px',
-        borderLeft:'1.5px dashed ' + (F.linie || '#e4d9c7') });
+      const x = B * H.teiler;
+      Object.assign(t.style,{position:'absolute',top:0,bottom:0,left:x+'px',
+        borderLeft:'1.5px dashed ' + (F.linie||'#e4d9c7')});
       grund.appendChild(t);
-      [[Z.haelften.links, 14], [Z.haelften.rechts, x + 14]].forEach(([txt, px]) => {
+      [[H.links,14],[H.rechts,x+14]].forEach(([txt, px]) => {
         const d = document.createElement('div');
-        Object.assign(d.style, { position:'absolute', top:'8px', left:px + 'px',
-          fontFamily:'var(--hand)', fontSize:'1.1rem', color:F.hell || '#6c6357' });
-        d.textContent = txt;
-        grund.appendChild(d);
+        Object.assign(d.style,{position:'absolute',top:'8px',left:px+'px',
+          fontSize:'15px',color:F.hell||'#6c6357'});
+        d.textContent = txt; grund.appendChild(d);
       });
     }
   }
 
-  if (!rasterAn || !Z.raster) return;
-  const R = Z.raster;
-  const fw = breite * R.breite, fh = breite * 0.844 * R.hoehe;
-  const zx0 = Z.haelften ? B * Z.haelften.teiler + 10 : 8;
-  const zx1 = B;
-  const spalten = Math.max(1, Math.floor((zx1 - zx0 - 6) / (fw + 10)));
-
-  const feld = (x, y, w, hh, text, zusatz) => {
+  const R = S.flaeche && S.flaeche.raster;
+  if (!rasterAn || !R || !R.anzahl) return;
+  const fw = breite * (R.breite||2), fh = breite * 0.844 * (R.hoehe||2);
+  const quer = H && H.achse === 'y';
+  const zx0 = (H && !quer) ? B * H.teiler + 10 : 14;
+  const spalten = Math.max(1, Math.floor((B - zx0 - 6) / (fw + 10)));
+  const feld = (x,y,w,h,text,zusatz) => {
     const d = document.createElement('div');
-    Object.assign(d.style, { position:'absolute', left:x + 'px', top:y + 'px',
-      width:w + 'px', height:hh + 'px', display:'flex', alignItems:'flex-start',
+    Object.assign(d.style,{position:'absolute',left:x+'px',top:y+'px',
+      width:w+'px',height:h+'px',display:'flex',alignItems:'flex-start',
       justifyContent:'center',
-      border:'1.5px ' + (zusatz ? 'solid ' + (F.akzent || '#9b8ac4')
-                                : 'dashed ' + (F.rand || '#c9bda6')),
-      background: zusatz ? (F.fuell || 'rgba(147,81,0,.045)') : 'transparent' });
-    const sp = document.createElement('span');
-    Object.assign(sp.style, { fontFamily:'var(--hand)', fontSize:'1.02rem',
-      color:F.hell || '#6c6357', marginTop:'5px' });
-    sp.textContent = text;
-    d.appendChild(sp);
+      border:'1.5px ' + (zusatz ? 'solid '+(F.akzent||'#9b8ac4')
+                                : 'dashed '+(F.rand||'#c9bda6')),
+      background: zusatz ? (F.fuell||'rgba(147,81,0,.045)') : 'transparent'});
+    if (text){
+      const sp = document.createElement('span');
+      Object.assign(sp.style,{fontSize:'14px',color:F.hell||'#6c6357',marginTop:'5px'});
+      sp.textContent = text; d.appendChild(sp);
+    }
     grund.appendChild(d);
   };
-
   let r = 0;
+  const y0 = quer ? (S.hoehe||S.tisch[1]) * H.teiler + 40 : 26;
   for (let i = 0; i < R.anzahl; i++){
     r = Math.floor(i / spalten);
-    feld(zx0 + (i % spalten) * (fw + 10), 26 + r * (fh + 10), fw, fh,
-         R.beschriftung, false);
+    feld(zx0 + (i % spalten) * (fw+10), y0 + r*(fh+10), fw, fh,
+         R.beschriftung || '', false);
   }
   if (R.extra){
-    const y = 26 + (r + 1) * (fh + 10);
-    const hh = breite * 0.844 * (R.extra.hoehe || R.hoehe);
-    feld(zx0, y, zx1 - zx0 - 8, hh, R.extra.beschriftung, true);
+    feld(zx0, y0 + (r+1)*(fh+10), B - zx0 - 8,
+         breite * 0.844 * (R.extra.hoehe || R.hoehe), R.extra.beschriftung, true);
   }
 }
 
-/* ============================================================
-   Zustand zu einem Zeitpunkt herstellen
-   ============================================================ */
 function zustandBei(t){
   const lage = {};
-  let breite = Z.breite, greift = null, letzte = -1;
-  let rasterAn = !!(Z.raster && Z.raster.an !== false);
+  let breite = S.breite, greift = null, letzte = -1;
+  let rasterAn = !!(S.flaeche && S.flaeche.raster && S.flaeche.raster.an !== false);
 
-  // Der Anfangszustand gilt immer, auch wenn er erst nach wenigen
-  // Millisekunden protokolliert wurde.
-  const anfang = Z.ereignisse.find(e => e.was === 'start');
+  const anfang = S.ereignisse.find(e => e.was === 'start');
   if (anfang) anfang.karten.forEach(k => lage[k.karte] = Object.assign({}, k));
 
-  for (let i = 0; i < Z.ereignisse.length; i++){
-    const e = Z.ereignisse[i];
+  for (let i = 0; i < S.ereignisse.length; i++){
+    const e = S.ereignisse[i];
     if (e.t > t) break;
     letzte = i;
     if (e.karten) e.karten.forEach(k => lage[k.karte] = Object.assign({}, k));
     if (e.breite) breite = e.breite;
     if (e.was === 'raster') rasterAn = !rasterAn;
-    if (e.was === 'greifen'){ greift = e.karte; }
+    if (e.was === 'greifen') greift = e.karte;
     if (e.was === 'ziehen' || e.was === 'ablegen'){
       lage[e.karte] = Object.assign(lage[e.karte] || {}, e);
       if (e.was === 'ablegen') greift = null;
@@ -489,176 +701,131 @@ function zustandBei(t){
   }
 
   strukturZeichnen(breite, rasterAn);
-
   const h = breite * 0.844;
-  for (const code in Z.knoten){
-    const im = Z.knoten[code], l = lage[code];
+  for (const code in S.knoten){
+    const im = S.knoten[code], l = lage[code];
     if (!l){ im.style.display = 'none'; continue; }
     im.style.display = '';
-    im.style.width  = breite + 'px';
-    im.style.height = h + 'px';
-    im.style.left   = (l.x || 0) + 'px';
-    im.style.top    = (l.y || 0) + 'px';
+    im.style.width = breite + 'px'; im.style.height = h + 'px';
+    im.style.left = (l.x||0) + 'px'; im.style.top = (l.y||0) + 'px';
     im.style.transform = l.dreh ? `rotate(${l.dreh}deg)` : '';
     im.style.zIndex = (l.z || 1) + 1;
     im.classList.toggle('greift', code === greift);
   }
-  if (letzte !== Z.letzterIndex){ Z.letzterIndex = letzte; laufMarkieren(letzte); }
+  if (letzte !== S.letzterIndex){ S.letzterIndex = letzte; laufMarkieren(letzte); }
 
-  $('zeit').textContent = zeitText(t) + ' / ' + zeitText(Z.dauer);
-  const anteil = Z.dauer ? Math.min(1, t / Z.dauer) : 0;
-  $('fuell').style.width = (anteil * 100) + '%';
-  $('griff').style.left  = (anteil * 100) + '%';
+  $('zeit').textContent = zeitText(t) + ' / ' + zeitText(S.dauer);
+  const anteil = S.dauer ? Math.min(1, t / S.dauer) : 0;
+  $('fuell').style.width = (anteil*100) + '%';
+  $('griff').style.left = (anteil*100) + '%';
 }
 
 /* ============================================================
-   Verlaufsliste
+   Verlauf
    ============================================================ */
 const WORTE = {
-  start:'Anfangszustand', greifen:'nimmt', ziehen:'zieht', ablegen:'legt ab',
-  pruefen:'Prüfen gedrückt', raster:'Raster', zurueck:'Zurück',
+  start:'Anfangszustand', greifen:'nimmt', ablegen:'legt ab',
+  pruefen:'Prüfen gedrückt', raster:'Felder', zurueck:'Zurück',
   'zoom-kleiner':'kleiner', 'zoom-groesser':'grösser', 'neue-runde':'neue Runde',
   'zufaellig-fuellen':'zufällig gefüllt', 'bild-gespeichert':'Bild gespeichert',
   rundenbild:'Runde beendet', felderanzahl:'Felderzahl geändert',
   fenster:'Fenster geändert', weggeklickt:'Fenster verlassen',
-  'zurueck-im-fenster':'wieder da', abgabefenster:'Abgabe geöffnet',
-  abgegeben:'abgegeben', ende:'Ende'
+  'zurueck-im-fenster':'wieder da', rueckmeldung:'Rückmeldung geschrieben',
+  abgabefenster:'Abgabe geöffnet', abgegeben:'abgegeben', ende:'Ende'
 };
 
 function laufBauen(){
   const teile = [];
-  Z.ereignisse.forEach((e, i) => {
-    if (e.was === 'ziehen') return;              // zu kleinteilig für die Liste
+  S.ereignisse.forEach((e, i) => {
+    if (e.was === 'ziehen') return;
     const was = WORTE[e.was] || e.was;
     const karte = e.karte ? ' ' + e.karte : '';
-    const wohin = e.haelfte ? ' → ' + e.haelfte : (e.feld != null ? ' → Feld ' + e.feld : '');
+    const wohin = e.haelfte ? ' → ' + e.haelfte
+                : (e.feld != null ? ' → Feld ' + e.feld : '');
     const extra = e.meldung ? ' · ' + e.meldung : '';
-    teile.push(`<div class="z" data-i="${i}" data-t="${e.t}">` +
-      `<i>${zeitText(e.t)}</i><span>${was}${karte}${wohin}${extra}</span></div>`);
+    teile.push(`<div class="z" data-i="${i}" data-t="${e.t}">`
+      + `<i>${zeitText(e.t)}</i><span>${was}${karte}${wohin}${extra}</span></div>`);
   });
   $('lauf').innerHTML = teile.join('');
-  $('lauf').querySelectorAll('.z').forEach(z => {
-    z.onclick = () => springen(+z.dataset.t);
-  });
+  $('lauf').querySelectorAll('.z').forEach(z => z.onclick = () => springen(+z.dataset.t));
 }
 
 function laufMarkieren(index){
   const liste = $('lauf').querySelectorAll('.z');
   let treffer = null;
-  liste.forEach(z => {
-    const an = +z.dataset.i <= index;
-    z.classList.toggle('jetzt', false);
-    if (an) treffer = z;
-  });
-  if (treffer){
-    treffer.classList.add('jetzt');
-    const k = $('lauf');
-    if (treffer.offsetTop < k.scrollTop ||
-        treffer.offsetTop > k.scrollTop + k.clientHeight - 30){
-      k.scrollTop = treffer.offsetTop - k.clientHeight / 2;
-    }
+  liste.forEach(z => { z.classList.remove('jetzt'); if (+z.dataset.i <= index) treffer = z; });
+  if (!treffer) return;
+  treffer.classList.add('jetzt');
+  const k = $('lauf');
+  if (treffer.offsetTop < k.scrollTop ||
+      treffer.offsetTop > k.scrollTop + k.clientHeight - 30){
+    k.scrollTop = treffer.offsetTop - k.clientHeight / 2;
   }
 }
 
 function marken(){
   const s = $('schiene');
   s.querySelectorAll('.marke').forEach(m => m.remove());
-  Z.ereignisse.forEach(e => {
+  S.ereignisse.forEach(e => {
     let art = null;
     if (e.was === 'pruefen') art = 'pruef';
     else if (e.was === 'rundenbild' || e.was === 'neue-runde') art = 'runde';
     if (!art) return;
     const m = document.createElement('div');
     m.className = 'marke ' + art;
-    m.style.left = (Z.dauer ? (e.t / Z.dauer) * 100 : 0) + '%';
+    m.style.left = (S.dauer ? (e.t / S.dauer) * 100 : 0) + '%';
     s.appendChild(m);
   });
-  laufBauen();
-}
-
-/* ============================================================
-   Zahlen
-   ============================================================ */
-function zahlen(){
-  const bewegt = {};
-  let zuege = 0, ersteAblage = null;
-  Z.ereignisse.forEach(e => {
-    if (e.was !== 'ablegen') return;
-    zuege++;
-    bewegt[e.karte] = (bewegt[e.karte] || 0) + 1;
-    if (ersteAblage === null) ersteAblage = e.t;
-  });
-  const oft = Object.entries(bewegt).sort((a,b) => b[1]-a[1]).slice(0, 5);
-  const angefasst = Object.keys(bewegt).length;
-  const gesamt = Object.keys(Z.knoten).length;
-
-  $('zahlen').innerHTML = '<table>' + [
-    ['Dauer', zeitText(Z.dauer)],
-    ['Ablagen insgesamt', zuege],
-    ['Karten bewegt', angefasst + ' von ' + gesamt],
-    ['Erste Ablage nach', ersteAblage === null ? '–' : zeitText(ersteAblage)],
-    ['Runden', (Z.angaben && Z.angaben.runden) || 0]
-  ].map(([a,b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join('')
-  + (oft.length ? '<tr><td colspan="2" style="padding-top:10px;color:var(--hell)">'
-     + 'Am häufigsten umgelegt</td></tr>'
-     + oft.map(([k,n]) => `<tr><td>${k}</td><td>${n}×</td></tr>`).join('') : '')
-  + '</table>';
 }
 
 /* ============================================================
    Abspielen
    ============================================================ */
 const ton = $('ton');
-
 function jetztZeit(){
-  if (Z.tonDa) return ton.currentTime * 1000;
-  return Z.standZeit + (Z.laeuft ? (performance.now() - Z.uhr0) * Z.tempo : 0);
+  if (S.tonDa) return ton.currentTime * 1000;
+  return S.standZeit + (S.laeuft ? (performance.now() - S.uhr0) * S.tempo : 0);
 }
-
 function schritt(){
-  if (!Z.laeuft) return;
+  if (!S.laeuft) return;
   const t = jetztZeit();
   zustandBei(t);
-  if (t >= Z.dauer){ anhalten(); zustandBei(Z.dauer); return; }
+  if (t >= S.dauer){ anhalten(); zustandBei(S.dauer); return; }
   requestAnimationFrame(schritt);
 }
-
 function starten(){
-  Z.laeuft = true;
-  Z.uhr0 = performance.now();
+  if (S.aktiv === null) return;
+  S.laeuft = true; S.uhr0 = performance.now();
   $('spielen').textContent = 'Pause';
-  if (Z.tonDa){ ton.playbackRate = Z.tempo; ton.play().catch(()=>{}); }
+  if (S.tonDa){ ton.playbackRate = S.tempo; ton.play().catch(()=>{}); }
   requestAnimationFrame(schritt);
 }
-
 function anhalten(){
-  Z.laeuft = false;
-  Z.standZeit = jetztZeit();
+  if (!S.laeuft) return;
+  S.laeuft = false; S.standZeit = jetztZeit();
   $('spielen').textContent = 'Abspielen';
-  if (Z.tonDa) ton.pause();
+  if (S.tonDa) ton.pause();
 }
-
 function springen(t){
-  t = Math.max(0, Math.min(Z.dauer, t));
-  Z.standZeit = t;
-  Z.uhr0 = performance.now();
-  if (Z.tonDa) ton.currentTime = t / 1000;
+  t = Math.max(0, Math.min(S.dauer, t));
+  S.standZeit = t; S.uhr0 = performance.now();
+  if (S.tonDa) ton.currentTime = t / 1000;
   zustandBei(t);
 }
-
-$('spielen').onclick = () => Z.laeuft ? anhalten() : starten();
+$('spielen').onclick = () => S.laeuft ? anhalten() : starten();
 $('tempo').onchange = e => {
-  Z.tempo = parseFloat(e.target.value);
-  if (Z.tonDa) ton.playbackRate = Z.tempo;
-  if (Z.laeuft){ Z.standZeit = jetztZeit(); Z.uhr0 = performance.now(); }
+  S.tempo = parseFloat(e.target.value);
+  if (S.tonDa) ton.playbackRate = S.tempo;
+  if (S.laeuft){ S.standZeit = jetztZeit(); S.uhr0 = performance.now(); }
 };
 $('schiene').onclick = e => {
   const r = $('schiene').getBoundingClientRect();
-  springen(((e.clientX - r.left) / r.width) * Z.dauer);
+  springen(((e.clientX - r.left) / r.width) * S.dauer);
 };
 addEventListener('keydown', e => {
   if ($('buehne').style.display !== 'block') return;
-  if (e.code === 'Space'){ e.preventDefault(); Z.laeuft ? anhalten() : starten(); }
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+  if (e.code === 'Space'){ e.preventDefault(); S.laeuft ? anhalten() : starten(); }
   if (e.code === 'ArrowLeft')  springen(jetztZeit() - 5000);
   if (e.code === 'ArrowRight') springen(jetztZeit() + 5000);
 });
