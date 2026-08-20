@@ -9,6 +9,14 @@
 (function(){
 'use strict';
 
+/* ---------- Welche Klasse? ----------
+   Das Kuerzel steht in der Adresse (?k=7a) und wird in der gemeinsamen
+   Klassentabelle nachgeschlagen. Diese Zeilen muessen vor den
+   Einstellungen stehen - dort wird KLASSE bereits gebraucht. */
+const KLASSENKUERZEL = new URLSearchParams(location.search).get('k') || '';
+const KLASSEN = window.SORT_KLASSEN || {};
+const KLASSE = KLASSEN[KLASSENKUERZEL] || null;
+
 /* ---------- Einstellungen ---------- */
 const CFG = Object.assign({
   // Ablage, die die Pakete entgegennimmt. null = nur herunterladen.
@@ -38,12 +46,6 @@ const variante = pfad.length >= 1 ? pfad[pfad.length - 1] : 'unbekannt';
 const thema    = pfad.length >= 2 ? pfad[pfad.length - 2] : 'unbekannt';
 const titel    = document.title || '';
 
-/* Welche Klasse? Das Kuerzel steht in der Adresse (?k=r7a) und wird in
-   der gemeinsamen Klassentabelle nachgeschlagen. Damit gibt es nur eine
-   Kopie jeder Sortierflaeche, egal wie viele Klassen dazukommen. */
-const KLASSENKUERZEL = new URLSearchParams(location.search).get('k') || '';
-const KLASSEN = window.SORT_KLASSEN || {};
-const KLASSE = KLASSEN[KLASSENKUERZEL] || null;
 
 /* Thema und Variante als Nummern - sie machen den Dateinamen kurz
    und trotzdem eindeutig. Alles Weitere steht in angaben.json. */
