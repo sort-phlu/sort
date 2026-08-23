@@ -294,9 +294,17 @@ const STIL = `
 .rueckfenster{position:fixed;inset:0;z-index:100002;display:grid;
   place-items:center;background:rgba(45,41,36,.55);padding:20px;
   font:14px var(--druck,'Fira Sans','Segoe UI',sans-serif)}
-.rueckfensterkarte{background:var(--karte,#fffefb);color:var(--tinte,#2d2924);
-  border-radius:14px;padding:26px 28px;max-width:440px;width:100%;
-  box-shadow:0 12px 40px rgba(0,0,0,.3);text-align:left}
+.rueckfensterkarte{position:relative;background:var(--karte,#fffefb);
+  color:var(--tinte,#2d2924);border-radius:14px;padding:26px 28px;
+  max-width:440px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.3);
+  text-align:left}
+/* Schliessen ohne Knopf - das Kreuz oben rechts. Ein Fenster, das nur
+   informiert, braucht keine Zeremonie zum Verlassen. */
+.rueckzu{position:absolute;top:10px;right:12px;border:none;background:none;
+  font-size:22px;line-height:1;color:var(--matt,#6c6357);cursor:pointer;
+  padding:2px 6px;border-radius:6px}
+.rueckzu:hover{background:var(--creme,#f6ecdf);color:var(--tinte,#2d2924)}
+.rueckklein{margin:0 0 4px;font-size:12px;color:var(--matt,#6c6357)}
 .rueckfensterkarte .augen{font-size:12px;text-transform:uppercase;
   letter-spacing:.07em;color:var(--akzent,#9867A5);margin:0 0 4px}
 .rueckfensterkarte h2{margin:0 0 12px;font-size:19px;line-height:1.3}
@@ -305,7 +313,7 @@ const STIL = `
 .rueckdatei span{color:var(--matt,#6c6357)}
 .rueckhinweistext{margin:0 0 16px;line-height:1.45;
   color:var(--matt,#6c6357);font-size:13.5px}
-.rueckknopf{display:inline-block;font:inherit;font-size:14px;
+.rueckknopf{display:inline-block;font:inherit;font-size:14px;margin-top:2px;
   padding:9px 16px;border-radius:9px;border:1px solid var(--linie,#e4d9c7);
   background:var(--karte,#fffefb);color:var(--tinte,#2d2924);cursor:pointer;
   text-decoration:none;margin-right:8px}
@@ -769,29 +777,22 @@ leiste.querySelector('.rueckgeben').onclick = async () => {
    Solange sie leer ist, zeigt das Fenster den Weg von Hand. */
 function abgabefenster(name, groesse, hochgeladen){
   document.querySelectorAll('.rueckfenster').forEach(e => e.remove());
-  const mb = (groesse / 1048576).toFixed(1);
   const f = el('div', 'rueckfenster');
   const k = el('div', 'rueckfensterkarte');
 
-  k.appendChild(el('p', 'augen', hochgeladen ? 'Angekommen' : 'Gespeichert'));
-  k.appendChild(el('h2', null, hochgeladen
-    ? 'Danke — Ihre Rückmeldung ist da.'
-    : 'Die Datei liegt in Ihren Downloads.'));
+  k.appendChild(el('p', 'augen', 'Gespeichert'));
+  k.appendChild(el('h2', null, 'Die Datei liegt in Ihren Downloads.'));
 
+  k.appendChild(el('p', 'rueckklein', 'So heisst sie:'));
   const d = el('p', 'rueckdatei');
   d.appendChild(el('b', null, name));
-  d.appendChild(el('span', null, '  ' + mb + ' MB'));
+  d.appendChild(el('span', null, '  ' + (groesse / 1048576).toFixed(1) + ' MB'));
   k.appendChild(d);
 
-  if (hochgeladen){
+  if (CFG.ablage){
     k.appendChild(el('p', 'rueckhinweistext',
-      'Sie können das Fenster schliessen. Eine Kopie liegt zusätzlich in '
-      + 'Ihren Downloads, falls Sie sie behalten möchten.'));
-  } else if (CFG.ablage){
-    k.appendChild(el('p', 'rueckhinweistext',
-      'Bitte legen Sie die Datei in den Ordner, den Sie von Rike bekommen '
-      + 'haben. Der Knopf öffnet ihn.'));
-    const b = el('a', 'rueckknopf gross', 'Ablage öffnen');
+      'Es öffnet sich ein neues Fenster. Ziehen Sie Ihre Datei hinein.'));
+    const b = el('a', 'rueckknopf gross', 'Abgabefenster öffnen');
     b.href = CFG.ablage; b.target = '_blank'; b.rel = 'noopener';
     k.appendChild(b);
   } else {
@@ -801,9 +802,18 @@ function abgabefenster(name, groesse, hochgeladen){
       + 'alles, was gebraucht wird.'));
   }
 
-  const zu = el('button', 'rueckknopf leer', 'Fenster schliessen');
+  // Schliessen ohne Knopf: das Kreuz oben, ein Klick daneben, Escape.
+  // Rike, 2026-08-23: «Wir brauchen keinen dritten Button mit
+  // abgegeben und Abschiedsfloskel.» Ein Fenster, das nur informiert,
+  // braucht keine Zeremonie zum Verlassen.
+  const zu = el('button', 'rueckzu', '×');
+  zu.title = 'Schliessen';
   zu.onclick = () => f.remove();
   k.appendChild(zu);
+  f.onclick = e => { if (e.target === f) f.remove(); };
+  const esc = e => { if (e.key === 'Escape'){ f.remove();
+                                              removeEventListener('keydown', esc); } };
+  addEventListener('keydown', esc);
 
   f.appendChild(k);
   document.body.appendChild(f);
