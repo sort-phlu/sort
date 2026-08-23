@@ -6,9 +6,24 @@
 <title>SORT – Kopfentwürfe</title>
 <meta name="description" content="Kärtchensortieraufgaben für selbstreguliertes Lernen im Mathematikunterricht Projekt SORT, PH Luzern.">
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Patrick+Hand&display=swap" rel="stylesheet">
+<!-- ERSETZT (2026-08-22, Rikes Auftrag «können wir das nicht mitgeben,
+     damit nichts von Google live geholt wird?»): Hier standen drei
+     Zeilen, die Fira Sans, Source Sans und Patrick Hand von
+     fonts.googleapis.com holten.
+
+     Sie waren das EINZIGE Externe an einer sonst selbsttragenden Seite -
+     und sie hielten sie an: Ein <link rel=stylesheet> im <head> blockiert
+     die Ausfuehrung aller nachfolgenden Skripte, bis er geladen ist.
+     Haengt Google, laeuft das Flaechenskript nie an: Seite halb da,
+     Schrift falsch, Karten unbeweglich. Genau dieses Bild am 2026-08-22.
+
+     Dazu ging bei jedem Aufruf einer Schulklasse eine IP an einen
+     Dritten. Siehe bauen/schriften/HERKUNFT.md. -->
+<style>
+@font-face{font-family:'Fira Sans';font-style:normal;font-weight:400;src:url('schriften/FiraSans-Regular.woff') format('woff')}
+@font-face{font-family:'Patrick Hand';font-style:normal;font-weight:400;src:url('schriften/PatrickHand-Regular.woff') format('woff')}
+</style>
+
 <style>
 :root{
   --papier:#fbf8f3;

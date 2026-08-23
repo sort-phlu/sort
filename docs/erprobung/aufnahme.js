@@ -333,68 +333,36 @@ function flaechenbeschreibung(){
 }
 
 /* ============================================================
-   Paket schnüren (Zip ohne Komprimierung)
+   Paket schnüren und abgeben
+
+   HERAUSGELOEST (2026-08-22) nach bauen/paket.js. Hier standen der
+   Zip-Schreiber (CRC-Tabelle, crc32, zip) und weiter unten der
+   fetch-Aufruf an die Ablage. Beides braucht seit heute auch die
+   Rueckmeldung - Rikes Auftrag war ausdruecklich, sie zu UEBERNEHMEN
+   und nicht neu zu bauen: «weil es eigentlich alles schon gebaut ist».
+
+   Eine zweite Fassung desselben Zip-Schreibers waere derselbe Fehler
+   wie bei «Faktorisieren 2»: zwei Dinge, die dasselbe tun sollen und
+   irgendwann nicht mehr dasselbe tun.
+
+   paket.js muss VOR dieser Datei geladen werden - studie_bauen.py
+   haengt beide in dieser Reihenfolge ein.
    ============================================================ */
-const CRC = (() => {
-  const t = new Uint32Array(256);
-  for (let i = 0; i < 256; i++){
-    let c = i;
-    for (let j = 0; j < 8; j++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
-    t[i] = c >>> 0;
-  }
-  return t;
-})();
-
-function crc32(u8){
-  let c = 0xFFFFFFFF;
-  for (let i = 0; i < u8.length; i++) c = CRC[(c ^ u8[i]) & 0xFF] ^ (c >>> 8);
-  return (c ^ 0xFFFFFFFF) >>> 0;
+const P = window.SORT_PAKET;
+// Ohne paket.js wuerde die naechste Zeile werfen und aufnahme.js waere
+// tot - mitten in einer Erhebung, ohne dass irgendjemand es merkte.
+// Lieber laut und lebendig: Die Sortierflaeche laeuft weiter, und in
+// der Konsole steht, was fehlt. werkzeuge/rueckmeldung_kontrolle.py
+// prueft die Reihenfolge beim Bauen, damit es gar nicht so weit kommt.
+if (!P){
+  console.error('aufnahme.js: paket.js fehlt oder steht dahinter. '
+              + 'Es wird nichts aufgezeichnet.');
+  return;
 }
+const zip       = P.zip;
+const zuBytes   = P.zuBytes;
+const textBytes = P.textBytes;
 
-function zip(dateien){
-  const teile = [], zentral = [];
-  let versatz = 0;
-  const txt = new TextEncoder();
-
-  dateien.forEach(d => {
-    const name = txt.encode(d.name);
-    const roh  = d.daten;
-    const summe = crc32(roh);
-
-    const kopf = new DataView(new ArrayBuffer(30));
-    kopf.setUint32(0, 0x04034b50, true);
-    kopf.setUint16(4, 20, true); kopf.setUint16(6, 0, true); kopf.setUint16(8, 0, true);
-    kopf.setUint16(10, 0, true); kopf.setUint16(12, 0, true);
-    kopf.setUint32(14, summe, true);
-    kopf.setUint32(18, roh.length, true); kopf.setUint32(22, roh.length, true);
-    kopf.setUint16(26, name.length, true); kopf.setUint16(28, 0, true);
-    teile.push(new Uint8Array(kopf.buffer), name, roh);
-
-    const z = new DataView(new ArrayBuffer(46));
-    z.setUint32(0, 0x02014b50, true);
-    z.setUint16(4, 20, true); z.setUint16(6, 20, true);
-    z.setUint32(16, summe, true);
-    z.setUint32(20, roh.length, true); z.setUint32(24, roh.length, true);
-    z.setUint16(28, name.length, true);
-    z.setUint32(42, versatz, true);
-    zentral.push(new Uint8Array(z.buffer), name);
-
-    versatz += 30 + name.length + roh.length;
-  });
-
-  let zlen = 0;
-  zentral.forEach(t => zlen += t.length);
-  const ende = new DataView(new ArrayBuffer(22));
-  ende.setUint32(0, 0x06054b50, true);
-  ende.setUint16(8, dateien.length, true); ende.setUint16(10, dateien.length, true);
-  ende.setUint32(12, zlen, true); ende.setUint32(16, versatz, true);
-
-  return new Blob(teile.concat(zentral, [new Uint8Array(ende.buffer)]),
-                  { type: 'application/zip' });
-}
-
-const zuBytes = async b => new Uint8Array(await b.arrayBuffer());
-const textBytes = s => new TextEncoder().encode(s);
 
 function kopfdaten(){
   return {
@@ -725,15 +693,7 @@ async function beenden(){
   let hoch = false;
   if (CFG.abgabe){
     stand.textContent = 'Wird abgegeben (' + mb + ' MB) …';
-    try {
-      const antwort = await fetch(CFG.abgabe + '/' + encodeURIComponent(name), {
-        method: 'PUT',
-        headers: CFG.schluessel ? { 'Authorization': 'Basic ' + btoa(CFG.schluessel + ':') } : {},
-        credentials: 'omit',
-        body: paket
-      });
-      hoch = antwort.ok || antwort.status === 201 || antwort.status === 204;
-    } catch(e){ hoch = false; }
+    hoch = await P.abgeben(CFG.abgabe, CFG.schluessel, name, paket);
   }
 
   const g = document.createDocumentFragment();

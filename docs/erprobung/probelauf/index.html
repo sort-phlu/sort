@@ -4,9 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Probelauf</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
+<!-- ERSETZT (2026-08-22): Hier standen drei Zeilen, die die Schriften von
+     Google holten. Der Probelauf ist die Seite, an der eine Klasse VOR der
+     Erhebung prueft, ob alles laeuft - ausgerechnet dort haette ein
+     haengender Google-Aufruf die Skripte angehalten und den Eindruck
+     erweckt, die Technik sei kaputt.
+     Die Schriften liegen in der Wurzel des Webauftritts; der Probelauf
+     landet unter erprobung/probelauf/, also zwei Ebenen tiefer. -->
+<style>
+@font-face{font-family:'Fira Sans';font-style:normal;font-weight:400;
+  src:url('../../schriften/FiraSans-Regular.woff') format('woff')}
+@font-face{font-family:'Patrick Hand';font-style:normal;font-weight:400;
+  src:url('../../schriften/PatrickHand-Regular.woff') format('woff')}
+</style>
 <style>
 :root{
   --w:170px; --h:143px;
@@ -231,6 +241,7 @@ grundZeichnen();
 <script>window.SORT_AUFGABE={thema:0,variante:0};</script>
 <script>window.SORT_ABGABE={abgabe:null,schluessel:"",ablage:null};</script>
 <script src="../klassen.js"></script>
+<script src="../paket.js"></script>
 <script src="../aufnahme.js"></script>
 </body>
 </html>
