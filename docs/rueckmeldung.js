@@ -716,19 +716,36 @@ leiste.querySelector('.rueckgeben').onclick = async () => {
              + '-' + z(d.getHours()) + z(d.getMinutes()) + '.zip';
 
   const hoch = await P.abgeben(CFG.abgabe, CFG.schluessel, name, paket);
-  if (hoch){
-    zeigen('Abgegeben — danke!');
-    // Erst NACH der bestaetigten Abgabe leeren. Wer vorher leert,
-    // verliert alles, wenn das Netz gerade weg ist.
-    S.notizen = []; merken(); listeZeigen();
-    return;
-  }
-  // Kein Abgabelink oder er hat nicht angenommen: herunterladen und
-  // das Abgabefenster zeigen.
+
+  /* FEHLERBEHOBEN (2026-08-23, beim Einbau des ersten echten
+     Abgabelinks gefunden - vorher war der Zweig nie erreichbar):
+
+     1. Das Fenster bekam `!!CFG.abgabe` als «hochgeladen». Das sagt
+        aber nur, OB ein Link eingetragen ist - nicht, ob die Abgabe
+        geklappt hat. War ein Link gesetzt und der Upload scheiterte,
+        stand da «Angekommen — danke, Ihre Rückmeldung ist da». Genau
+        die Luege, die man nicht machen darf: Maurus haette geglaubt,
+        es sei angekommen, und die Datei waere nur in seinen Downloads
+        gelegen.
+
+     2. Bei Erfolg erschien gar kein Fenster, nur eine kleine gruene
+        Zeile - und die Notizen wurden geleert. Wer eine Kopie behalten
+        wollte, hatte keine mehr.
+
+     Jetzt: IMMER herunterladen, IMMER das Fenster, und es sagt die
+     Wahrheit ueber den Upload. Die Datei in der Hand kostet nichts und
+     ist die Sicherung gegen alles, was zwischen hier und SWITCHdrive
+     schiefgehen kann. */
   const a = document.createElement('a');
   a.href = URL.createObjectURL(paket); a.download = name; a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-  abgabefenster(name, paket.size, !!CFG.abgabe);
+
+  if (hoch){
+    // Erst NACH der bestaetigten Abgabe leeren. Wer vorher leert,
+    // verliert alles, wenn das Netz gerade weg ist.
+    S.notizen = []; merken(true); listeZeigen();
+  }
+  abgabefenster(name, paket.size, hoch);
 };
 
 /* Das Abgabefenster — es geht nach dem Herunterladen auf.
