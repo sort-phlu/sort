@@ -252,9 +252,20 @@ const STIL = `
   line-height:1;color:var(--matt,#6c6357);cursor:pointer;padding:0 4px;
   border-radius:6px}
 .rueckzu:hover{background:var(--karte,#fffefb);color:var(--tinte,#2d2924)}
-.rueckinhalt{flex:1 1 auto;overflow-y:auto;padding:12px 14px 16px}
-.rueckkopf{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;
-  margin-bottom:8px}
+/* Der rollende Teil. Er ist selbst eine Spalte, damit Schreibfeld und
+   Zeichenfläche den freien Platz UNTER sich aufteilen können - vorher
+   stand die untere Hälfte der Tafel leer.
+
+   min-height:0 ist nötig, sonst weigert sich ein Flex-Kind, unter
+   seine Inhaltshöhe zu schrumpfen, und der Rollbalken erscheint nie.
+
+   ACHTUNG: Dieser Block steht in einem Template-Literal. Rückwärts-
+   Anführungszeichen beenden es - auch im Kommentar. Genau daran ist
+   dieser Kommentar beim Schreiben einmal zerbrochen. */
+.rueckinhalt{flex:1 1 auto;overflow-y:auto;padding:12px 14px 14px;
+  display:flex;flex-direction:column;gap:8px;min-height:0}
+.rueckkopf{flex:0 0 auto;display:flex;gap:6px;align-items:flex-start;
+  flex-wrap:wrap}
 .rueckkopf label{font-size:12px;color:var(--matt,#6c6357);
   display:flex;align-items:center;gap:6px;flex:1 1 100%}
 .rueckwer{font:inherit;font-size:13px;padding:5px 9px;border-radius:7px;
@@ -263,23 +274,26 @@ const STIL = `
 .rueckwer:focus{outline:none;border-color:var(--akzent,#9867A5)}
 .rueckwo{font-size:12px;color:var(--matt,#6c6357);flex:1 1 100%;
   line-height:1.35}
-.ruecktext{width:100%;min-height:96px;box-sizing:border-box;
+/* Schreibfeld und Zeichenfläche teilen sich den Platz: ein Drittel
+   tippen, zwei Drittel von Hand. Die Mindesthöhen sorgen dafür, dass
+   auf einem kurzen Fenster gerollt wird, statt beides plattzudrücken. */
+.ruecktext{width:100%;flex:1 1 0;min-height:110px;box-sizing:border-box;
   font:14px var(--druck,'Fira Sans',sans-serif);padding:8px 10px;
   border:1px solid var(--linie,#e4d9c7);border-radius:8px;background:#fff;
-  color:var(--tinte,#2d2924);resize:vertical}
+  color:var(--tinte,#2d2924);resize:none}
 .ruecktext:focus{outline:none;border-color:var(--akzent,#9867A5)}
-.rueckmalen{position:relative;margin-top:8px}
+.rueckmalen{position:relative;flex:2 1 0;min-height:200px;display:flex}
 /* LARS' Falle (FUERKASPERleisterechts.md): Ein <canvas> ist ein
    ERSATZELEMENT. Width und Height gehoeren ausdruecklich in die CSS,
    sonst nimmt es seine Eigengroesse aus den Attributen - die stehen in
    Geraetepunkten, und der Stift setzt dann nicht dort an, wo die Maus
    ist. Hier stand es schon richtig; es bleibt so und mit Begruendung. */
-.rueckblatt{display:block;width:100%;height:130px;background:#fff;
-  border:1px dashed var(--akzent,#9867A5);border-radius:8px;
-  cursor:crosshair;touch-action:none}
+.rueckblatt{display:block;flex:1 1 auto;width:100%;height:100%;
+  background:#fff;border:1px dashed var(--akzent,#9867A5);
+  border-radius:8px;cursor:crosshair;touch-action:none}
 .rueckhinweis{position:absolute;left:10px;top:6px;font-size:12px;
   color:var(--matt,#6c6357);pointer-events:none}
-.rueckbilder{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.rueckbilder{flex:0 0 auto;display:flex;gap:8px;flex-wrap:wrap}
 .rueckbilder:empty{display:none}
 .rueckbild{position:relative;display:inline-block}
 .rueckbild img{height:64px;border-radius:6px;
@@ -287,8 +301,12 @@ const STIL = `
 .rueckbild button{position:absolute;top:-6px;right:-6px;width:19px;height:19px;
   border-radius:50%;border:1px solid var(--linie,#e4d9c7);background:#fff;
   color:var(--matt,#6c6357);font-size:13px;line-height:1;cursor:pointer;padding:0}
-.rueckknoepfe{display:flex;gap:8px;align-items:center;margin-top:10px;
-  flex-wrap:wrap}
+/* Die Knopfreihe sitzt AUSSERHALB des rollenden Teils, ganz unten.
+   Sie ist damit immer erreichbar - man muss nicht erst ans Ende
+   rollen, um abzugeben. */
+.rueckknoepfe{flex:0 0 auto;display:flex;gap:8px;align-items:center;
+  flex-wrap:wrap;padding:10px 14px;border-top:1px solid var(--linie,#e4d9c7);
+  background:var(--creme,#f6ecdf)}
 .rueckknoepfe button,.ruecklade{font:inherit;font-size:13px;padding:6px 12px;
   border-radius:8px;border:1px solid var(--linie,#e4d9c7);
   background:var(--karte,#fffefb);color:var(--tinte,#2d2924);cursor:pointer}
@@ -299,7 +317,7 @@ const STIL = `
 .rueckgeben{background:var(--akzent,#9867A5) !important;color:#fff !important;
   border-color:var(--akzent,#9867A5) !important;font-weight:600;
   flex:1 1 auto}
-.rueckliste{margin-top:12px;font-size:12.5px}
+.rueckliste{flex:0 0 auto;margin-top:2px;font-size:12.5px}
 .rueckliste:empty{display:none}
 .rueckliste > b{color:var(--akzent,#9867A5)}
 .rueckzeile{display:flex;gap:6px;align-items:baseline;padding:4px 0;
@@ -375,6 +393,8 @@ leiste.innerHTML =
   + '    <div class="rueckhinweis">Oder von Hand: hier zeichnen und schreiben.</div>'
   + '  </div>'
   + '  <div class="rueckbilder"></div>'
+  + '  <div class="rueckliste"></div>'
+  + '</div>'
   /* NEU (Rikes Befund, 2026-08-23): «Notiz merken» stand ganz LINKS,
      «Rückmeldung abgeben» ganz RECHTS - die beiden Schritte, die
      zusammengehören, so weit auseinander wie möglich.
@@ -386,7 +406,17 @@ leiste.innerHTML =
 
      Jetzt liegen sie nebeneinander, und in der Reihenfolge, in der man
      sie braucht: merken · merken · merken - abgeben. Links bleibt, was
-     zum SCHREIBEN gehört; rechts, was mit dem Ergebnis geschieht. */
+     zum SCHREIBEN gehört; rechts, was mit dem Ergebnis geschieht.
+
+     GEAENDERT (Rikes Befund, 2026-08-24): Die Knopfreihe steht jetzt
+     GANZ UNTEN und AUSSERHALB des rollenden Teils. «Das Notizmerken und
+     gesammelte Rückmeldung abgeben kann eigentlich ganz unten stehen,
+     genauso wie Bild hinzufügen oder Zeichnung löschen, sodass dann
+     einfach ein größeres Freischreibfeld ist.»
+
+     Damit bleiben die Knöpfe immer erreichbar, egal wie weit oben man
+     gerade schreibt - und der ganze übrige Platz gehört dem Schreiben
+     und Zeichnen. */
   + '  <div class="rueckknoepfe">'
   + '    <label class="ruecklade">Bild hinzufügen'
   + '      <input type="file" accept="image/*" hidden></label>'
@@ -398,9 +428,7 @@ leiste.innerHTML =
   + '    <button type="button" class="rueckgeben">'
   + (CFG.sammeln ? 'Gesammelte Rückmeldung abgeben' : 'Rückmeldung abgeben')
   + '</button>'
-  + '  </div>'
-  + '  <div class="rueckliste"></div>'
-  + '</div>';
+  + '  </div>';
 document.body.appendChild(leiste);
 
 const werF   = leiste.querySelector('.rueckwer');
