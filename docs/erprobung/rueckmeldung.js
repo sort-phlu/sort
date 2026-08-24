@@ -293,6 +293,14 @@ const STIL = `
   border-radius:8px;cursor:crosshair;touch-action:none}
 .rueckhinweis{position:absolute;left:10px;top:6px;font-size:12px;
   color:var(--matt,#6c6357);pointer-events:none}
+/* Der Knopf sitzt direkt unter dem Blatt, schmal und zurueckhaltend -
+   er ist ein Angebot, keine Aufforderung. */
+.rueckmehrblatt{flex:0 0 auto;align-self:flex-start;font:inherit;
+  font-size:12px;padding:3px 10px;border-radius:7px;
+  border:1px dashed var(--akzent,#9867A5);background:transparent;
+  color:var(--akzent,#9867A5);cursor:pointer;margin-top:-2px}
+.rueckmehrblatt:hover{background:var(--akzent,#9867A5);color:#fff;
+  border-style:solid}
 .rueckbilder{flex:0 0 auto;display:flex;gap:8px;flex-wrap:wrap}
 .rueckbilder:empty{display:none}
 .rueckbild{position:relative;display:inline-block}
@@ -392,6 +400,7 @@ leiste.innerHTML =
   + '    <canvas class="rueckblatt"></canvas>'
   + '    <div class="rueckhinweis">Oder von Hand: hier zeichnen und schreiben.</div>'
   + '  </div>'
+  + '  <button type="button" class="rueckmehrblatt">+ Blatt verlängern</button>'
   + '  <div class="rueckbilder"></div>'
   + '  <div class="rueckliste"></div>'
   + '</div>'
@@ -435,6 +444,7 @@ const werF   = leiste.querySelector('.rueckwer');
 const woFeld = leiste.querySelector('.rueckwo');
 const text   = leiste.querySelector('.ruecktext');
 const blatt  = leiste.querySelector('.rueckblatt');
+const malen  = leiste.querySelector('.rueckmalen');
 const stand  = leiste.querySelector('.rueckstand');
 const bilder = leiste.querySelector('.rueckbilder');
 const liste  = leiste.querySelector('.rueckliste');
@@ -564,21 +574,68 @@ addEventListener('keydown', e => {
 const stift = blatt.getContext('2d');
 let malt = false, letzte = null;
 
+/* Das Blatt laesst sich verlaengern.
+
+   NEU (Rikes Befund, 2026-08-24): «Beim Schreiben, sobald ich den Platz
+   aufgebraucht habe, kann ich rollen. Aber beim Zeichnen ist es so:
+   wenn ich aus der Zeichenflaeche rausgehe, dann war's das. Ich kann
+   nicht weiterschreiben.»
+
+   Ein Textfeld waechst von selbst, ein Canvas nicht - es hat genau die
+   Groesse, die man ihm gibt. Darum ein Knopf, der es nach unten
+   verlaengert; die Tafel rollt dann mit.
+
+   ZWEI WEGE fuehren jetzt zum selben Ziel, und beide sind gebaut:
+     - Blatt verlaengern: EIN Bild, so lang wie noetig
+     - Notiz merken, dann weiterzeichnen: MEHRERE Bilder, je eines
+       (notiz-01-hand.png, notiz-02-hand.png, ...)
+   Der zweite Weg gibt es nur, wo gesammelt wird - bei SORT nicht.
+   Deshalb muss der erste ueberall gehen.
+
+   `S.blattzu` sind die zusaetzlichen Bildpunkte. Sie ueberleben das
+   Neuladen wie alles andere. */
+function blattHoehe(){
+  const zu = S.blattzu || 0;
+  if (zu > 0){
+    /* Feste Hoehe statt Mitwachsen: Sobald verlaengert wurde, soll das
+       Blatt nicht mehr vom Fenster abhaengen - sonst waere die
+       Zeichnung beim naechsten Groesseaendern gestaucht.
+
+       Die GRUNDHOEHE wird beim ersten Verlaengern gemerkt. Sie aus der
+       aktuellen Hoehe zurueckzurechnen ginge schief: Beim zweiten Klick
+       stuende dort schon die verlaengerte. */
+    const grund = S.blattgrund || 200;
+    malen.style.flex = '0 0 ' + Math.round(grund + zu) + 'px';
+  } else {
+    malen.style.flex = '';
+  }
+}
+
 function blattGroesse(){
   // Die Zeichnung ginge beim Groesseaendern verloren - erst sichern,
   // dann neu aufspannen, dann zurueckmalen.
   const alt = blatt.width ? blatt.toDataURL() : null;
+  const altB = blatt._b || null;
+  blattHoehe();
   const b = blatt.getBoundingClientRect();
   const dpr = window.devicePixelRatio || 1;
   blatt.width  = Math.max(1, Math.round(b.width  * dpr));
   blatt.height = Math.max(1, Math.round(b.height * dpr));
+  blatt._b = [b.width, b.height];
   stift.setTransform(dpr, 0, 0, dpr, 0, 0);
   stift.lineCap = 'round'; stift.lineJoin = 'round';
   stift.lineWidth = 2; stift.strokeStyle = '#2d2924';
   const quelle = alt || S.zeichnung;
   if (quelle){
     const im = new Image();
-    im.onload = () => stift.drawImage(im, 0, 0, b.width, b.height);
+    /* In der ALTEN Groesse zurueckmalen, oben links buendig - nicht auf
+       die neue gedehnt. Sonst zoege das Verlaengern die Zeichnung in
+       die Laenge, und aus einem Wort wuerde ein Gummiband. Was
+       dazukommt, ist leeres Blatt. */
+    im.onload = () => {
+      const [aw, ah] = altB || [b.width, b.height];
+      stift.drawImage(im, 0, 0, aw, ah);
+    };
     im.src = quelle;
   }
 }
@@ -606,9 +663,28 @@ blatt.addEventListener('pointermove', e => {
     merken();
   }));
 
+leiste.querySelector('.rueckmehrblatt').onclick = () => {
+  // Die Grundhoehe EINMAL merken, solange sie noch die vom Fenster
+  // bestimmte ist.
+  if (!S.blattgrund){
+    S.blattgrund = Math.round(malen.getBoundingClientRect().height) || 200;
+  }
+  S.blattzu = (S.blattzu || 0) + 260;
+  blattGroesse();
+  merken(true);
+  // Ans Ende rollen, damit man sieht, dass Platz dazugekommen ist -
+  // sonst waechst das Blatt unsichtbar unterhalb des Fensterrands.
+  const i = leiste.querySelector('.rueckinhalt');
+  requestAnimationFrame(() => { i.scrollTop = i.scrollHeight; });
+  zeigen('Blatt verlängert');
+};
+
 leiste.querySelector('.rueckleeren').onclick = () => {
   stift.clearRect(0, 0, blatt.width, blatt.height);
-  S.zeichnung = null; merken();
+  // Ein leeres Blatt faengt wieder bei der Grundhoehe an. Wer geloescht
+  // hat, will von vorn anfangen, nicht mit dem langen Blatt von vorhin.
+  S.zeichnung = null; S.blattzu = 0; S.blattgrund = 0;
+  blattGroesse(); merken();
 };
 
 /* ---------- Bild hinzufügen ----------
@@ -690,7 +766,8 @@ function halten(still){
                    bilder: angehaengt.slice(), zeit: zeitstempel() });
   // Der Tisch wird frei fuer die naechste Notiz - der Name bleibt.
   text.value = ''; S.entwurf = '';
-  S.zeichnung = null; stift.clearRect(0, 0, blatt.width, blatt.height);
+  S.zeichnung = null; S.blattzu = 0; S.blattgrund = 0;
+  stift.clearRect(0, 0, blatt.width, blatt.height);
   angehaengt = []; bilderZeigen();
   merken(still);
   listeZeigen();
