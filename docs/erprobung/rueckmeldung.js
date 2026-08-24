@@ -211,43 +211,70 @@ function zeitstempel(){
    stabilsten ist».
    ============================================================ */
 const STIL = `
-.rueckleiste{position:fixed;left:0;right:0;bottom:0;z-index:100001;
+/* ── Der Öffner in der Kopfzeile ──────────────────────────────
+   Das EINZIGE, was im Ruhezustand von der Rückmeldung zu sehen ist.
+   Er sitzt in der Kopfzeile, wo keine Karte liegt. */
+.rueckoeffner{display:inline-flex;align-items:center;gap:6px;
+  font:600 13px var(--druck,'Fira Sans','Segoe UI',sans-serif);
+  padding:5px 12px;border-radius:999px;cursor:pointer;
+  border:1px solid var(--akzent,#9867A5);background:transparent;
+  color:var(--akzent,#9867A5);white-space:nowrap}
+.rueckoeffner:hover{background:var(--akzent,#9867A5);color:#fff}
+.rueckoeffner.an{background:var(--akzent,#9867A5);color:#fff}
+.rueckoeffner.imkopf{margin-left:auto}
+.rueckoeffner.freistehend{position:fixed;top:10px;right:12px;z-index:100000;
+  background:var(--karte,#fffefb);box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.rueckoeffner .rueckzahl:empty{display:none}
+.rueckoeffner .rueckzahl{background:currentColor;color:transparent;
+  border-radius:999px;padding:0 6px;font-size:11px;position:relative}
+.rueckoeffner .rueckzahl::after{content:attr(data-n);position:absolute;
+  inset:0;display:grid;place-items:center;color:var(--karte,#fffefb)}
+.rueckoeffner.an .rueckzahl::after{color:var(--akzent,#9867A5)}
+
+/* ── Die Tafel ────────────────────────────────────────────────
+   Rechts, über die volle Höhe, GESCHLOSSEN ganz draussen. Sie nimmt
+   der Fläche keinen Platz weg - weder Platz noch Klickbarkeit. */
+.rueckleiste{position:fixed;top:0;right:0;bottom:0;z-index:100001;
+  width:min(400px,94vw);display:flex;flex-direction:column;
   background:var(--karte,#fffefb);color:var(--tinte,#2d2924);
-  border-top:2px solid var(--akzent,#9867A5);
-  box-shadow:0 -3px 14px rgba(45,41,36,.13);
-  font:14px var(--druck,'Fira Sans','Segoe UI',sans-serif)}
-.rueckgriff{display:flex;align-items:center;gap:6px;width:100%;text-align:left;
-  border:none;background:none;font:inherit;font-size:13.5px;
-  color:var(--tinte,#2d2924);padding:7px 18px;cursor:pointer}
-.rueckgriff:hover{background:var(--creme,#f6ecdf)}
+  border-left:2px solid var(--akzent,#9867A5);
+  box-shadow:-6px 0 28px rgba(45,41,36,.18);
+  font:14px var(--druck,'Fira Sans','Segoe UI',sans-serif);
+  transform:translateX(100%);transition:transform .18s ease-out;
+  visibility:hidden}
+.rueckleiste.offen{transform:translateX(0);visibility:visible}
+.rueckgriff{display:flex;align-items:center;gap:6px;flex:0 0 auto;
+  padding:10px 14px;border-bottom:1px solid var(--linie,#e4d9c7);
+  font-size:13.5px;background:var(--creme,#f6ecdf)}
 .rueckgriff .stift{color:var(--akzent,#9867A5);font-size:15px}
-.rueckgriff .zart{color:var(--matt,#6c6357)}
-.rueckzahl:empty{display:none}
-.rueckzahl{background:var(--akzent,#9867A5);color:#fff;
-  border-radius:999px;padding:1px 9px;font-size:12px;font-weight:600}
-/* «Zuklappen» und der Winkel stehen ganz rechts und sagen, was der
-   Klick tut. Ohne sie sah der Streifen aus wie eine Ueberschrift. */
-.ruecktu{margin-left:auto;color:var(--akzent,#9867A5);font-weight:600;
-  font-size:13px}
-.rueckpfeil{color:var(--akzent,#9867A5);font-size:12px}
-.rueckinhalt{display:none;padding:0 18px 12px;max-height:52vh;overflow:auto}
-.rueckleiste.offen .rueckinhalt{display:block}
-.rueckkopf{display:flex;gap:14px;align-items:center;flex-wrap:wrap;
-  margin-bottom:7px}
+.rueckgriff .zart{color:var(--matt,#6c6357);font-size:12.5px}
+.rueckzu{margin-left:auto;border:none;background:none;font-size:22px;
+  line-height:1;color:var(--matt,#6c6357);cursor:pointer;padding:0 4px;
+  border-radius:6px}
+.rueckzu:hover{background:var(--karte,#fffefb);color:var(--tinte,#2d2924)}
+.rueckinhalt{flex:1 1 auto;overflow-y:auto;padding:12px 14px 16px}
+.rueckkopf{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;
+  margin-bottom:8px}
 .rueckkopf label{font-size:12px;color:var(--matt,#6c6357);
-  display:flex;align-items:center;gap:6px}
+  display:flex;align-items:center;gap:6px;flex:1 1 100%}
 .rueckwer{font:inherit;font-size:13px;padding:5px 9px;border-radius:7px;
   border:1px solid var(--linie,#e4d9c7);background:#fff;
-  color:var(--tinte,#2d2924);min-width:190px}
+  color:var(--tinte,#2d2924);flex:1 1 auto;min-width:0}
 .rueckwer:focus{outline:none;border-color:var(--akzent,#9867A5)}
-.rueckwo{font-size:12px;color:var(--matt,#6c6357);flex:1 1 200px}
-.ruecktext{width:100%;min-height:62px;box-sizing:border-box;
+.rueckwo{font-size:12px;color:var(--matt,#6c6357);flex:1 1 100%;
+  line-height:1.35}
+.ruecktext{width:100%;min-height:96px;box-sizing:border-box;
   font:14px var(--druck,'Fira Sans',sans-serif);padding:8px 10px;
   border:1px solid var(--linie,#e4d9c7);border-radius:8px;background:#fff;
   color:var(--tinte,#2d2924);resize:vertical}
 .ruecktext:focus{outline:none;border-color:var(--akzent,#9867A5)}
 .rueckmalen{position:relative;margin-top:8px}
-.rueckblatt{display:block;width:100%;height:120px;background:#fff;
+/* LARS' Falle (FUERKASPERleisterechts.md): Ein <canvas> ist ein
+   ERSATZELEMENT. Width und Height gehoeren ausdruecklich in die CSS,
+   sonst nimmt es seine Eigengroesse aus den Attributen - die stehen in
+   Geraetepunkten, und der Stift setzt dann nicht dort an, wo die Maus
+   ist. Hier stand es schon richtig; es bleibt so und mit Begruendung. */
+.rueckblatt{display:block;width:100%;height:130px;background:#fff;
   border:1px dashed var(--akzent,#9867A5);border-radius:8px;
   cursor:crosshair;touch-action:none}
 .rueckhinweis{position:absolute;left:10px;top:6px;font-size:12px;
@@ -260,37 +287,33 @@ const STIL = `
 .rueckbild button{position:absolute;top:-6px;right:-6px;width:19px;height:19px;
   border-radius:50%;border:1px solid var(--linie,#e4d9c7);background:#fff;
   color:var(--matt,#6c6357);font-size:13px;line-height:1;cursor:pointer;padding:0}
-.rueckknoepfe{display:flex;gap:8px;align-items:center;margin-top:9px;
+.rueckknoepfe{display:flex;gap:8px;align-items:center;margin-top:10px;
   flex-wrap:wrap}
 .rueckknoepfe button,.ruecklade{font:inherit;font-size:13px;padding:6px 12px;
   border-radius:8px;border:1px solid var(--linie,#e4d9c7);
   background:var(--karte,#fffefb);color:var(--tinte,#2d2924);cursor:pointer}
 .rueckknoepfe button:hover,.ruecklade:hover{border-color:var(--akzent,#9867A5);
   color:var(--akzent,#9867A5)}
-/* Der Stand schiebt alles nach ihm nach RECHTS. Damit stehen «Notiz
-   merken» und «Rückmeldung abgeben» nebeneinander - die zwei Schritte,
-   die zusammengehören. Links bleibt, was zum Schreiben gehört. */
-.rueckstand{margin-left:auto}
+.rueckstand{font-size:12px;color:#2E7D32;flex:1 1 100%;order:9}
 .rueckhalten{font-weight:600}
-.rueckgeben{background:var(--akzent,#9867A5) !important;
-  color:#fff !important;border-color:var(--akzent,#9867A5) !important;
-  font-weight:600}
-.rueckstand{font-size:12px;color:#2E7D32;margin-left:auto}
-.rueckliste{margin-top:10px;font-size:12.5px}
+.rueckgeben{background:var(--akzent,#9867A5) !important;color:#fff !important;
+  border-color:var(--akzent,#9867A5) !important;font-weight:600;
+  flex:1 1 auto}
+.rueckliste{margin-top:12px;font-size:12.5px}
 .rueckliste:empty{display:none}
 .rueckliste > b{color:var(--akzent,#9867A5)}
-.rueckzeile{display:flex;gap:8px;align-items:baseline;padding:4px 0;
+.rueckzeile{display:flex;gap:6px;align-items:baseline;padding:4px 0;
   border-top:1px solid var(--linie,#e4d9c7)}
 .rueckzeile .nr{background:var(--akzent,#9867A5);color:#fff;border-radius:4px;
   padding:0 6px;font-size:11px;font-weight:600;flex:0 0 auto}
-.rueckzeile .wo{color:var(--matt,#6c6357);flex:0 1 240px;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rueckzeile .wo{color:var(--matt,#6c6357);flex:0 1 100px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
 .rueckzeile .was{flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap}
 .rueckzeile button{border:none;background:none;color:var(--matt,#6c6357);
   cursor:pointer;font-size:14px;padding:0 4px}
-/* Das Abgabefenster. Es liegt UEBER allem - auch ueber der Leiste -,
-   weil es der Abschluss ist und nicht ein weiteres Angebot. */
+
+/* ── Das Abgabefenster ───────────────────────────────────────── */
 .rueckfenster{position:fixed;inset:0;z-index:100002;display:grid;
   place-items:center;background:rgba(45,41,36,.55);padding:20px;
   font:14px var(--druck,'Fira Sans','Segoe UI',sans-serif)}
@@ -298,16 +321,12 @@ const STIL = `
   color:var(--tinte,#2d2924);border-radius:14px;padding:26px 28px;
   max-width:440px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.3);
   text-align:left}
-/* Schliessen ohne Knopf - das Kreuz oben rechts. Ein Fenster, das nur
-   informiert, braucht keine Zeremonie zum Verlassen. */
-.rueckzu{position:absolute;top:10px;right:12px;border:none;background:none;
-  font-size:22px;line-height:1;color:var(--matt,#6c6357);cursor:pointer;
-  padding:2px 6px;border-radius:6px}
-.rueckzu:hover{background:var(--creme,#f6ecdf);color:var(--tinte,#2d2924)}
-.rueckklein{margin:0 0 4px;font-size:12px;color:var(--matt,#6c6357)}
+.rueckfensterkarte .rueckzu{position:absolute;top:10px;right:12px;
+  margin-left:0}
 .rueckfensterkarte .augen{font-size:12px;text-transform:uppercase;
   letter-spacing:.07em;color:var(--akzent,#9867A5);margin:0 0 4px}
 .rueckfensterkarte h2{margin:0 0 12px;font-size:19px;line-height:1.3}
+.rueckklein{margin:0 0 4px;font-size:12px;color:var(--matt,#6c6357)}
 .rueckdatei{margin:0 0 14px;padding:9px 12px;border-radius:8px;
   background:var(--creme,#f6ecdf);font-size:13px;word-break:break-all}
 .rueckdatei span{color:var(--matt,#6c6357)}
@@ -316,14 +335,14 @@ const STIL = `
 .rueckknopf{display:inline-block;font:inherit;font-size:14px;margin-top:2px;
   padding:9px 16px;border-radius:9px;border:1px solid var(--linie,#e4d9c7);
   background:var(--karte,#fffefb);color:var(--tinte,#2d2924);cursor:pointer;
-  text-decoration:none;margin-right:8px}
+  text-decoration:none}
 .rueckknopf.gross{background:var(--akzent,#9867A5);color:#fff;
   border-color:var(--akzent,#9867A5);font-weight:600}
 .rueckknopf:hover{border-color:var(--akzent,#9867A5)}
 
 @media (max-width:640px){
-  .rueckstand{margin-left:0}
-  .rueckinhalt{max-height:64vh}
+  .rueckleiste{width:100vw}
+  .rueckoeffner .wort{display:none}
 }
 `;
 const stilKnoten = document.createElement('style');
@@ -335,21 +354,13 @@ document.head.appendChild(stilKnoten);
    ============================================================ */
 const leiste = el('div', 'rueckleiste');
 leiste.innerHTML =
-    /* NEU (Rikes Befund, 2026-08-23): «Ich klick unten auf Rückmeldung,
-       dann öffnet sich das Fenster, dann schreib ich was und dann will
-       ich wieder oben weiterschauen und ich schaff's nicht. Der Clou
-       ist, dass man noch mal draufklickt - das hab ich nur durch Trial
-       and Error rausgefunden.»
-
-       Der Griff WAR ein Umschalter, sah aber nicht aus wie einer.
-       Drei Dinge sagen es jetzt: ein Winkel, der sich dreht; ein
-       Zusatz, der wechselt; und rechts «Zuklappen» als eigenes Wort. */
-    '<button class="rueckgriff" type="button">'
+    /* Der Kopf der Tafel. Der Umschalter sitzt seit dem 2026-08-24
+       NICHT mehr hier, sondern als einzelner Knopf in der Kopfzeile
+       der Seite - siehe knopfEinhaengen(). */
+    '<div class="rueckgriff">'
   + '<span class="stift">✎</span> Rückmeldung'
   + '<span class="zart rueckwink"> — was würden Sie hier anpassen?</span>'
-  + '<span class="rueckzahl"></span>'
-  + '<span class="ruecktu"></span>'
-  + '<span class="rueckpfeil">▾</span></button>'
+  + '<button class="rueckzu" type="button" title="Schliessen">×</button></div>'
   + '<div class="rueckinhalt">'
   + '  <div class="rueckkopf">'
   + '    <label>Ihr Name<input class="rueckwer" type="text" autocomplete="off"'
@@ -392,8 +403,6 @@ leiste.innerHTML =
   + '</div>';
 document.body.appendChild(leiste);
 
-const griff  = leiste.querySelector('.rueckgriff');
-const zahl   = leiste.querySelector('.rueckzahl');
 const werF   = leiste.querySelector('.rueckwer');
 const woFeld = leiste.querySelector('.rueckwo');
 const text   = leiste.querySelector('.ruecktext');
@@ -450,27 +459,77 @@ werF.addEventListener('input', () => { S.wer = werF.value.trim(); merken(); });
 text.value = S.entwurf || '';
 text.addEventListener('input', () => { S.entwurf = text.value; merken(); });
 
-const wink  = leiste.querySelector('.rueckwink');
-const tu    = leiste.querySelector('.ruecktu');
-const pfeil = leiste.querySelector('.rueckpfeil');
+/* ============================================================
+   Der Umschalter sitzt in der KOPFZEILE, nicht auf der Flaeche
 
-/* Der Griff sagt, was der Klick TUT - nicht, wo man ist. «Zuklappen»
-   ist eine Anweisung, «offen» waere nur ein Zustand. */
-function griffZeigen(offen){
+   FEHLERBEHOBEN (Rikes Befund, 2026-08-24): «Durch diese
+   Rueckmeldeleiste ist unten immer ein Stueck von der Sortierflaeche
+   ueberschrieben. Bei der ersten Etappe von der Kombinatorik fuehrt das
+   zu einem Problem, weil dadurch die Buttons ueberdeckt sind, mit denen
+   man die Kaertchen ueberhaupt erst auslegt.»
+
+   Eine fest sitzende Leiste am unteren Rand nimmt der Flaeche DAUERND
+   Platz weg - auch wenn niemand etwas schreibt. Und was darunter
+   geraet, ist nicht bloss schlecht zu sehen, sondern nicht mehr
+   anklickbar.
+
+   Rikes Loesung, und sie ist besser als der Zwischenweg:
+
+     «Wir koennten es so bauen, dass es einfach nur ein einzelner Button
+      ist. Oben rechts, weil dort ja der Kopf der ganzen
+      Sortieraktivitaet ist und damit keine wichtigen Sachen fuer die
+      Sortieraktivitaet. Und wenn man auf diesen Button klickt, dann
+      oeffnet sich der Rueckmeldeteil. Sie soll nur dann sichtbar sein,
+      wenn ich sie anschalte, und nur dieser eine Button ueberdeckt dann
+      die Sortierflaeche.»
+
+   LARS hat dasselbe Problem mit einem Streifen am rechten Rand geloest,
+   der immer 52 px breit stehen bleibt, und hat es fuer Kasper
+   aufgeschrieben (FUERKASPERleisterechts.md, 2026-08-24). Sein Weg
+   funktioniert - aber er kostet dauerhaft 52 px, und die Seite muss
+   ihm ausweichen («der Teil, der wehtut»). Rikes Weg kostet NICHTS:
+   Geschlossen ist gar nichts da ausser einem Knopf, der ohnehin in
+   einer Kopfzeile sitzt, wo keine Karte liegt.
+
+   Uebernommen habe ich von LARS die Falle mit dem <canvas> - dort
+   steckt eines drin.
+   ============================================================ */
+function knopfEinhaengen(){
+  const k = el('button', 'rueckoeffner');
+  k.type = 'button';
+  k.innerHTML = '<span class="stift">✎</span><span class="wort">Rückmeldung</span>'
+              + '<span class="rueckzahl"></span>';
+  k.title = 'Rückmeldung schreiben';
+  k.onclick = () => zeigenTafel(!leiste.classList.contains('offen'));
+
+  // In die Kopfzeile, wenn es eine gibt - dort liegt keine Karte. Alle
+  // drei Seitenarten haben eine: die Reflexionen, die Festigung und die
+  // SORT-Flaechen. Sonst haengt er sich oben rechts ans Fenster; dann
+  // ist er das einzige, was ueberdeckt.
+  const kopf = document.querySelector('header');
+  if (kopf){ kopf.appendChild(k); k.classList.add('imkopf'); }
+  else { document.body.appendChild(k); k.classList.add('freistehend'); }
+  return k;
+}
+const oeffner = knopfEinhaengen();
+const wink = leiste.querySelector('.rueckwink');
+
+function zeigenTafel(offen){
+  leiste.classList.toggle('offen', offen);
+  oeffner.classList.toggle('an', offen);
   wink.textContent = offen ? ' — Ihre Notiz zu dieser Stelle'
                            : ' — was würden Sie hier anpassen?';
-  tu.textContent = offen ? 'Zuklappen' : 'Aufklappen';
-  pfeil.textContent = offen ? '▴' : '▾';
-}
-griffZeigen(false);
-
-griff.onclick = () => {
-  leiste.classList.toggle('offen');
-  const offen = leiste.classList.contains('offen');
-  griffZeigen(offen);
   ortVerfolgen(offen);
   if (offen){ blattGroesse(); werF.focus(); }
-};
+}
+
+leiste.querySelector('.rueckzu').onclick = () => zeigenTafel(false);
+
+/* Escape schiebt sie weg - nuetzlich, wenn jemand mitten im Schreiben
+   wieder auf die Flaeche sehen will. Von LARS uebernommen. */
+addEventListener('keydown', e => {
+  if (e.key === 'Escape' && leiste.classList.contains('offen')) zeigenTafel(false);
+});
 
 /* ---------- die Zeichenfläche ----------
    Uebernommen aus notiz.js, unveraendert bewaehrt. */
@@ -628,7 +687,16 @@ function leer(c){
 }
 
 function listeZeigen(){
-  zahl.textContent = S.notizen.length ? S.notizen.length : '';
+  // Die Zahl der gemerkten Notizen steht am OEFFNER - dort sieht man
+  // sie auch bei geschlossener Tafel. Sonst wuesste niemand, dass
+  // etwas gesammelt ist.
+  const z = oeffner.querySelector('.rueckzahl');
+  if (S.notizen.length){
+    z.textContent = S.notizen.length;
+    z.dataset.n = S.notizen.length;
+  } else {
+    z.textContent = ''; delete z.dataset.n;
+  }
   liste.innerHTML = '';
   if (!S.notizen.length) return;
   liste.appendChild(el('b', null, 'Gemerkt: ' + S.notizen.length));
