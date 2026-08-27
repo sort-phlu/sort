@@ -1328,11 +1328,17 @@ function kettePruefen(){
   }
 }
 
-function auslegen(){
+function auslegen(teilmenge){
+  // FEHLERBEHOBEN (2026-08-27, Maurus' Rueckmeldung ueber kasper-7b):
+  // «Mehr Karten» rief bisher immer auslegen() ohne Argument auf - das
+  // legt ALLE Karten neu aus und zerstoert damit jede schon gebildete
+  // Gruppe. `teilmenge` laesst den Aufrufer sagen, welche Karten neu
+  // verteilt werden sollen; ohne Angabe bleibt das Verhalten wie bisher
+  // (voller Reset, gebraucht von zurueck() und beim ersten Aufbau).
   if (FLAECHE === 'buendel'){ buendelAufbau(); buendelLegen(); return; }
   if (FLAECHE === 'kette'){ kettenAufbau(); kettenStreuen(); return; }
   const h = Math.round(breite * 0.844);
-  const zu = karten.filter(k => k.dataset.rolle !== 'ablage');
+  const zu = teilmenge || karten.filter(k => k.dataset.rolle !== 'ablage');
   const bereiche = [];
   if (!BRETT){
     const grenze = HAELFTEN ? tisch.clientWidth * HAELFTEN.teiler : tisch.clientWidth;
@@ -1714,7 +1720,9 @@ if (NACHSCHUB && NACHSCHUB.length){
       || (neue.length + ' weitere Karten liegen jetzt dabei.');
     if (FLAECHE === 'kette') kettenNeuZeichnen();
     else if (FLAECHE === 'buendel'){ buendelAufbau(); buendelLegen(); }
-    else auslegen();
+    // Nur die neuen Karten bekommen einen Platz - alles, was schon liegt,
+    // bleibt unangetastet, ob sortiert oder noch lose.
+    else auslegen(neue);
     beschriften();
   };
   const leiste = document.querySelector('.leiste');
