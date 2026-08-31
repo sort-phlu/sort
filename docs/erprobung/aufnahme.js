@@ -303,6 +303,60 @@ function rundenbilderAbfangen(){
    allein wiedergegeben werden kann und niemand die passende
    index.html dazusuchen muss.
    ============================================================ */
+/* Das Feld so festhalten, wie es WIRKLICH auf dem Tisch stand: gemessen
+   am fertig gezeichneten Bild, nicht aus RASTER neu hergeleitet.
+
+   FEHLERBEHOBEN (2026-08-28, Rikes Befund «beim Abspielen lag ein anderes
+   Sortierfeld hinten dran als die Klasse gesehen hat»): Das Feld wurde
+   zweimal gezeichnet - hier von der Aufgabenseite, und im Abspielgeraet
+   noch einmal von vorne. Die beiden Zeichner sind auseinandergelaufen:
+   `reihe` kannte das Abspielgeraet gar nicht, eine Beschriftungs-LISTE
+   landete auf jedem Feld zugleich, und selbst dazugenommene Gruppen
+   (`erweiterbar`) bekamen ueberhaupt keinen Rahmen. Gemessen am Probelauf
+   ({anzahl:10, reihe:true}): eine Reihe ueber die ganze Breite auf der
+   Aufgabenseite, ein mehrzeiliges Gitter im Abspielgeraet.
+
+   Deshalb wird jetzt das Ergebnis aufgeschrieben statt der Regel. Was
+   hier nicht gemessen wurde, kann drueben auch nicht falsch geraten
+   werden - auch bei Feldarten, die es heute noch nicht gibt.
+
+   Nebenbei kommen die selbst getippten Gruppennamen mit (`frei: true`).
+   Die gingen bisher verloren, dabei sind sie das Interessante daran. */
+function flaechengemessen(){
+  const t = document.getElementById('tisch');
+  if (!t) return null;
+  // offset* statt style: Beide Sortierflaechen setzen ihre Felder anders,
+  // die gemessene Lage ist bei beiden dieselbe Wahrheit.
+  const masse = e => ({ x: e.offsetLeft, y: e.offsetTop,
+                        w: e.offsetWidth, h: e.offsetHeight });
+  const felder = Array.prototype.map.call(
+    t.querySelectorAll('.rasterfeld, .feld'), d => {
+      const eig = d.querySelector('input');
+      const s = getComputedStyle(d);
+      return Object.assign(masse(d), {
+        // Getipptes zaehlt, der Platzhalter ist nur das Angebot.
+        text: eig ? (eig.value || eig.placeholder || '')
+                  : (d.textContent || '').trim(),
+        selbstbenannt: !!(eig && eig.value),
+        neu:    d.classList.contains('neu'),
+        rand:   s.borderColor,
+        strich: s.borderStyle
+      });
+    });
+  const marken = Array.prototype.map.call(
+    t.querySelectorAll('.haelfte'),
+    d => Object.assign(masse(d), { text: (d.textContent || '').trim() }));
+  const teiler = t.querySelector('#teiler');
+  return {
+    felder: felder, marken: marken,
+    teiler: teiler ? masse(teiler) : null,
+    // Sichtbar? Ein leeres Feld heisst: Die Gruppe hat es nie eingeblendet.
+    sichtbar: felder.length > 0,
+    breite: (typeof breite !== 'undefined') ? breite : null,
+    tisch: [t.clientWidth, t.clientHeight]
+  };
+}
+
 function flaechenbeschreibung(){
   const karten = {}, gruppen = {};
   document.querySelectorAll('.karte').forEach(k => {
@@ -320,6 +374,7 @@ function flaechenbeschreibung(){
     titel: titel,
     karten: karten,
     gruppen: gruppen,
+    gemessen: flaechengemessen(),
     haelften: (typeof HAELFTEN !== 'undefined') ? HAELFTEN : null,
     raster:   (typeof RASTER   !== 'undefined') ? RASTER   : null,
     farben: {

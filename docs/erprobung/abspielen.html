@@ -585,6 +585,13 @@ function noetigeHoehe(){
     if (e.karten) e.karten.forEach(k => tief = Math.max(tief, (k.y||0) + kh));
     if (e.y != null) tief = Math.max(tief, e.y + kh);
   });
+  // Ist das Feld gemessen mitgekommen, sagt die Messung, wie tief es reicht.
+  const G = S.flaeche && S.flaeche.gemessen;
+  if (G && G.felder && G.felder.length){
+    G.felder.forEach(f => tief = Math.max(tief, f.y + f.h));
+    return Math.ceil(tief + 16);
+  }
+
   const R = S.flaeche && S.flaeche.raster;
   if (R && R.anzahl){
     const fw = S.breite * (R.breite || 2), fh = S.breite * 0.844 * (R.hoehe || 2);
@@ -616,6 +623,46 @@ function strukturZeichnen(breite, rasterAn){
   const H = S.flaeche && S.flaeche.haelften;
   const B = S.tisch[0], HH = S.hoehe || S.tisch[1];
 
+  // Liegt eine Messung bei, wird nur noch nachgezeichnet. Kein Herleiten,
+  // kein Raten - und damit kein Auseinanderlaufen mit der Aufgabenseite.
+  const G = S.flaeche && S.flaeche.gemessen;
+  if (G){
+    const kasten = (m, stil) => {
+      const d = document.createElement('div');
+      Object.assign(d.style, { position:'absolute', left:m.x+'px', top:m.y+'px',
+        width:m.w+'px', height:m.h+'px' }, stil);
+      grund.appendChild(d);
+      return d;
+    };
+    if (G.teiler)
+      kasten(G.teiler, { borderTop: G.teiler.h <= 2
+                           ? '1.5px dashed ' + (F.linie||'#e4d9c7') : '',
+                         borderLeft: G.teiler.h > 2
+                           ? '1.5px dashed ' + (F.linie||'#e4d9c7') : '' });
+    (G.marken || []).forEach(m => {
+      const d = document.createElement('div');
+      Object.assign(d.style, { position:'absolute', left:m.x+'px', top:m.y+'px',
+        fontSize:'15px', color:F.hell||'#6c6357' });
+      d.textContent = m.text; grund.appendChild(d);
+    });
+    if (!rasterAn) return;
+    (G.felder || []).forEach(f => {
+      const d = kasten(f, {
+        border: '1.5px ' + (f.strich || 'dashed') + ' ' + (f.rand || F.rand
+                || '#c9bda6'),
+        display:'flex', alignItems:'flex-start', justifyContent:'center' });
+      if (f.text){
+        const sp = document.createElement('span');
+        Object.assign(sp.style, { fontSize:'14px', marginTop:'5px',
+          // Selbst getippte Gruppennamen sind Befund, nicht Vorlage -
+          // sie stehen deshalb kraeftiger da als die Platzhalter.
+          color: f.selbstbenannt ? (F.akzent||'#9b8ac4') : (F.hell||'#6c6357') });
+        sp.textContent = f.text; d.appendChild(sp);
+      }
+    });
+    return;
+  }
+
   if (H){
     const quer = H.achse === 'y';
     const t = document.createElement('div');
@@ -646,10 +693,15 @@ function strukturZeichnen(breite, rasterAn){
 
   const R = S.flaeche && S.flaeche.raster;
   if (!rasterAn || !R || !R.anzahl) return;
-  const fw = breite * (R.breite||2), fh = breite * 0.844 * (R.hoehe||2);
   const quer = H && H.achse === 'y';
   const zx0 = (H && !quer) ? B * H.teiler + 10 : 14;
-  const spalten = Math.max(1, Math.floor((B - zx0 - 6) / (fw + 10)));
+  // `reihe`: alle Felder nebeneinander ueber die volle Breite. Nur der
+  // Probelauf nutzt das - und nur Pakete ohne Messung landen noch hier.
+  const fw = R.reihe ? (B - 28 - (R.anzahl-1)*10) / R.anzahl
+                     : breite * (R.breite||2);
+  const fh = R.reihe ? breite * 0.844 : breite * 0.844 * (R.hoehe||2);
+  const spalten = R.reihe ? R.anzahl
+                : Math.max(1, Math.floor((B - zx0 - 6) / (fw + 10)));
   const feld = (x,y,w,h,text,zusatz) => {
     const d = document.createElement('div');
     Object.assign(d.style,{position:'absolute',left:x+'px',top:y+'px',
@@ -669,8 +721,13 @@ function strukturZeichnen(breite, rasterAn){
   const y0 = quer ? (S.hoehe||S.tisch[1]) * H.teiler + 40 : 26;
   for (let i = 0; i < R.anzahl; i++){
     r = Math.floor(i / spalten);
-    feld(zx0 + (i % spalten) * (fw+10), y0 + r*(fh+10), fw, fh,
-         R.beschriftung || '', false);
+    // Eine LISTE beschriftet jedes Feld einzeln - sonst stand auf allen
+    // dreien «immer,manchmal,nie» statt auf jedem eines.
+    const bs = Array.isArray(R.beschriftung)
+      ? (R.beschriftung[i] !== undefined ? R.beschriftung[i]
+         : R.beschriftung[R.beschriftung.length-1])
+      : R.beschriftung;
+    feld(zx0 + (i % spalten) * (fw+10), y0 + r*(fh+10), fw, fh, bs || '', false);
   }
   if (R.extra){
     feld(zx0, y0 + (r+1)*(fh+10), B - zx0 - 8,
@@ -681,7 +738,25 @@ function strukturZeichnen(breite, rasterAn){
 function zustandBei(t){
   const lage = {};
   let breite = S.breite, greift = null, letzte = -1;
-  let rasterAn = !!(S.flaeche && S.flaeche.raster && S.flaeche.raster.an !== false);
+  // FEHLERBEHOBEN (2026-08-28, Rikes Befund «beim Probelauf lag ein
+  // Sortierfeld hinten dran, das die Klasse gar nicht eingeblendet hat»):
+  // Hier stand `an !== false`, also «eingeblendet, solange nicht
+  // ausdruecklich abgeschaltet». Die Aufgabenseite macht es umgekehrt und
+  // blendet nur ein, wenn `an` oder `zwingend` gesetzt ist
+  // (kern/htmlvorlage.py, Zeile 2066). Beim Probelauf ist beides nicht
+  // gesetzt: Der Tisch war leer, das Abspielgeraet zeigte zehn Felder.
+  // Liegt eine Messung bei, ist der Anfang nicht geraten, sondern
+  // gerechnet: Gemessen wird am Ende, und jedes Ein- und Ausblenden
+  // steht als Ereignis dazwischen. Ungerade Anzahl -> vorher andersherum.
+  let rasterAn;
+  const G0 = S.flaeche && S.flaeche.gemessen;
+  if (G0 && typeof G0.sichtbar === 'boolean'){
+    const um = S.ereignisse.filter(e => e.was === 'raster').length;
+    rasterAn = (um % 2) ? !G0.sichtbar : G0.sichtbar;
+  } else {
+    const R0 = S.flaeche && S.flaeche.raster;
+    rasterAn = !!(R0 && (R0.an || R0.zwingend));
+  }
 
   const anfang = S.ereignisse.find(e => e.was === 'start');
   if (anfang) anfang.karten.forEach(k => lage[k.karte] = Object.assign({}, k));
