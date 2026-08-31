@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sortieraufgaben · Praxislehrpersonen · 31.08.2026</title>
+<!-- Keine Google-Schriften. Ein <link> im <head> haelt alle
+     nachfolgenden Skripte an, bis er geladen ist - haengt Google, steht
+     der Vortrag. Die Dateien liegen daneben. Siehe
+     bauen/schriften/HERKUNFT.md. Lizenztexte in schriften/. -->
+<style>
+@font-face{font-family:'Fira Sans';font-style:normal;font-weight:400;
+  src:url('schriften/FiraSans-Regular.woff') format('woff')}
+@font-face{font-family:'Fira Sans';font-style:italic;font-weight:400;
+  src:url('schriften/FiraSans-Italic.woff') format('woff')}
+@font-face{font-family:'Fira Sans';font-style:normal;font-weight:600;
+  src:url('schriften/FiraSans-SemiBold.woff') format('woff')}
+@font-face{font-family:'Fira Sans';font-style:normal;font-weight:700;
+  src:url('schriften/FiraSans-Bold.woff') format('woff')}
+@font-face{font-family:'Patrick Hand';font-style:normal;font-weight:400;
+  src:url('schriften/PatrickHand-Regular.woff') format('woff')}
+</style>
+<style>
+:root {
+  --B:#3d5a88;--Bd:#2a3f60;--Bb:#e4ecf5;--Bbd:#b0c4d8;
+  --P:#7a3a88;--Pd:#5c2a66;--Pb:#f3e8f6;--Pbd:#c9a0d4;
+  --A:#374151;--Ab:#f0f1f3;--Abd:#c8ccd0;--Ad:#1a2030;
+  --E:#2a4870;--Ebg:#e3edf7;--O:#7a4a10;--Obg:#fdf0e3;--V:#3d6845;--Vbg:#e8f0ea;
+  --bg:#f5f0e8;--card:#fff;--bd:#e0d8ce;--bd2:#d8d0c4;
+  --tx:#1a1a1a;--mu:#6b7280;--mu2:#9ca3af;
+  --sh:0 2px 8px rgba(0,0,0,.08);
+  --brot:'Fira Sans','Segoe UI',-apple-system,sans-serif;
+  --hand:'Patrick Hand','Bradley Hand','Segoe Print',cursive;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{width:100vw;height:100vh;overflow:hidden;background:#2a2a2a;}
+body{font-family:var(--brot);color:var(--tx);font-size:16px;line-height:1.55;}
+/* Ueberschriften und Hervorhebungen: Patrick Hand.
+   Fliesstext: Fira Sans. */
+h1,h2,h3,h4,h5,.fq,.ctit,.atit,.gt-col h3,.hc h3,.dim h4,.tipp h4,
+.srl h4,.dim-extra h4,.vc-t,.ph-title,.dim>h3
+{font-family:var(--hand);font-weight:400;}
+/* Beschriftungen bleiben Fira Sans. agent/05_layout.md: «Patrick Hand
+   nur fuer Titel und grosse Rollen. Kopfzeilen, Fusszeilen und
+   Beschriftungen immer Fira Sans.» Patrick Hand hat eine kleine
+   x-Hoehe - bei 10 bis 12 Punkt in Versalien ist sie nicht mehr
+   zuverlaessig zu lesen. */
+.hdr-k,.badge,.hlbl,.gt-lbl,.flbl,.bsp-tag,.eov-box .eb-h,.dim-hl,
+.bsp h5,.gt-item h5,.nummer{font-family:var(--brot);}
+
+/* Zahlen und Marken bleiben Fira Sans - Patrick Hand setzt Ziffern
+   unruhig, und eine Nummer ist keine Ueberschrift. */
+.hnum,.anum,.dim-nr,.srl .marke,.nctr,.nb,.nfs{font-family:var(--brot);}
+.slide{display:none;position:absolute;inset:0;flex-direction:column;background:var(--bg);}
+.slide.active{display:flex;}
+
+/* ── headers ── */
+.hdr{color:#fff;padding:13px 52px;flex-shrink:0;position:relative;}
+.hdr.b{background:var(--B);}
+.hdr.a{background:var(--A);}
+.hdr.p{background:var(--P);}
+.hdr-k{font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;opacity:.65;margin-bottom:3px;}
+.hdr h1{font-size:40px;font-weight:400;line-height:1.08;letter-spacing:.01em;}
+.badge{position:absolute;top:13px;right:52px;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.38);}
+
+/* ── body ── */
+.body{flex:1;overflow:hidden;padding:16px 52px 8px;display:flex;flex-direction:column;}
+.body.center{justify-content:center;align-items:center;}
+.sub{font-size:14px;color:var(--mu);margin-bottom:14px;}
+
+/* ── progress ── */
+.pbar{position:fixed;top:0;left:0;right:0;height:3px;z-index:300;background:rgba(0,0,0,.18);}
+.pfill{height:100%;background:rgba(255,255,255,.5);transition:width .3s;}
+
+/* ── nav ── */
+.nav{background:var(--card);border-top:1px solid var(--bd);padding:8px 40px;display:flex;align-items:center;gap:9px;flex-shrink:0;}
+.nb{background:var(--bg);color:var(--tx);border:1px solid var(--bd2);padding:5px 16px;border-radius:6px;cursor:pointer;font-family:var(--brot);font-size:12.5px;font-weight:600;}
+.nb:hover{background:var(--Ab);border-color:var(--Abd);}
+.nb:disabled{opacity:.35;cursor:default;}
+.nb:disabled:hover{background:var(--bg);border-color:var(--bd2);}
+.nctr{font-size:11px;color:var(--mu2);flex:1;text-align:center;}
+.nfs{background:var(--bg);border:1px solid var(--bd2);color:var(--mu);padding:5px 10px;border-radius:6px;cursor:pointer;font-size:15px;font-family:inherit;}
+.nfs:hover{background:var(--Ab);border-color:var(--Abd);}
+
+/* ── card ── */
+.card{background:var(--card);border:1px solid var(--bd);border-radius:8px;box-shadow:var(--sh);overflow:hidden;}
+
+/* ── hub ── */
+.hub{display:flex;gap:16px;flex:1;margin-bottom:4px;}
+.hc{flex:1;background:var(--card);border:1px solid var(--bd);border-radius:9px;box-shadow:var(--sh);padding:20px 24px;display:flex;flex-direction:column;gap:9px;}
+.hc.cl{cursor:pointer;transition:border-color .15s,box-shadow .15s;}
+.hnum{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;}
+.hlbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;}
+.hc h3{font-size:20px;font-weight:700;line-height:1.25;}
+.hdet{font-size:15px;color:var(--mu);line-height:1.5;flex:1;font-weight:300;}
+.harr{font-size:13px;font-weight:700;align-self:flex-end;}
+/* blue */
+.hb{border-color:var(--Bbd);}.hb .hnum{background:var(--Bb);color:var(--Bd);}.hb .hlbl{color:var(--B);}.hb .harr{color:var(--B);}
+.hb.cl:hover{border-color:var(--B);box-shadow:0 3px 14px rgba(61,90,136,.18);}
+/* anthracite */
+.ha{border-color:var(--Abd);}.ha .hnum{background:var(--Ab);color:var(--Ad);}.ha .hlbl{color:var(--A);}.ha .harr{color:var(--A);}
+.ha.cl:hover{border-color:var(--A);box-shadow:0 3px 14px rgba(55,65,81,.18);}
+
+/* ── frage ── */
+.fcard{background:var(--card);border:2px solid var(--Bbd);border-radius:12px;box-shadow:var(--sh);padding:36px 44px;max-width:860px;}
+.flbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--B);margin-bottom:12px;}
+.fq{font-size:36px;font-weight:400;line-height:1.32;}
+
+/* ── chancen cards ── */
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;flex:1;}
+.ccard{background:var(--card);border:1px solid var(--bd);border-radius:9px;box-shadow:var(--sh);padding:18px 20px;display:flex;flex-direction:column;gap:6px;}
+.cicon{font-size:40px;line-height:1;margin-bottom:2px;}
+.ctit{font-size:16px;font-weight:700;line-height:1.3;}
+.cdesc{font-size:14px;color:var(--mu);line-height:1.5;font-weight:300;}
+
+/* ── beispiele grid ── */
+.bsp-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;flex:1;}
+.bsp{background:var(--card);border:1px solid var(--bd);border-radius:9px;box-shadow:var(--sh);overflow:hidden;display:flex;flex-direction:column;}
+.bsp-tag{padding:6px 14px;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--bd);}
+.bsp-tag.tg{background:var(--Bb);color:var(--Bd);}
+.bsp-tag.tr{background:#fef3e2;color:#7a4a10;}
+.bsp-b{padding:12px 14px;flex:1;display:flex;flex-direction:column;gap:4px;}
+.bsp h5{font-size:14px;font-weight:700;line-height:1.3;}
+.bsp p{font-size:12.5px;color:var(--mu);line-height:1.45;font-weight:300;}
+
+/* ── zwei-spalten grundtypen ── */
+.gt-wrap{display:flex;gap:16px;flex:1;}
+.gt-col{flex:1;background:var(--card);border:1px solid var(--bd);border-radius:9px;box-shadow:var(--sh);padding:18px 22px;display:flex;flex-direction:column;}
+.gt-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;}
+.gt-col h3{font-size:20px;font-weight:700;margin-bottom:6px;}
+.gt-desc{font-size:14px;color:var(--mu);line-height:1.55;font-weight:300;margin-bottom:12px;}
+.gt-ex{display:flex;flex-direction:column;gap:7px;flex:1;}
+.gt-item{background:var(--Bb);border:1px solid var(--Bbd);border-radius:6px;padding:9px 13px;}
+.gt-item h5{font-size:12.5px;font-weight:700;color:var(--Bd);margin-bottom:2px;}
+.gt-item p{font-size:11.5px;color:var(--mu);line-height:1.4;font-weight:300;}
+
+/* ── dimension cards ── */
+.dim-row{display:flex;gap:12px;margin-bottom:12px;}
+.dim{background:var(--card);border:1px solid var(--bd);border-radius:9px;box-shadow:var(--sh);padding:16px 18px;flex:1;display:flex;flex-direction:column;gap:5px;}
+.dim-nr{width:24px;height:24px;border-radius:50%;background:var(--Bb);border:1px solid var(--Bbd);color:var(--Bd);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;}
+.dim h4{font-size:15px;font-weight:700;line-height:1.3;}
+.dim p{font-size:13px;color:var(--mu);line-height:1.45;font-weight:300;}
+.dim-hl{font-size:12px;color:var(--B);font-weight:600;margin-top:auto;padding-top:4px;}
+.dim-extra{background:var(--card);border:1px solid var(--bd);border-radius:9px;box-shadow:var(--sh);padding:14px 18px;display:flex;align-items:flex-start;gap:12px;}
+.dim-extra-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+.dim-extra h4{font-size:14px;font-weight:700;margin-bottom:3px;}
+.dim-extra p{font-size:12.5px;color:var(--mu);line-height:1.45;font-weight:300;}
+
+/* ── eov boxes ── */
+.eov-wrap{display:flex;gap:12px;flex:1;}
+.eov-col{flex:1;display:flex;flex-direction:column;gap:8px;}
+.eov-box{background:var(--card);border:1px solid var(--bd);border-radius:9px;box-shadow:var(--sh);padding:14px 16px;flex:1;}
+.eov-box .eb-h{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;}
+.eov-box ul{padding-left:15px;}
+.eov-box li{font-size:13.5px;margin-bottom:5px;line-height:1.45;font-weight:300;}
+.eov-box.eE{border-left:3px solid var(--E);}.eov-box.eE .eb-h{color:var(--E);}
+.eov-box.eO{border-left:3px solid var(--O);}.eov-box.eO .eb-h{color:var(--O);}
+.eov-box.eV{border-left:3px solid var(--V);}.eov-box.eV .eb-h{color:var(--V);}
+.eov-leit{border-radius:7px;padding:10px 14px;font-size:13px;font-weight:600;font-style:italic;line-height:1.45;}
+.eov-leit.lE{background:var(--Ebg);color:var(--E);}
+.eov-leit.lO{background:var(--Obg);color:var(--O);}
+.eov-leit.lV{background:var(--Vbg);color:var(--V);}
+
+/* ── tipps ── */
+.tipp-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;flex:1;}
+.tipp{background:var(--card);border:1px solid var(--bd);border-radius:9px;box-shadow:var(--sh);padding:16px 18px;display:flex;flex-direction:column;gap:5px;}
+.tipp h4{font-size:15px;font-weight:700;line-height:1.3;}
+.tipp p{font-size:13px;color:var(--mu);line-height:1.5;font-weight:300;}
+
+/* ── auftrag step ── */
+.astep{background:var(--card);border:1px solid var(--bd);border-radius:9px;box-shadow:var(--sh);display:flex;align-items:flex-start;gap:18px;padding:18px 22px;margin-bottom:12px;}
+.astep:last-child{margin-bottom:0;}
+.anum{width:36px;height:36px;border-radius:50%;background:var(--Bb);border:1px solid var(--Bbd);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:var(--B);flex-shrink:0;margin-top:2px;}
+.atit{font-size:18px;font-weight:700;margin-bottom:5px;}
+.adesc{font-size:15px;color:var(--mu);line-height:1.6;font-weight:300;}
+
+/* ── ziel ── */
+.ziel{background:var(--Bb);border:1px solid var(--Bbd);border-radius:8px;padding:13px 22px;font-size:14px;color:var(--Bd);line-height:1.6;margin-top:10px;}
+.ziel strong{font-weight:700;}
+
+/* ── vorb card ── */
+.vc{flex:1;background:var(--card);border:1px solid var(--bd);border-radius:9px;box-shadow:var(--sh);padding:15px 18px;}
+.vc-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;}
+.vc-t{font-size:17px;font-weight:700;margin-bottom:4px;}
+.vc-s{font-size:13.5px;color:var(--mu);line-height:1.5;font-weight:300;}
+
+/* ── math ── */
+.math{font-family:'Times New Roman',serif;font-style:italic;}
+
+/* ── SRL: Teilkompetenz oben, was die Gruppe tut darunter ── */
+.srl-kopf{display:flex;gap:14px;align-items:stretch;margin-bottom:13px}
+.srl-def{flex:1;background:var(--card);border:1px solid var(--bd);
+  border-left:3px solid var(--A);border-radius:9px;box-shadow:var(--sh);
+  padding:13px 17px}
+.srl-def .k{font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.1em;color:var(--A);margin-bottom:4px}
+.srl-def p{font-size:13.5px;color:var(--mu);line-height:1.5;font-weight:300}
+.srl-def b{color:var(--tx);font-weight:700}
+.srl-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;flex:1}
+.srl{background:var(--card);border:1px solid var(--bd);border-radius:9px;
+  box-shadow:var(--sh);padding:15px 17px;display:flex;flex-direction:column}
+.srl h4{font-size:16px;font-weight:700;margin-bottom:2px}
+.srl .frage{font-size:12.5px;font-style:italic;color:var(--B);
+  margin-bottom:9px;line-height:1.4}
+.srl p{font-size:13px;color:var(--mu);line-height:1.5;font-weight:300}
+.srl .marke{width:26px;height:26px;border-radius:50%;background:var(--Bb);
+  border:1px solid var(--Bbd);color:var(--Bd);display:flex;
+  align-items:center;justify-content:center;font-size:13px;font-weight:700;
+  margin-bottom:8px}
+
+/* ── platzhalter ── */
+.ph-box{background:var(--card);border:2px dashed var(--bd2);border-radius:12px;padding:40px 50px;max-width:720px;text-align:center;}
+.ph-icon{font-size:36px;margin-bottom:12px;color:var(--mu2);}
+.ph-title{font-size:22px;font-weight:700;margin-bottom:8px;}
+.ph-desc{font-size:15px;color:var(--mu);line-height:1.6;font-weight:300;}
+
+/* ── Einblendung ─────────────────────────────────────────────────
+   Liegt ueber der Folie, nicht daneben: Rike entscheidet am Pult, ob
+   der Punkt jetzt kommt oder erst spaeter auf der Nachlese-Seite. */
+.ov{position:absolute;inset:0;background:rgba(26,32,48,.55);z-index:200;
+  display:none;align-items:center;justify-content:center;padding:34px;}
+.ov.auf{display:flex;}
+.ov-karte{background:var(--card);border-radius:12px;box-shadow:0 18px 60px
+  rgba(0,0,0,.3);max-width:1080px;width:100%;padding:30px 36px;
+  max-height:100%;overflow:auto;}
+.ov-kopf{display:flex;align-items:baseline;gap:14px;margin-bottom:6px;}
+.ov-kopf h3{font-family:var(--hand);font-size:30px;font-weight:400;}
+.ov-zu{margin-left:auto;background:var(--bg);border:1px solid var(--bd2);
+  color:var(--mu);border-radius:6px;padding:4px 12px;cursor:pointer;
+  font-family:var(--brot);font-size:12px;font-weight:600;}
+.ccard.klick,.saeule.klick{cursor:pointer;transition:box-shadow .15s,border-color .15s;}
+.ccard.klick:hover,.saeule.klick:hover{border-color:var(--B);box-shadow:0 3px 14px rgba(61,90,136,.2);}
+
+/* ── Symbolbilder in den Kacheln ─────────────────────────────────
+   Vorbereitet am 2026-08-30. Sobald die Bilder da sind, ersetzt
+   <img class="sym" src="bilder/sym-NAME.jpg" alt=""> den Emoji-Text in
+   .cicon bzw. .ikon - mehr ist nicht zu tun. Rike: «Das sollten nicht
+   so Mini-Icons sein, sondern kleine Symbolbilder, die dürfen auch
+   etwas grösser sein.» Deshalb ein Band ueber der Ueberschrift, wie
+   auf der Grundtypen-Folie, und nicht ein Zeichen davor. */
+.sym{display:block;width:100%;height:156px;object-fit:contain;
+  border-radius:6px;margin-bottom:9px;background:#fdecce;}
+.saeule .sym{height:140px;}
+/* «contain», nicht «cover»: Die Motive sind auf 3:2 komponiert - oben
+   das Motiv, unten die Kaertchen. Ein Zuschnitt auf Bandhoehe wuerde
+   genau die Haelfte wegschneiden, auf die es ankommt. Die cremefarbenen
+   Streifen links und rechts fallen nicht auf, weil das Papier des
+   Bildes denselben Ton hat wie der Grund dahinter.
+   156 px ist gemessen, nicht geraten: bei 180 laeuft Folie 3 ueber. */
+
+/* ── Der Kartensatz auf der Folie ────────────────────────────────
+   Rike, 2026-08-30: «Vielleicht könnte man links diese Funktionskärtchen
+   hinlegen und daneben einfach mal verschiedene Optionen, was man mit
+   denen alles anstellen kann.» Die Karten tragen dieselben Terme wie
+   der Papiersatz, den sie eben in der Hand hatten. */
+.satzfeld{background:var(--card);border:1px solid var(--bd);border-radius:9px;
+  box-shadow:var(--sh);padding:14px;display:grid;
+  grid-template-columns:1fr 1fr;gap:9px;align-content:space-evenly;}
+.fkarte{background:#fffdf9;border:1px solid var(--bd2);border-radius:5px;
+  padding:11px 6px;text-align:center;font-family:'Times New Roman',serif;
+  font-style:italic;font-size:16px;color:var(--tx);}
+.optionen{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;
+  height:100%;align-content:space-evenly;}
+.option{background:var(--card);border:1px solid var(--bd);border-radius:8px;
+  box-shadow:var(--sh);padding:10px 12px;}
+.option .sym{height:auto;aspect-ratio:3/2;margin-bottom:7px;}
+.option h5{font-family:var(--hand);font-size:19px;font-weight:400;
+  line-height:1.15;margin-bottom:2px;}
+.option p{font-size:13px;color:var(--mu);line-height:1.45;font-weight:300;}
+.option .art{font-family:var(--brot);font-size:10px;font-weight:700;
+  letter-spacing:.09em;text-transform:uppercase;color:var(--B);margin-top:5px;}
+.option.getan{border-color:var(--Bbd);background:var(--Bb);}
+
+/* ── Stellschrauben: drei abgesetzte Kaesten ─────────────────────
+   Rike, 2026-08-30: «Die Leisten finde ich gut, aber die drei
+   Stellschrauben müssen sich noch voneinander abheben.» Vorher lagen
+   sie als drei Bloecke ohne Rahmen untereinander und liefen ineinander. */
+.schraube{background:var(--card);border:1px solid var(--bd);border-radius:9px;
+  box-shadow:var(--sh);padding:13px 18px 15px;}
+.schraube+.schraube{margin-top:11px;}
+.schraube .kopf{display:flex;align-items:baseline;gap:10px;}
+/* KEINE Baender auf dieser Folie. Probiert am 2026-08-30 und wieder
+   entfernt: Die drei Bilder in `bilder/band-*.jpg` sind auf 3:1
+   komponiert; in die verfuegbaren 58 px Hoehe gepresst werden daraus
+   Farbstreifen ohne Aussage, und die Folie lief um 32 px ueber. Sie
+   ungeschnitten zu zeigen haette dreimal 130 px gekostet - die Folie
+   traegt das nicht. Die Dateien bleiben liegen, falls eine spaetere,
+   luftigere Fassung sie brauchen kann. */
+.schraube .nr{width:23px;height:23px;border-radius:50%;background:var(--Bb);
+  border:1px solid var(--Bbd);color:var(--Bd);display:flex;align-items:center;
+  justify-content:center;font-family:var(--brot);font-size:12px;font-weight:700;
+  flex-shrink:0;align-self:center;}
+
+/* ── Die drei Fragen, die das Projekt beantwortet ────────────────
+   Sie sind nummeriert und stehen in derselben Reihenfolge wie die
+   Antworten auf der Folie danach. Wer die beiden nebeneinander legt,
+   sieht die Zuordnung. */
+.fragen{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;flex:1;
+  align-content:center;}
+.frage3{background:var(--card);border:1px solid var(--bd);border-radius:9px;
+  box-shadow:var(--sh);padding:17px 19px;display:flex;flex-direction:column;
+  gap:7px;border-top:3px solid var(--B);}
+.frage3 .nr{font-family:var(--brot);font-size:11px;font-weight:700;
+  letter-spacing:.11em;text-transform:uppercase;color:var(--B);}
+.frage3 h4{font-family:var(--hand);font-size:23px;font-weight:400;
+  line-height:1.15;}
+.frage3 p{font-size:13.5px;color:var(--mu);line-height:1.5;font-weight:300;}
+.frage3 .beispiele{font-size:12.5px;color:var(--mu);line-height:1.45;
+  font-weight:300;font-style:italic;margin-top:auto;padding-top:8px;
+  border-top:1px solid var(--bd);}
+
+/* ── Grundtypen knapp, damit die Stellschrauben mit draufpassen ── */
+.gtk{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:13px;}
+.gtk>div{background:var(--card);border:1px solid var(--Bbd);border-radius:9px;
+  box-shadow:var(--sh);padding:12px 16px;display:flex;gap:14px;
+  align-items:center;}
+.gtk img{width:150px;height:100px;object-fit:cover;border-radius:6px;
+  flex-shrink:0;}
+.gtk h4{font-family:var(--hand);font-size:24px;font-weight:400;line-height:1.1;
+  margin-bottom:3px;}
+.gtk h4 span{font-family:var(--brot);font-size:14px;font-weight:600;
+  color:var(--B);}
+.gtk p{font-size:14px;color:var(--mu);line-height:1.45;font-weight:300;}
+
+/* ── Zwei Grundtypen: gleiche Zeilen in beiden Kaesten ───────────
+   Rike, 2026-08-30: «Die Bilder sollen gleich hoch und oben bündig
+   sein, und ‹gleich oder verschieden› und ‹vorher oder nachher›
+   jeweils auf einer Höhe.» Mit `justify-content` allein geht das nicht -
+   die Kaesten richten sich dann nach ihrem eigenen Inhalt. Beide
+   Kaesten tragen deshalb DASSELBE Zeilenraster. */
+.gt2{display:grid;grid-template-columns:1fr 1fr;gap:22px;flex:1;}
+.gt2>div{background:var(--card);border:1px solid var(--Bbd);border-radius:9px;
+  box-shadow:var(--sh);padding:18px 20px;display:grid;
+  grid-template-rows:auto auto auto auto 1fr;gap:9px;align-content:start;}
+.gt2 img{width:100%;height:132px;object-fit:contain;border-radius:6px;
+  background:#faf0dc;}
+.gt2 h4{font-family:var(--hand);font-size:28px;font-weight:400;line-height:1.1;}
+.gt2 .satz{font-size:15px;color:var(--mu);line-height:1.5;font-weight:300;}
+.gt2 .leit{font-family:var(--hand);font-size:23px;color:var(--Bd);}
+.gt2 .bsp{align-self:end;}
+.gt2 .bsp .wozu{font-family:var(--brot);font-size:10.5px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--B);
+  margin-bottom:6px;}
+.gt2 .bsp ul{list-style:none;display:flex;flex-wrap:wrap;gap:7px;}
+.gt2 .bsp li{background:var(--Bb);border:1px solid var(--Bbd);border-radius:6px;
+  padding:6px 12px;font-size:15px;color:var(--Bd);}
+
+/* ── Antragsmuster: Marke, kurzes Wort, eine Zeile ───────────────
+   Aus dem Stiftungsantrag uebernommen: dort steht «Gestaltungs-
+   prinzipien / Qualitaetsrueckgrat aller Produkte» - ein Wort und ein
+   Halbsatz, kein Absatz. Das traegt auf einer Folie besser als Prosa. */
+.saeulen{display:grid;gap:14px;flex:1;align-content:start;}
+.saeulen.v2{grid-template-columns:1fr 1fr;}
+.saeulen.v4{grid-template-columns:repeat(4,1fr);}
+.saeule{background:var(--card);border:1px solid var(--bd);border-radius:9px;
+  box-shadow:var(--sh);padding:16px 19px;display:flex;flex-direction:column;
+  gap:4px;}
+.saeule .ikon{font-size:32px;line-height:1;margin-bottom:3px;}
+.saeule h4{font-family:var(--hand);font-size:21px;font-weight:400;line-height:1.15;}
+.saeule .merk{font-family:var(--brot);font-size:10.5px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;margin-top:auto;padding-top:7px;}
+.saeule .eins{font-size:14px;color:var(--mu);line-height:1.5;font-weight:300;}
+.dimtitel{font-family:var(--hand);font-size:21px;font-weight:400;}
+.dimart{font-family:var(--brot);font-size:11px;font-weight:700;
+  letter-spacing:.09em;text-transform:uppercase;margin-left:9px;}
+.stufen{display:grid;grid-template-columns:repeat(4,1fr);gap:0;
+  border-top:2px solid var(--bd);margin-top:7px;}
+.stufen>div{padding:11px 15px 2px 0;position:relative;}
+.stufen>div::before{content:"";position:absolute;top:-6px;left:0;width:9px;
+  height:9px;border-radius:50%;background:var(--Bbd);}
+.stufen.typ>div::before{background:var(--Pbd);}
+.stufen b{display:block;font-family:var(--brot);font-size:13px;margin-bottom:2px;}
+.stufen span{font-size:12.5px;color:var(--mu);line-height:1.4;font-weight:300;}
+
+/* ── Offene Bildplaetze ──────────────────────────────────────────
+   Sichtbar, damit sie nicht vergessen gehen - und mit dem Auftrag
+   daneben, damit klar ist, WAS dort hin soll. Vor dem Vortrag
+   entfernen oder durch das Bild ersetzen. */
+.bildplatz{border:2px dashed var(--bd2);border-radius:10px;padding:20px 22px;
+  display:flex;flex-direction:column;justify-content:center;height:100%;
+  background:repeating-linear-gradient(45deg,transparent,transparent 9px,
+    rgba(0,0,0,.02) 9px,rgba(0,0,0,.02) 18px);}
+.bildplatz .wer{font-family:var(--brot);font-size:10px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;margin-bottom:7px;}
+.bildplatz.erzeugt .wer{color:var(--O);}
+.bildplatz.echt .wer{color:var(--P);}
+.bildplatz .auftrag{font-size:13.5px;color:var(--mu);line-height:1.55;
+  font-weight:300;}
+.bildplatz .auftrag b{color:var(--tx);}
+
+/* ── Bilder ─────────────────────────────────────────────────────── */
+.bild{border-radius:10px;box-shadow:var(--sh);display:block;width:100%;
+  height:100%;object-fit:cover;}
+/* Bilder, bei denen die ganze Komposition die Aussage traegt, duerfen
+   nicht beschnitten werden - `weiterarbeiten.jpg` zeigt drei Schritte,
+   und «cover» schneidet den ersten und den dritten ab. */
+.bild.ganz{object-fit:contain;box-shadow:none;}
+.zweispalt{display:flex;gap:30px;align-items:center;width:100%;flex:1;
+  min-height:0;}
+.zweispalt>.links{flex:1.05;min-width:0;height:100%;display:flex;}
+.zweispalt>.rechts{flex:1;min-width:0;}
+.beat{display:flex;gap:13px;align-items:baseline;padding:9px 0;
+  border-bottom:1px solid var(--bd);}
+.beat:last-of-type{border-bottom:0;}
+.beat .nr{font-family:var(--brot);font-size:11px;font-weight:700;
+  color:var(--B);letter-spacing:.1em;flex-shrink:0;width:22px;}
+.beat .was{font-family:var(--hand);font-size:23px;line-height:1.15;}
+.beat .wie{font-size:13.5px;color:var(--mu);font-weight:300;}
+
+/* ── Grade fuer Patrick Hand ──────────────────────────────────────
+   Patrick Hand hat eine kleinere x-Hoehe als Fira Sans und braucht bei
+   gleicher Wirkung mehr Grad. Diese Regeln stehen bewusst am ENDE des
+   Blocks: sie heben die Grade der Bauteile oben an, und dafuer muessen
+   sie spaeter kommen. */
+.ctit{font-size:21px;font-weight:400;line-height:1.2;}
+.dim h4,.tipp h4,.srl h4,.dim-extra h4{font-size:20px;font-weight:400;line-height:1.2;}
+.gt-col h3,.hc h3{font-size:25px;font-weight:400;}
+.atit{font-size:22px;font-weight:400;}
+.dim>h3{font-size:22px;font-weight:400;}
+.leitsatz{font-family:var(--hand);font-weight:400;}
+</style>
+</head>
+<body>
+<div class="pbar"><div class="pfill" id="pf"></div></div>
+
+<noscript>
+  <div style="position:fixed;inset:0;z-index:999;background:#f5f0e8;
+       display:flex;align-items:center;justify-content:center;padding:40px;
+       font-family:'Fira Sans',sans-serif;">
+    <div style="max-width:620px;background:#fff;border:1px solid #e0d8ce;
+         border-radius:12px;padding:34px 40px;box-shadow:0 2px 8px rgba(0,0,0,.08);">
+      <p style="font-family:'Patrick Hand',cursive;font-size:30px;
+         margin-bottom:14px;">Hier läuft kein JavaScript</p>
+      <p style="font-size:16px;line-height:1.65;color:#6b7280;">
+        Deshalb siehst du nur diese eine Folie, und die Knöpfe tun nichts.
+        Das liegt nicht an der Datei — Vorschaufenster in Chat- und
+        Mailprogrammen führen keine Skripte aus.</p>
+      <p style="font-size:16px;line-height:1.65;color:#6b7280;margin-top:14px;">
+        <b style="color:#1a1a1a;">So geht es:</b> im Ordner
+        <code>projekte/sort/vortraege/2026-08-31_praxislehrpersonen/</code>
+        auf <b>«VORTRAG STARTEN.command»</b> doppelklicken. Oder
+        <code>vortrag.html</code> selbst doppelklicken — dann öffnet sie
+        im richtigen Browser.</p>
+    </div>
+  </div>
+</noscript>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     Vortrag Praxislehrpersonen, 31.08.2026
+     Gestaltung und Inhalt aus der Seminarsitzung Woche 5 (S4-S10),
+     eingefroren in ../../quellen/2026-08-29_Seminar_W5/.
+     Teil A wird erzaehlt und hat bewusst keine Folie.
+     Der Auftrag steht auf B1 und wird nicht vorweggenommen: Was
+     herauskommen soll, steht auf keiner Folie, die die Gruppe waehrend
+     des Legens sieht (agent/02_didaktische_prinzipien.md).
+     ═══════════════════════════════════════════════════════════════ -->
+
+<!-- ══ A1 · EINSTIEG ══ -->
+<div class="slide active" id="a1">
+  <div class="hdr b">
+    <div class="hdr-k">Praxislehrpersonen · 31. August 2026</div>
+    <h1>Kärtchen sortieren</h1>
+    <div class="badge">Heute Abend</div>
+  </div>
+  <div class="body">
+    <div class="zweispalt">
+      <div class="links">
+        <img class="bild" src="bilder/in-aktion1.jpg"
+             alt="Drei Lernende sortieren Termkärtchen auf dem Tisch, daneben
+                  dieselbe Sortierung auf einem Tablet.">
+      </div>
+      <div class="rechts">
+        <div class="beat"><span class="nr">01</span>
+          <div><div class="was">Selber ausprobieren</div>
+            <div class="wie">Eine Aufgabe, die so im Unterricht gelaufen ist.</div></div></div>
+        <div class="beat"><span class="nr">02</span>
+          <div><div class="was">Was sich daraus alles machen lässt</div>
+            <div class="wie">Und woran sich der Aufbau entscheidet.</div></div></div>
+        <div class="beat"><span class="nr">03</span>
+          <div><div class="was">Warum lohnt sich das?</div>
+            <div class="wie">Was beim Sortieren passiert, das sonst ausbleibt.</div></div></div>
+        <div class="beat"><span class="nr">04</span>
+          <div><div class="was">Was wir vorhaben</div>
+            <div class="wie">Und wo ihr selbst hineinschauen könnt.</div></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="nav"><button class="nb" onclick="nav(-1)">← zurück</button>
+    <span class="nctr"></span>
+    <button class="nb" onclick="nav(1)">weiter →</button>
+    <button class="nfs" onclick="tFS()">⛶</button></div>
+</div>
+
+<!-- ══ B1 · AUFTRAG ══ -->
+<div class="slide" id="b1">
+  <div class="hdr b">
+    <div class="hdr-k">Sortieraufgaben · Praxislehrpersonen · Selber legen</div>
+    <h1>Funktionen sortieren</h1>
+    <div class="badge">Auftrag</div>
+  </div>
+  <div class="body">
+    <div class="zweispalt">
+      <div class="links">
+        <img class="bild" src="bilder/in-aktion3.jpg"
+             alt="Fünf Lernende sitzen um einen Tisch und ordnen Termkärtchen
+                  in drei Gruppen.">
+      </div>
+      <div class="rechts">
+        <div class="astep" style="margin-bottom:10px;">
+          <div class="anum">1</div>
+          <div>
+            <div class="atit">Sortiert die Kärtchen so, wie <em>ihr</em> es für
+              sinnvoll haltet.</div>
+            <div class="adesc">Nach welchen Kriterien geht ihr vor?</div>
+          </div>
+        </div>
+        <div class="astep">
+          <div class="anum">2</div>
+          <div>
+            <div class="atit">Welche Sortierung würden <em>eure Schülerinnen
+              und Schüler</em> vornehmen?</div>
+            <div class="adesc">Was würden sie schaffen — was vermutlich noch
+              nicht?</div>
+          </div>
+        </div>
+        <div class="ziel">
+          <strong>Kontext:</strong> Quadratische Funktionen und
+          Potenzfunktionen sind bekannt. Exponentialfunktionen noch nicht.
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="nav"><button class="nb" onclick="nav(-1)">← zurück</button>
+    <span class="nctr"></span>
+    <button class="nb" onclick="nav(1)">weiter →</button>
+    <button class="nfs" onclick="tFS()">⛶</button></div>
+</div>
+
+<!-- ══ C1 · FUENF STAERKEN ══
+     Drei Listen lagen vor und ueberschnitten sich: die vier von Folie
+     S5 der Seminarsitzung, die vier der Retraite-Fassung (Station 3)
+     und Rikes eigene muendliche Aufzaehlung aus Teil A. Hier sind sie
+     zusammengefuehrt. «Niedrige Einstiegshuerde» stand in zweien der
+     drei, fehlte aber auf S5 und damit in der ersten Fassung dieser
+     Folie. «Kognitiv aktivierend» und «diskursiv» waren da, aber nicht
+     benannt — Rike, 2026-08-29. -->
+<div class="slide" id="c1">
+  <div class="hdr b">
+    <div class="hdr-k">Sortieraufgaben · Praxislehrpersonen · Warum</div>
+    <h1>Warum lohnen sich Kärtchensortieraufgaben?</h1>
+    <div class="badge">Chancen</div>
+  </div>
+  <div class="body">
+    <div class="cgrid" style="grid-template-columns:1fr 1fr 1fr;">
+      <div class="ccard"><img class="sym" src="bilder/sym-einstieg.jpg" alt="">
+        <div class="ctit">Niedrige Einstiegshürde</div>
+        <div class="cdesc">Alle können sofort beginnen, auch wenn noch nicht
+          alles verstanden ist. Niemand sitzt vor einem leeren Blatt — die
+          Karten liegen ja schon da.</div></div>
+      <div class="ccard"><img class="sym" src="bilder/sym-aktivierend.jpg" alt="">
+        <div class="ctit">Kognitiv aktivierend</div>
+        <div class="cdesc">Vergleichen, ordnen, entscheiden, Zusammenhänge
+          herstellen. Jedes Kärtchen verlangt eine Positionierung — man kann
+          nicht durchlesen und nicken.</div></div>
+      <div class="ccard"><img class="sym" src="bilder/sym-diskursiv.jpg" alt="">
+        <div class="ctit">Stark diskursiv</div>
+        <div class="cdesc">Die Sortierung liegt sichtbar, verhandelbar und
+          verschiebbar auf dem Tisch. Unterschiede fallen sofort auf — und
+          spätestens beim Widerspruch muss inhaltlich begründet werden.</div></div>
+      <div class="ccard"><img class="sym" src="bilder/sym-differenzierend.jpg" alt="">
+        <div class="ctit">Natürlich differenzierend</div>
+        <div class="cdesc">Einstieg über Intuition, Formalisierung über die
+          Begründung. Dieselbe Aufgabe trägt vom einfachen Sortieren bis zur
+          anspruchsvollen Begründung.</div></div>
+      <div class="ccard"><img class="sym" src="bilder/sym-diagnostisch.jpg" alt="">
+        <div class="ctit">Diagnostisch reichhaltig</div>
+        <div class="cdesc"><em>Wie</em> sortiert wird, zeigt Vorstellungen und
+          Fehlvorstellungen oft deutlicher als eine gelöste Aufgabe. Ihr seht,
+          was Lernende wahrnehmen und wie sie Kategorien bilden.</div></div>
+      <div class="ccard klick" style="border-color:var(--Bbd);background:var(--Bb);"
+           onclick="ov('ovSRL',true)" title="Anklicken oder Taste S — blendet die Einzelheiten ein">
+        <img class="sym" src="bilder/sym-srl.jpg" alt="">
+        <div class="ctit">Sie üben das Selbstregulieren</div>
+        <div class="cdesc">Planen, prüfen, begründen, zurückschauen — und zwar
+          ohne dass es jemand ansagt. Eine Selbstlernphase ist nicht
+          automatisch eine, in der das geübt wird.</div></div>
+    </div>
+  </div>
+  <div class="nav"><button class="nb" onclick="nav(-1)">← zurück</button>
+    <span class="nctr"></span>
+    <button class="nb" onclick="nav(1)">weiter →</button>
+    <button class="nfs" onclick="tFS()">⛶</button></div>
+  <!-- Einblendung zum Selbstregulieren. Rike entscheidet am Pult, ob
+       der Punkt jetzt kommt oder erst auf der Nachlese-Seite. Die
+       Begriffe stammen aus profile/schule.md. -->
+  <div class="ov" id="ovSRL" onclick="if(event.target===this)zu()">
+    <div class="ov-karte">
+      <div class="ov-kopf">
+        <h3>Sie üben das Selbstregulieren</h3>
+        <button class="ov-zu" onclick="zu()">schliessen · Esc</button>
+      </div>
+      <p style="font-size:15px;color:var(--mu);line-height:1.6;font-weight:300;
+         margin-bottom:18px;max-width:78ch;">
+        <b style="color:var(--tx);">Selbstorganisiert</b> ist die
+        Organisationsform — ohne ständige Anleitung.
+        <b style="color:var(--tx);">Selbstreguliert</b> ist das Kompetenzziel.
+        Das eine folgt nicht aus dem anderen: Eine Selbstlernphase kann auch
+        reines Abarbeiten sein. Geübt wird es nur, wenn die Aufgabe es
+        verlangt — und das tut sie hier, ohne dass jemand es ansagt.</p>
+      <div class="srl-grid">
+        <div class="srl"><div class="marke">1</div><h4>Planen</h4>
+          <div class="frage">«Womit fangen wir an?»</div>
+          <p>Ein Vorgehen wählen, bevor die erste Karte liegt. Der Auftrag gibt
+            kein Kriterium vor — die Gruppe muss selbst eines setzen.</p></div>
+        <div class="srl"><div class="marke">2</div><h4>Monitoring</h4>
+          <div class="frage">«Trägt unser Kriterium noch?»</div>
+          <p>Passt eine Karte nicht, ist die eigene Regel an ihrer Grenze. Weil
+            die Sortierung sichtbar daliegt, fällt das auf.</p></div>
+        <div class="srl"><div class="marke">3</div><h4>Begründen</h4>
+          <div class="frage">«Warum dorthin?»</div>
+          <p>Bei Widerspruch reicht «finde ich» nicht — vor Leuten, die
+            danebensitzen und anderer Meinung sind.</p></div>
+        <div class="srl"><div class="marke">4</div><h4>Reflektieren</h4>
+          <div class="frage">«Was hat es nicht erfasst?»</div>
+          <p>Zwei Gruppen, zwei Sortierungen. Die Frage, warum, ist nicht
+            gestellt worden — sie stellt sich.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══ C3 · GRUNDTYPEN UND STELLSCHRAUBEN ══
+     Zusammengelegt am 2026-08-30. Rike: «Ich überlege, dass wir die
+     Beispiele dort komplett weglassen und stattdessen die Grundtypen
+     und die Stellschrauben auf eine Folie bringen. Wir brauchen
+     vielleicht auch gar nicht so viel Text bei Gruppieren, dann hätten
+     wir Platz. Weil dann kommen die Beispieltypen ja automatisch
+     danach.» Genau so: die Beispiele stehen jetzt nur noch auf der
+     folgenden Folie, ausfuehrlich und an den eigenen Kaertchen.
+     Die Leitfrage steht in Klammern beim Titel - als eigene Zeile sah
+     sie aus wie eine Ueberschrift, auf die nichts folgt. -->
+<div class="slide" id="c3">
+  <div class="hdr b">
+    <div class="hdr-k">Sortieraufgaben · Praxislehrpersonen · Bauen</div>
+    <h1>Woran entscheidet sich der Aufbau?</h1>
+    <div class="badge">Typen und Schrauben</div>
+  </div>
+  <div class="body">
+    <div class="sub">Die sechs Aufgaben von eben unterscheiden sich in vier
+      Dingen — einem grundsätzlichen und drei Stellschrauben.</div>
+    <div class="gtk">
+      <div>
+        <img src="bilder/c3-gruppieren.jpg" alt="Neun Kärtchen liegen in drei
+             losen Häufchen.">
+        <div>
+          <h4>Gruppieren <span>(gleich oder verschieden?)</span></h4>
+          <p>A gehört mit B zusammen, also auch B mit A. <b>Symmetrisch</b> —
+            am Ende stehen Gruppen.</p>
+        </div>
+      </div>
+      <div>
+        <img src="bilder/c3-reihen.jpg" alt="Dieselben Kärtchen liegen in einer
+             Reihe, mit Pfeilen.">
+        <div>
+          <h4>Reihen <span>(vorher oder nachher?)</span></h4>
+          <p>A kommt vor B, und dann nicht B vor A. <b>Asymmetrisch</b> —
+            am Ende steht eine Reihenfolge.</p>
+        </div>
+      </div>
+    </div>
+    <div class="schraube">
+      <div class="kopf"><span class="nr">1</span>
+        <span class="dimtitel">Offenheit</span>
+        <span class="dimart" style="color:var(--mu);">Spektrum</span></div>
+      <div class="stufen">
+        <div><b>offen</b><span>«Sortiert in Gruppen»</span></div>
+        <div><b>Richtung</b><span>«Sortiert nach Typ»</span></div>
+        <div><b>Kategorien</b><span>«Polynome / Nicht-Polynome»</span></div>
+        <div><b>geschlossen</b><span>«linear / quadratisch / exponentiell»</span></div>
+      </div>
+    </div>
+    <div class="schraube">
+      <div class="kopf"><span class="nr">2</span>
+        <span class="dimtitel">Eindeutigkeit</span>
+        <span class="dimart" style="color:var(--P);">Typologie — keine Skala</span></div>
+      <div class="stufen typ" style="border-top-color:var(--Pbd);">
+        <div><b>A · eindeutig</b><span>Genau eine richtige Zuordnung</span></div>
+        <div><b>B · mathematisch mehrdeutig</b><span>Mehrere Kriterien treffen zu</span></div>
+        <div><b>C · wissensabhängig</b><span>Bestimmbar — mit dem nötigen Wissen</span></div>
+        <div><b>D · subjektiv mehrdeutig</b><span>Kein objektives Richtig</span></div>
+      </div>
+    </div>
+    <div class="schraube">
+      <div class="kopf"><span class="nr">3</span>
+        <span class="dimtitel">Vollständigkeit</span>
+        <span class="dimart" style="color:var(--mu);">Spektrum</span></div>
+      <div class="stufen">
+        <div><b>vollständig</b><span>Alle Kärtchen</span></div>
+        <div><b>mit Ausnahmen</b><span>Was nicht passt, kommt beiseite</span></div>
+        <div><b>selektiv</b><span>«Findet möglichst viele …»</span></div>
+        <div><b>punktuell</b><span>«Findet drei, die ein Tripel bilden»</span></div>
+      </div>
+    </div>
+    <p style="margin-top:10px;font-size:14px;color:var(--mu);text-align:center;
+       font-weight:300;"><b style="color:var(--tx);">Eure Aufgabe von vorhin:</b>
+       offen · vollständig · Eindeutigkeit <b style="color:var(--tx);">B und C</b>
+       — man kann ein ganz anderes Kriterium anlegen, und der
+       Definitionsbereich verlangt Wissen.</p>
+  </div>
+  <div class="nav"><button class="nb" onclick="nav(-1)">← zurück</button>
+    <span class="nctr"></span>
+    <button class="nb" onclick="nav(1)">weiter →</button>
+    <button class="nfs" onclick="tFS()">⛶</button></div>
+</div>
+
+
+
+
+<!-- ══ C5B · WAS LAESST SICH MIT EINEM KARTENSATZ ANSTELLEN ══
+     Umgebaut am 2026-08-30 auf Rikes Wunsch: nicht abstrakte Beispiele,
+     sondern DIE Karten, die sie eben in der Hand hatten. «Da müssen sie
+     sich nicht immer in ein neues Kärtchenformat eindenken, sondern
+     können bei den Kärtchen, die sie haben, schauen, was könnte man mit
+     dem Kartensatz jetzt alles machen.» Sechs Optionen statt drei.
+     Die Terme stimmen mit `projekte/sort/themen/polynomfunktionen/
+     inhalte.py` ueberein - es sind dieselben Karten.
+     BILD FÜR CHATGPT · C5B ················································
+       Gewuenscht: eigene gezeichnete Ikonen fuer die sechs Optionen,
+       im Stil der Projektbilder. Auftrag in BILDER_auftrag.md.
+     ······································································· -->
+<div class="slide" id="c5b">
+  <div class="hdr b">
+    <div class="hdr-k">Sortieraufgaben · Praxislehrpersonen · Vielfalt</div>
+    <h1>Was lässt sich mit einem Kartensatz alles anstellen?</h1>
+    <div class="badge">Beispiele</div>
+  </div>
+  <div class="body">
+    <div class="zweispalt" style="gap:20px;align-items:stretch;">
+      <div style="flex:.72;display:flex;flex-direction:column;">
+        <div class="dimart" style="color:var(--mu);margin:0 0 7px 2px;">
+          Eure Karten von vorhin</div>
+        <div class="satzfeld" style="flex:1;">
+          <div class="fkarte">√2 · x − 8</div>
+          <div class="fkarte">4</div>
+          <div class="fkarte">2<sup>x</sup> + 1</div>
+          <div class="fkarte">1 / x</div>
+          <div class="fkarte">√x · √x</div>
+          <div class="fkarte">x</div>
+          <div class="fkarte">−3 (x + 2)<sup>5</sup></div>
+          <div class="fkarte">2√x</div>
+          <div class="fkarte">(x<sup>7</sup> + x) / x</div>
+          <div class="fkarte">x<sup>6</sup> + 1</div>
+        </div>
+      </div>
+      <div style="flex:1.28;display:flex;flex-direction:column;">
+        <div class="dimart" style="color:var(--mu);margin:0 0 7px 2px;">
+          Und was man damit stellen kann</div>
+        <div class="optionen">
+          <div class="option getan">
+            <img class="sym" src="bilder/sym-offen.jpg" alt="">
+            <h5>Offen sortieren</h5>
+            <p>«Sortiert, wie es euch sinnvoll erscheint.»</p>
+            <div class="art">Gruppieren · offen — das habt ihr gemacht</div></div>
+          <div class="option">
+            <img class="sym" src="bilder/sym-eindringling.jpg" alt="">
+            <h5>Der Eindringling</h5>
+            <p>«Drei Karten, eine gehört nicht dazu — welche, und woran habt
+              ihr es erkannt?»</p>
+            <div class="art">Gruppieren · punktuell</div></div>
+          <div class="option">
+            <img class="sym" src="bilder/sym-paare.jpg" alt="">
+            <h5>Paare finden</h5>
+            <p>«Welche zwei beschreiben dieselbe Funktion?» — und welche nur
+              fast?</p>
+            <div class="art">Gruppieren · geschlossen</div></div>
+          <div class="option">
+            <img class="sym" src="bilder/sym-venn.jpg" alt="">
+            <h5>Eigenschaften prüfen</h5>
+            <p>«Polynom? Überall definiert?» Zwei Kreise, und manche Karte
+              liegt in beiden.</p>
+            <div class="art">Gruppieren · Venn</div></div>
+          <div class="option">
+            <img class="sym" src="bilder/sym-reihen.jpg" alt="">
+            <h5>Nach Wachstum ordnen</h5>
+            <p>«Legt sie in eine Reihe: Welche wächst am schnellsten?»</p>
+            <div class="art">Reihen · Richtung vorgegeben</div></div>
+          <div class="option">
+            <img class="sym" src="bilder/sym-immer.jpg" alt="">
+            <h5>Immer – manchmal – nie</h5>
+            <p>«Eine Wurzel im Term heisst, dass es kein Polynom ist.»
+              Stimmt das?</p>
+            <div class="art">Aussagen beurteilen</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="nav"><button class="nb" onclick="nav(-1)">← zurück</button>
+    <span class="nctr"></span>
+    <button class="nb" onclick="nav(1)">weiter →</button>
+    <button class="nfs" onclick="tFS()">⛶</button></div>
+</div>
+
+<!-- ══ C5F · WAS ES BRAUCHT ══
+     Umgebaut am 2026-08-31. Vorher stand hier nur die Frage «Was macht
+     eine gute Sortieraufgabe aus?». Rike: «Da sollte deutlich nicht nur
+     die Frage draufstehen, sondern das Feld ein bisschen aufgerollt
+     werden.» Der Aufhaenger kommt von der Folie davor, die das
+     Selbstregulieren betont: Wenn die Aufgaben dafuer so viel taugen,
+     was muss dann getan werden, damit sie in selbstregulierten Phasen
+     wirklich ankommen?
+     Die drei Fragen stehen in DERSELBEN Reihenfolge wie die Antworten
+     auf der naechsten Folie. Diese Folie bereitet vor, was dort steht;
+     die naechste bleibt unveraendert. -->
+<div class="slide" id="c5f">
+  <div class="hdr a">
+    <div class="hdr-k">Sortieraufgaben · Praxislehrpersonen</div>
+    <h1>Was es braucht, damit sie ankommen</h1>
+    <div class="badge">Scharnier</div>
+  </div>
+  <div class="body">
+    <div class="sub" style="font-size:16px;color:var(--tx);">Wenn solche
+      Kärtchen so viel Potenzial haben — gerade für selbstregulierte
+      Phasen —, dann müssen sie stärker in den Unterricht hinein. Dafür
+      sind drei Fragen zu klären.</div>
+    <div class="fragen">
+      <div class="frage3">
+        <div class="nr">Frage 1 · Gestaltung</div>
+        <h4>Wie muss sie gebaut sein, damit sie trägt?</h4>
+        <p>Welche Kärtchen gehören hinein, und wie viele? Welcher Typ eignet
+          sich wann — und welches Ziel erreiche ich womit?</p>
+        <div class="beispiele">Ohne strittige Fälle stellt die Aufgabe keine
+          Frage. Aber welche, und wie viele?</div>
+      </div>
+      <div class="frage3">
+        <div class="nr">Frage 2 · Aufbereitung</div>
+        <h4>Wie kommt die Sortierung zurück ins Plenum?</h4>
+        <p>In einer selbstregulierten Phase ist die Lehrperson nicht dabei.
+          Was die Gruppen gelegt und begründet haben, muss trotzdem
+          anschlussfähig bleiben.</p>
+        <div class="beispiele">Papierkärtchen werden eingesammelt — und damit
+          ist die Arbeit weg.</div>
+      </div>
+      <div class="frage3">
+        <div class="nr">Frage 3 · Aufwand</div>
+        <h4>Wie unterstützt man Lehrpersonen beim Herstellen?</h4>
+        <p>Kärtchen auswählen, setzen, drucken, schneiden, sortieren — bevor
+          überhaupt jemand etwas gelegt hat. Der Aufwand entscheidet, ob so
+          eine Aufgabe ein zweites Mal zum Einsatz kommt.</p>
+        <div class="beispiele">Ihr habt heute einen Satz bekommen. Wer baut
+          den nächsten?</div>
+      </div>
+    </div>
+  </div>
+  <div class="nav"><button class="nb" onclick="nav(-1)">← zurück</button>
+    <span class="nctr"></span>
+    <button class="nb" onclick="nav(1)">weiter →</button>
+    <button class="nfs" onclick="tFS()">⛶</button></div>
+</div>
+
+<!-- ══ D1 · WAS WIR VORHABEN ══
+     Umgebaut am 2026-08-29 nach dem Muster des Stiftungsantrags
+     (~/Downloads/sort_antrag-v2.pdf): dort steht «Vier Produkte fuer
+     Praxis und Unterricht» als vier Marken mit je einem Halbsatz, dazu
+     eine Faktenleiste «Auf einen Blick». Genau das traegt hier auch.
+     Der beantragte Betrag steht bewusst NICHT auf der Folie - fuer
+     Praxislehrpersonen ohne Belang und lenkt ab. -->
+<div class="slide" id="d1">
+  <div class="hdr p">
+    <div class="hdr-k">Sortieraufgaben · Praxislehrpersonen · Das Projekt</div>
+    <h1>Was wir vorhaben</h1>
+    <div class="badge">SORT</div>
+  </div>
+  <div class="body">
+    <div class="sub"><b>S</b>ortieren · <b>O</b>rdnen · <b>R</b>eflektieren ·
+      <b>T</b>ransfer — Kärtchensortieraufgaben für selbstreguliertes Lernen.
+      12 Monate · 5 Klassen · Reussbühl und Hochdorf · gefördert von der
+      Milton Ray Hartmann Stiftung.</div>
+    <div class="saeulen v4">
+      <div class="saeule"><img class="sym" src="bilder/sym-prinzipien.jpg" alt="">
+        <h4>Gestaltungs&shy;prinzipien</h4>
+        <div class="eins">Das Qualitätsrückgrat aller anderen Produkte.</div></div>
+      <div class="saeule klick" onclick="ov('ovDIGITAL',true)"
+           title="Anklicken oder Taste D — warum überhaupt digital?">
+        <img class="sym" src="bilder/sym-sets.jpg" alt="">
+        <h4>Digitale Kärtchensets</h4>
+        <div class="eins">Fertige Sets für den Unterricht — drei Themen sind
+          gebaut, weitere folgen.<br>
+          <span style="color:var(--P);font-weight:600;">warum digital?</span></div></div>
+      <div class="saeule"><img class="sym" src="bilder/sym-handreichung.jpg" alt="">
+        <h4>Didaktische Handreichung</h4>
+        <div class="eins">Leitfragen für den Unterricht.</div></div>
+      <div class="saeule"><img class="sym" src="bilder/sym-assistent.jpg" alt="">
+        <h4>Didaktischer Assistent</h4>
+        <div class="eins">Hilft beim Bauen eigener Sets — kennt die
+          Gestaltungsprinzipien und fragt danach.</div></div>
+    </div>
+    <div class="stufen" style="margin-top:16px;border-top-color:var(--Pbd);">
+      <div style="--x:1"><b>1 · Konzeption</b><span>Kartensätze und Aufgaben entwerfen</span></div>
+      <div><b>2 · Erprobung</b><span>Im Unterricht, an zwei Schulen</span></div>
+      <div><b>3 · Auswertung</b><span>Was trägt, was nicht</span></div>
+      <div><b>4 · Aufbereitung</b><span>Weitergeben an die Praxis</span></div>
+    </div>
+    <div class="ziel" style="margin-top:14px;"><strong>Wir sind bei 2.</strong></div>
+  </div>
+  <div class="nav"><button class="nb" onclick="nav(-1)">← zurück</button>
+    <span class="nctr"></span>
+    <button class="nb" onclick="nav(1)">weiter →</button>
+    <button class="nfs" onclick="tFS()">⛶</button></div>
+  <!-- Exkurs: warum ueberhaupt digital. Haengt an «Digitale
+       Kaertchensets», weil es dort hingehoert - eine Nebenbemerkung,
+       keine eigene Station. Taste D. -->
+  <div class="ov" id="ovDIGITAL" onclick="if(event.target===this)zu()">
+    <div class="ov-karte">
+      <div class="ov-kopf">
+        <h3>Warum überhaupt digital?</h3>
+        <button class="ov-zu" onclick="zu()">schliessen · Esc</button>
+      </div>
+      <div class="zweispalt" style="gap:26px;align-items:center;">
+        <div style="flex:1.1;">
+          <img class="bild ganz" src="bilder/weiterarbeiten.jpg"
+               style="height:auto;max-height:300px;"
+               alt="Drei Schritte: Sortierstände sichern, am Rechner
+                    vergleichen und wählen, danach weiterarbeiten und
+                    vertiefen.">
+        </div>
+        <div style="flex:1;">
+          <p style="font-size:16px;line-height:1.6;margin-bottom:14px;">
+            Papierkärtchen werden am Ende der Stunde eingesammelt —
+            <b>und damit ist die Arbeit weg.</b></p>
+          <div class="beat"><span class="nr">01</span>
+            <div><div class="was">Sie bleibt liegen</div>
+              <div class="wie">Sichern statt einsammeln.</div></div></div>
+          <div class="beat"><span class="nr">02</span>
+            <div><div class="was">Sie wird vergleichbar</div>
+              <div class="wie">Zwei Gruppen, zwei Sortierungen, nebeneinander.</div></div></div>
+          <div class="beat"><span class="nr">03</span>
+            <div><div class="was">Sie geht weiter</div>
+              <div class="wie">Nächste Stunde wieder aufgreifen — daraus wird
+                das Klassengespräch.</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- ══ D0 · SELBER REINSCHAUEN ══
+     Die Adresse traegt die Folie erst, wenn die Seite veroeffentlicht
+     ist - und das ist noch nicht entschieden. Siehe LIESMICH.md. -->
+<div class="slide" id="d0">
+  <div class="hdr p">
+    <div class="hdr-k">Sortieraufgaben · Praxislehrpersonen · Ausprobieren</div>
+    <h1>So sieht es aus</h1>
+    <div class="badge">Ausprobieren</div>
+  </div>
+  <div class="body">
+    <div class="zweispalt" style="gap:24px;">
+      <div class="links" style="flex:1.75;">
+        <img class="bild ganz" src="bilder/d0-eindringling-variablen-und-terme.jpg"
+             alt="Browseransicht der Aufgabe «Der Eindringling» mit vier Zeilen
+                  aus je einer Figurenkarte, drei Termkarten und einem
+                  Ablagefeld.">
+      </div>
+      <div class="rechts">
+        <!-- Nicht «zwei Aufgaben»: Rike und Maurus entscheiden am
+             31.08., was gezeigt wird. Vorbereitet ist alles. -->
+        <p style="font-size:16px;color:var(--mu);line-height:1.65;
+           font-weight:300;margin-bottom:18px;">Unsere Sortieraufgaben — so,
+           wie eine Klasse sie bekommt.</p>
+        <div class="fcard" style="border-color:var(--Pbd);padding:24px 28px;
+             text-align:center;">
+          <div class="flbl" style="color:var(--P);">Auf eurem eigenen Gerät</div>
+          <div class="fq" style="font-size:26px;font-family:ui-monospace,
+               monospace;letter-spacing:-.01em;">sort-phlu.github.io<br>/sort/praxis/</div>
+        </div>
+        <div class="beat" style="margin-top:16px;"><span class="nr">✓</span>
+          <div><div class="was">Nichts wird aufgezeichnet</div>
+            <div class="wie">Kein Mikrofon, keine Anmeldung.</div></div></div>
+        <div class="beat"><span class="nr">✓</span>
+          <div><div class="was">Rückmeldeleiste unter jeder Aufgabe</div>
+            <div class="wie">Auch später noch, in Ruhe.</div></div></div>
+        <div class="beat"><span class="nr">✓</span>
+          <div><div class="was">Der Abend zum Nachlesen</div>
+            <div class="wie">Alles von heute, am Stück, auf derselben Seite.</div></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="nav"><button class="nb" onclick="nav(-1)">← zurück</button>
+    <span class="nctr"></span>
+    <button class="nb" onclick="nav(1)">weiter →</button>
+    <button class="nfs" onclick="tFS()">⛶</button></div>
+</div>
+
+<!-- ══ E1 · SCHLUSS ══
+     Rike, 2026-08-29: «Die letzte Seite ist wieder zu textlastig.»
+     Uebrig bleiben die Frage, die Adresse und der Satz. -->
+<div class="slide" id="e1">
+  <div class="hdr a">
+    <div class="hdr-k">Sortieraufgaben · Praxislehrpersonen</div>
+    <h1>Was haltet ihr davon?</h1>
+    <div class="badge">Schluss</div>
+  </div>
+  <div class="body center">
+    <div style="max-width:900px;width:100%;text-align:center;">
+      <div class="fq" style="font-size:34px;margin-bottom:26px;">
+        Wo seht ihr das in eurem Unterricht —<br>
+        und <span style="color:var(--B);">wo seht ihr das Problem?</span></div>
+      <div class="ziel" style="text-align:left;font-size:15px;">
+        Und in Ruhe, in den nächsten Tagen:
+        <b>sort-phlu.github.io/sort/praxis/</b> — unter jeder Aufgabe liegt
+        eine Rückmeldeleiste.
+      </div>
+      <p style="margin-top:30px;padding-top:20px;border-top:1px solid var(--bd);
+         font-family:var(--hand);font-size:26px;line-height:1.4;">
+        Die fertige Sortierung ist nicht das Produkt —
+        <span style="color:var(--B);">das Gespräch darüber ist es.</span></p>
+    </div>
+  </div>
+  <div class="nav"><button class="nb" onclick="nav(-1)">← zurück</button>
+    <span class="nctr"></span>
+    <button class="nb" onclick="nav(1)">weiter →</button>
+    <button class="nfs" onclick="tFS()">⛶</button></div>
+</div>
+
+<!-- ══ C7 · DER GRUNDSATZ · RESERVE ══
+     Aus dem Laufweg genommen am 2026-08-30. Rike: «Der Grundsatz hört
+     sich gross an, da bin ich mir nicht sicher, ob wir die haben
+     wollen.» Nicht geloescht - Taste G holt sie. -->
+<div class="slide" id="c7">
+  <div class="hdr a">
+    <div class="hdr-k">Sortieraufgaben · Praxislehrpersonen · Prinzip</div>
+    <h1>Ein Grundsatz, der für jedes Material gilt</h1>
+    <div class="badge">Reserve</div>
+  </div>
+  <div class="body center">
+    <div class="fcard" style="border-color:var(--Abd);">
+      <div class="flbl" style="color:var(--A);">Die Regel</div>
+      <div class="fq">Die Einsicht steht nirgends,<br>wo die Klasse sie liest.</div>
+      <p style="font-size:15px;color:var(--mu);line-height:1.7;margin-top:18px;
+         font-weight:300;">
+        Nicht im Auftrag. Nicht auf dem Brett. Nicht in den Feldnamen. Nicht in
+        der Rückmeldung. Wer «Sortiert nach Definitionsbereich» auf den Auftrag
+        schreibt, hat die Aufgabe schon gelöst — und die Gruppe führt nur noch
+        aus.</p>
+    </div>
+  </div>
+  <div class="nav"><button class="nb" onclick="nav(-1)">← zurück</button>
+    <span class="nctr"></span>
+    <button class="nb" onclick="nav(1)">weiter →</button>
+    <button class="nfs" onclick="tFS()">⛶</button></div>
+</div>
+
+<!-- ══ RESERVE · nicht im Hauptweg, nur über die Adresse #r1 ══ -->
+<!-- ══ C5 · WO EIGNET SICH WAS (aus S9) ══ -->
+<div class="slide" id="c5">
+  <div class="hdr a">
+    <div class="hdr-k">Sortieraufgaben · Praxislehrpersonen · Einsetzen</div>
+    <h1>Wo eignet sich was?</h1>
+    <div class="badge">Reserve</div>
+  </div>
+  <div class="body">
+    <div class="sub">Nicht jede Variante passt an jede Stelle im Lernprozess
+      gleich gut.</div>
+    <div class="eov-wrap">
+      <div class="eov-col">
+        <div class="eov-box eE"><div class="eb-h">Erkunden</div>
+          <ul>
+            <li>Offene Sortierung — eigene Kategorien bilden, Vorwissen sichtbar machen</li>
+            <li>Reihenbildung ohne vorgegebenes Kriterium — ein Ordnungsbegriff entsteht durch die Aktivität</li>
+          </ul></div>
+        <div class="eov-leit lE">Zeigt, was da ist, bevor etwas eingeführt wird.</div>
+      </div>
+      <div class="eov-col">
+        <div class="eov-box eO"><div class="eb-h">Ordnen</div>
+          <ul>
+            <li>Venn-Diagramm — Zusammenhänge zwischen bekannten Eigenschaften klären</li>
+            <li>Tripel / Quartette — Darstellungsvernetzung erzwingen</li>
+            <li>Hierarchie — Begriffsbeziehungen sichtbar machen</li>
+          </ul></div>
+        <div class="eov-leit lO">Eigenschaften sind bekannt — ihre Struktur wird geklärt.</div>
+      </div>
+      <div class="eov-col">
+        <div class="eov-box eV"><div class="eb-h">Sichern / Vertiefen</div>
+          <ul>
+            <li>Gerichtete Suche — mentales Durchspielen von Verfahren</li>
+            <li>Der Eindringling — Begriffsbildung von der Negativseite</li>
+            <li>Varianten mit Ermessensspielraum — Einschätzungen verteidigen</li>
+          </ul></div>
+        <div class="eov-leit lV">Wissen wird angewandt, verglichen, beurteilt.</div>
+      </div>
+    </div>
+  </div>
+  <div class="nav"><button class="nb" onclick="nav(-1)">← zurück</button>
+    <span class="nctr"></span>
+    <button class="nb" onclick="nav(1)">weiter →</button>
+    <button class="nfs" onclick="tFS()">⛶</button></div>
+</div>
+
+<script>
+const ORD=['a1','b1','c5b','c3','c1','c5f','d1','d0','e1'];
+// c5 «Wo eignet sich was?» liegt als Reserve hinter e1 und ist
+// nur über show('c5') erreichbar — in 60 Minuten passt sie nicht.
+let c=0;
+function show(id){
+  document.querySelectorAll('.slide').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const i=ORD.indexOf(id);if(i>=0)c=i;
+  document.getElementById('pf').style.width=((c+1)/ORD.length*100)+'%';
+  document.querySelectorAll('.nctr').forEach(el=>el.textContent=(c+1)+' / '+ORD.length);
+}
+// Einblendungen. Jede haengt an einer Folie; oeffnen springt dorthin.
+const OV={ovSRL:'c1', ovDIGITAL:'d1'};
+function ov(id,auf){
+  const el=document.getElementById(id);
+  if(!el)return;                       // fehlt die Einblendung, passiert nichts
+  if(auf===undefined)auf=!el.classList.contains('auf');
+  zu();
+  el.classList.toggle('auf',auf);
+  if(auf&&OV[id])show(OV[id]);
+}
+function zu(){
+  Object.keys(OV).forEach(i=>document.getElementById(i)?.classList.remove('auf'));
+}
+function nav(d){
+  zu();
+  show(ORD[Math.max(0,Math.min(ORD.length-1,c+d))]);
+}
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;
+  if(e.key==='ArrowRight'||e.key===' '){nav(1);e.preventDefault();}
+  if(e.key==='ArrowLeft'){nav(-1);e.preventDefault();}
+  // R wie Reserve: die Folie «Wo eignet sich was?» liegt nicht im
+  // Laufweg. Ueber die Konsole waere sie am Rednerpult unerreichbar.
+  if(e.key==='r'||e.key==='R'){show('c5');e.preventDefault();}
+  // G wie Grundsatz - die zweite Reservefolie.
+  if(e.key==='g'||e.key==='G'){show('c7');e.preventDefault();}
+  // S wie Selbstregulieren - blendet die Einzelheiten ein und aus.
+  if(e.key==='s'||e.key==='S'){ov('ovSRL');e.preventDefault();}
+  if(e.key==='d'||e.key==='D'){ov('ovDIGITAL');e.preventDefault();}
+  if(e.key==='Escape'){zu();}
+  if(e.key==='f'||e.key==='F'){tFS();e.preventDefault();}
+});
+function tFS(){
+  if(!document.fullscreenElement)document.documentElement.requestFullscreen().catch(()=>{});
+  else document.exitFullscreen();
+}
+document.addEventListener('fullscreenchange',()=>{
+  const ic=document.fullscreenElement?'⊠':'⛶';
+  document.querySelectorAll('.nfs').forEach(b=>b.textContent=ic);
+});
+show('a1');
+</script>
+</body>
+</html>
