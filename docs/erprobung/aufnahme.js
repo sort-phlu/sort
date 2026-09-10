@@ -521,8 +521,100 @@ function bildschirmStart(){
   };
   f.appendChild(w);
 
+  /* NEU (2026-09-10, Rikes Auftrag): der aufnahmefreie Weg.
+     Der Elternbrief sagt ihn seit dem 19.08. zu - «Die Jugendlichen
+     koennen die SORT-Aktivitaeten auch nutzen ohne dass die Daten
+     aufgezeichnet werden». Bis jetzt gab es ihn nur, wenn die Klasse
+     im Link fehlte, also aus Versehen.
+
+     DREI ASYMMETRIEN, und sie sind der ganze Punkt. Rikes Sorge war,
+     Gruppen koennten aus Versehen ablehnen und die Aufnahme ginge
+     verloren:
+
+     1. Der Ausweg ist ein LEISER Knopf unter dem lauten, keine zweite
+        gleichwertige Wahl. Wer nur weiterklickt, nimmt auf.
+     2. Er ist als TATSACHE formuliert, nicht als Vorliebe. Wer
+        aufgenommen werden darf, kann ihn nicht wahrheitsgemaess
+        druecken.
+     3. Er kostet eine zweite Bestaetigung, auf der der laute Knopf
+        zurueckfuehrt.
+
+     Und er ist UMKEHRBAR: waehrend des Sortierens bleibt oben eine
+     Zeile stehen, ueber die die Gruppe doch noch aufnehmen kann.
+     mitschreibenStarten() schreibt die Lage aller Karten als
+     'start'-Ereignis - der Stand geht dabei nicht verloren. */
+  const aus = el('button', 'sortauf-neben',
+    'Bei uns ist jemand dabei, der nicht aufgenommen werden darf');
+  aus.onclick = () => bildschirmOhneAufnahme();
+  f.appendChild(aus);
+
   bildschirm(f);
   setTimeout(() => felder[0].focus(), 100);
+}
+
+/* ---------- 1b. Ohne Aufnahme - Rueckfrage ---------- */
+function bildschirmOhneAufnahme(){
+  const f = document.createDocumentFragment();
+  f.appendChild(el('p', 'sortauf-hand', 'Kurzer Halt'));
+  f.appendChild(el('h2', null, 'Ohne Aufnahme sortieren'));
+  f.appendChild(el('p', 'sortauf-lauf',
+    'Das ist in Ordnung und ausdrücklich vorgesehen: Wer nicht '
+    + 'aufgenommen wird, macht trotzdem mit. Es wird dann gar nichts '
+    + 'gespeichert – kein Ton, keine Kartenbewegungen, keine Abgabe.'));
+
+  const hinweis = el('div', 'sortauf-kamera');
+  hinweis.appendChild(el('b', null, 'Zum Schluss:'));
+  hinweis.appendChild(el('span', null,
+    ' Drückt oben «Bild speichern» und gebt das Bild eurer '
+    + 'Lehrperson. So sieht sie, was ihr gelegt habt.'));
+  f.appendChild(hinweis);
+
+  f.appendChild(el('p', 'sortauf-klein',
+    'Wählt das nur, wenn wirklich jemand bei euch dabei ist, der nicht '
+    + 'aufgenommen werden darf. Sonst geht uns eure Aufnahme verloren – '
+    + 'und die brauchen wir, um die Aufgaben besser zu machen.'));
+
+  const zurueck = el('button', 'sortauf-knopf', 'Zurück – bei uns dürfen alle');
+  zurueck.onclick = () => bildschirmStart();
+  f.appendChild(zurueck);
+
+  const weiter = el('button', 'sortauf-neben', 'Ja, ohne Aufnahme sortieren');
+  weiter.onclick = () => ohneAufnahmeLos();
+  f.appendChild(weiter);
+
+  bildschirm(f);
+}
+
+/* ---------- 1c. Ohne Aufnahme - die Flaeche freigeben ---------- */
+function ohneAufnahmeLos(){
+  huelle.style.display = 'none';
+
+  /* Die Zeile bleibt stehen, damit der Weg zurueckfuehrt. Sie sagt
+     zugleich der Gruppe waehrend der ganzen Stunde, dass nichts
+     mitlaeuft - ein stummer Zustand waere schlechter als ein
+     angezeigter. */
+  const bar = document.querySelector('.leiste');
+  const gruppe = el('span', 'sortauf-gruppe');
+  gruppe.appendChild(el('span', 'sortauf-etikett', 'Ohne Aufnahme'));
+  const zurueck = el('button', 'sortauf-schluss sortauf-leise', 'Doch aufnehmen');
+  zurueck.onclick = () => {
+    document.querySelectorAll('.sortauf-gruppe, .sortauf-schluss, .sortauf-notleiste')
+            .forEach(e => e.remove());
+    huelle.style.display = 'grid';
+    bildschirmStart();
+  };
+  if (bar){
+    bar.appendChild(el('div', 'trenner'));
+    bar.appendChild(gruppe);
+    bar.appendChild(zurueck);
+    const m = document.getElementById('meldung');
+    if (m) bar.appendChild(m);
+  } else {
+    const notleiste = el('div', 'sortauf-notleiste');
+    notleiste.appendChild(gruppe);
+    notleiste.appendChild(zurueck);
+    document.body.insertBefore(notleiste, document.body.firstChild);
+  }
 }
 
 /* ---------- 2. Hört das Mikrofon uns? ---------- */
@@ -1017,6 +1109,15 @@ stil.textContent = `
   padding:7px 14px;border:1px solid var(--sa-braun);border-radius:3px;
   background:var(--sa-braun);color:#fff;cursor:pointer;}
 .sortauf-schluss:hover{background:#7d4500;border-color:#7d4500;}
+/* NEU (2026-09-10): Der Rueckweg aus dem aufnahmefreien Sortieren traegt
+   denselben Umriss, aber nicht die Fuellung. «Aufnahme beenden» ist die
+   Hauptsache der Stunde und darf laut sein; «Doch aufnehmen» ist ein
+   Notausgang fuer den Fehlklick und war als gefuellter Knopf der
+   lauteste Punkt der ganzen Leiste. */
+.sortauf-schluss.sortauf-leise{background:none;color:var(--sa-braun);
+  font-weight:500;padding:6px 11px;}
+.sortauf-schluss.sortauf-leise:hover{background:var(--sa-creme);
+  border-color:var(--sa-braun);color:var(--sa-braun);}
 .sortauf-notleiste{display:flex;align-items:center;gap:12px;padding:8px 14px;
   background:var(--sa-creme);border-bottom:1px solid var(--sa-linie);}
 @media (prefers-reduced-motion:reduce){.sortauf-punkt{animation:none}}

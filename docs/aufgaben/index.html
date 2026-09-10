@@ -6,21 +6,12 @@
 <title>SORT – Die Sortieraufgaben</title>
 <meta name="description" content="Kärtchensortieraufgaben für selbstreguliertes Lernen im Mathematikunterricht Projekt SORT, PH Luzern.">
 
-<!-- ERSETZT (2026-08-22, Rikes Auftrag «können wir das nicht mitgeben,
-     damit nichts von Google live geholt wird?»): Hier standen drei
-     Zeilen, die Fira Sans, Source Sans und Patrick Hand von
-     fonts.googleapis.com holten.
-
-     Sie waren das EINZIGE Externe an einer sonst selbsttragenden Seite -
-     und sie hielten sie an: Ein <link rel=stylesheet> im <head> blockiert
-     die Ausfuehrung aller nachfolgenden Skripte, bis er geladen ist.
-     Haengt Google, laeuft das Flaechenskript nie an: Seite halb da,
-     Schrift falsch, Karten unbeweglich. Genau dieses Bild am 2026-08-22.
-
-     Dazu ging bei jedem Aufruf einer Schulklasse eine IP an einen
-     Dritten. Siehe bauen/schriften/HERKUNFT.md. -->
+<!-- Schriften liegen bei, nichts wird nachgeladen. -->
 <style>
 @font-face{font-family:'Fira Sans';font-style:normal;font-weight:400;src:url('../schriften/FiraSans-Regular.woff') format('woff')}
+@font-face{font-family:'Fira Sans';font-style:italic;font-weight:400;src:url('../schriften/FiraSans-Italic.woff') format('woff')}
+@font-face{font-family:'Fira Sans';font-style:normal;font-weight:600;src:url('../schriften/FiraSans-SemiBold.woff') format('woff')}
+@font-face{font-family:'Fira Sans';font-style:normal;font-weight:700;src:url('../schriften/FiraSans-Bold.woff') format('woff')}
 @font-face{font-family:'Patrick Hand';font-style:normal;font-weight:400;src:url('../schriften/PatrickHand-Regular.woff') format('woff')}
 </style>
 
@@ -152,12 +143,27 @@ main{padding-top:52px}
 .feld .zeile{color:var(--tinte-hell);margin:0 0 22px;max-width:58ch;font-size:.97rem}
 .knoepfe{display:grid;gap:17px;grid-template-columns:repeat(auto-fill,minmax(218px,1fr));
   padding-bottom:14px}
+/* NEU (2026-09-10): Pflicht und freiwillig innerhalb eines Themas.
+   Die freiwillige Ueberschrift traegt bewusst nicht denselben satten
+   Balken wie die Pflicht - sonst stuenden beide gleich laut da, und
+   genau das soll die Trennung ja nicht sagen. Duenner Strich, matte
+   Farbe, Abstand darueber. */
+.feld .balken{margin:0 0 14px}
+.feld .balken.freiwillig{color:var(--tinte-hell);border-bottom-width:1px;
+  border-bottom-color:var(--linie);margin-top:16px}
 .sortierung{display:block;text-decoration:none;color:inherit;background:var(--karte);
   padding:17px 18px 19px;min-height:128px;
   transition:transform .25s ease,box-shadow .25s ease}
 .sortierung:hover,.sortierung:focus-visible{transform:translateY(-3px);
   box-shadow:0 12px 26px rgba(90,70,35,.13);outline:none}
 .sortierung:focus-visible{outline:2px solid var(--braun);outline-offset:3px}
+/* Sichtbare Marke, dass die Kachel ein Link ist. Nur an <a>, nicht an
+   den <div>-Kacheln der Klassenseiten - dort fuehrt sie nirgendwohin.
+   Rike, 31.08.: «bitte einen Link, der zu den Aufgaben fuehrt» - die
+   Kacheln WAREN Links, man sah es ihnen nur nicht an. */
+a.sortierung::after{content:"Aufgabe öffnen →";display:block;margin-top:12px;
+  font-family:var(--sans);font-size:.82rem;font-weight:700;color:var(--braun)}
+a.sortierung:hover::after{text-decoration:underline}
 .nummer{display:block;margin-bottom:8px;color:var(--braun)}
 .sortierung h3{margin:0 0 8px}
 .sortierung p{margin:0;color:var(--tinte-hell)}

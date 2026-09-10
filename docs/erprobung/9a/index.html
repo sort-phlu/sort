@@ -6,21 +6,12 @@
 <title>SORT – Klasse 9a</title>
 <meta name="description" content="Kärtchensortieraufgaben für selbstreguliertes Lernen im Mathematikunterricht Projekt SORT, PH Luzern.">
 
-<!-- ERSETZT (2026-08-22, Rikes Auftrag «können wir das nicht mitgeben,
-     damit nichts von Google live geholt wird?»): Hier standen drei
-     Zeilen, die Fira Sans, Source Sans und Patrick Hand von
-     fonts.googleapis.com holten.
-
-     Sie waren das EINZIGE Externe an einer sonst selbsttragenden Seite -
-     und sie hielten sie an: Ein <link rel=stylesheet> im <head> blockiert
-     die Ausfuehrung aller nachfolgenden Skripte, bis er geladen ist.
-     Haengt Google, laeuft das Flaechenskript nie an: Seite halb da,
-     Schrift falsch, Karten unbeweglich. Genau dieses Bild am 2026-08-22.
-
-     Dazu ging bei jedem Aufruf einer Schulklasse eine IP an einen
-     Dritten. Siehe bauen/schriften/HERKUNFT.md. -->
+<!-- Schriften liegen bei, nichts wird nachgeladen. -->
 <style>
 @font-face{font-family:'Fira Sans';font-style:normal;font-weight:400;src:url('../../schriften/FiraSans-Regular.woff') format('woff')}
+@font-face{font-family:'Fira Sans';font-style:italic;font-weight:400;src:url('../../schriften/FiraSans-Italic.woff') format('woff')}
+@font-face{font-family:'Fira Sans';font-style:normal;font-weight:600;src:url('../../schriften/FiraSans-SemiBold.woff') format('woff')}
+@font-face{font-family:'Fira Sans';font-style:normal;font-weight:700;src:url('../../schriften/FiraSans-Bold.woff') format('woff')}
 @font-face{font-family:'Patrick Hand';font-style:normal;font-weight:400;src:url('../../schriften/PatrickHand-Regular.woff') format('woff')}
 </style>
 
@@ -152,12 +143,27 @@ main{padding-top:52px}
 .feld .zeile{color:var(--tinte-hell);margin:0 0 22px;max-width:58ch;font-size:.97rem}
 .knoepfe{display:grid;gap:17px;grid-template-columns:repeat(auto-fill,minmax(218px,1fr));
   padding-bottom:14px}
+/* NEU (2026-09-10): Pflicht und freiwillig innerhalb eines Themas.
+   Die freiwillige Ueberschrift traegt bewusst nicht denselben satten
+   Balken wie die Pflicht - sonst stuenden beide gleich laut da, und
+   genau das soll die Trennung ja nicht sagen. Duenner Strich, matte
+   Farbe, Abstand darueber. */
+.feld .balken{margin:0 0 14px}
+.feld .balken.freiwillig{color:var(--tinte-hell);border-bottom-width:1px;
+  border-bottom-color:var(--linie);margin-top:16px}
 .sortierung{display:block;text-decoration:none;color:inherit;background:var(--karte);
   padding:17px 18px 19px;min-height:128px;
   transition:transform .25s ease,box-shadow .25s ease}
 .sortierung:hover,.sortierung:focus-visible{transform:translateY(-3px);
   box-shadow:0 12px 26px rgba(90,70,35,.13);outline:none}
 .sortierung:focus-visible{outline:2px solid var(--braun);outline-offset:3px}
+/* Sichtbare Marke, dass die Kachel ein Link ist. Nur an <a>, nicht an
+   den <div>-Kacheln der Klassenseiten - dort fuehrt sie nirgendwohin.
+   Rike, 31.08.: «bitte einen Link, der zu den Aufgaben fuehrt» - die
+   Kacheln WAREN Links, man sah es ihnen nur nicht an. */
+a.sortierung::after{content:"Aufgabe öffnen →";display:block;margin-top:12px;
+  font-family:var(--sans);font-size:.82rem;font-weight:700;color:var(--braun)}
+a.sortierung:hover::after{text-decoration:underline}
 .nummer{display:block;margin-bottom:8px;color:var(--braun)}
 .sortierung h3{margin:0 0 8px}
 .sortierung p{margin:0;color:var(--tinte-hell)}
@@ -288,7 +294,7 @@ footer p{margin:0 0 5px}
 </head>
 <body>
 <div class="leiste"><div class="rand"><span class="wortmarke">SORT</span><span class="ort aufloesung"><b>S</b>ortieren · <b>O</b>rdnen · <b>R</b>eflektieren · <b>T</b>ransfer</span></div></div>
-<div class="rand kopfklein"><h1>Klasse 9a</h1><p class="schule">Kantonsschule Reussbühl</p><p class="handzeile">Sucht euch eine Aufgabe aus.</p><div class="klassenbild"><img src="../../bilder/banner.jpg" alt="Jugendliche ordnen Karten auf einem Tisch." width="1400" height="560"></div></div><main class="rand" style="padding-top:6px"><section class="feld"><div class="feldkopf"><span class="marker" style="background:var(--rot)"></span><h2>Faktorisieren und Bruchterme</h2></div><p class="zeile">Bausteine erkennen, kürzen, vergleichen – und sehen, was verboten ist.</p><div class="knoepfe kv1" style="--f:var(--rot)"><a class="sortierung" href="../faktorisieren_und_bruchterme/variante_1/?k=9a"><span class="nummer">Sortierung 1</span><h3>Wonach kann man diese Karten ordnen?</h3><p>Sortiert die Karten nach einem Kriterium, das ihr selbst wählt.</p></a><a class="sortierung" href="../faktorisieren_und_bruchterme/variante_2/?k=9a"><span class="nummer">Sortierung 2</span><h3>Welche Bausteine stecken drin?</h3></a><a class="sortierung" href="../faktorisieren_und_bruchterme/variante_3/?k=9a"><span class="nummer">Sortierung 3</span><h3>Wie wenige Karten bleiben übrig?</h3><p>Zwei Karten bilden ein Paar, wenn sie als Bruch übereinander einen gemeinsamen Faktor haben — nicht bloss ein gemeinsames Zeichen.</p></a><a class="sortierung" href="../faktorisieren_und_bruchterme/variante_4/?k=9a"><span class="nummer">Sortierung 4</span><h3>Welche Bruchterme sind gleichwertig?</h3><p>Legt die Bruchtermkarten so zusammen, dass in jeder Gruppe gleichwertige Terme liegen.</p></a><a class="sortierung" href="../faktorisieren_und_bruchterme/variante_5/?k=9a"><span class="nummer">Sortierung 5</span><h3>Immer, manchmal oder nie?</h3><p>Erster Durchgang: Ordnet jede Aussagenkarte einem der drei Felder zu und begründet jede Entscheidung.</p></a></div></section><section class="feld"><div class="feldkopf"><span class="marker" style="background:var(--lila)"></span><h2>Ähnlichkeit</h2></div><p class="zeile">Figuren, Behauptungen und Vergleiche – zwischen ähnlich und nur beinahe ähnlich.</p><div class="knoepfe kv1" style="--f:var(--lila)"><a class="sortierung" href="../aehnlichkeit/variante_1/?k=9a"><span class="nummer">Sortierung 1</span><h3>Ähnlichkeitsklassen</h3><p>Legt die Karten so zusammen, dass in jeder Gruppe ähnliche Figuren liegen.</p></a><a class="sortierung" href="../aehnlichkeit/variante_2/?k=9a"><span class="nummer">Sortierung 2</span><h3>Welche Merkmale passen?</h3><p>Wählt drei Merkmalskarten und legt sie in die Kreise — selbst oder mit «Zufällig füllen».</p></a><a class="sortierung" href="../aehnlichkeit/variante_3/?k=9a"><span class="nummer">Sortierung 3</span><h3>Der Umweg</h3><p>Start und Ende sind vorgegeben.</p></a><a class="sortierung" href="../aehnlichkeit/variante_4/?k=9a"><span class="nummer">Sortierung 4</span><h3>Immer – manchmal – nie</h3><p>Erster Durchgang: Ordnet jede Aussagenkarte einem der drei Felder zu und begründet jede Entscheidung.</p></a><a class="sortierung" href="../aehnlichkeit/variante_5/?k=9a"><span class="nummer">Sortierung 5</span><h3>Der Eindringling</h3><p>Jede Vierergruppe enthält eine Karte, die nicht zu den anderen passt.</p></a></div></section><section class="feld"><div class="feldkopf"><span class="marker" style="background:var(--blau)"></span><h2>Lineare Funktionen</h2></div><p class="zeile">Der Kartensatz entsteht.</p><div class="wartet">Zu diesem Thema entsteht der Kartensatz gerade.</div></section><section class="feld"><div class="feldkopf"><span class="marker" style="background:var(--gruen)"></span><h2>Lineare Gleichungssysteme</h2></div><p class="zeile">Der Kartensatz entsteht.</p><div class="wartet">Zu diesem Thema entsteht der Kartensatz gerade.</div></section></main>
+<div class="rand kopfklein"><h1>Klasse 9a</h1><p class="schule">Kantonsschule Reussbühl</p><p class="handzeile">Sucht euch eine Aufgabe aus.</p><div class="klassenbild"><img src="../../bilder/banner.jpg" alt="Jugendliche ordnen Karten auf einem Tisch." width="1400" height="560"></div></div><main class="rand" style="padding-top:6px"><section class="feld"><div class="feldkopf"><span class="marker" style="background:var(--lila)"></span><h2>Ähnlichkeit</h2></div><p class="zeile">Figuren, Behauptungen und Vergleiche – zwischen ähnlich und nur beinahe ähnlich.</p><p class="balken">Diese Aufgaben macht ihr</p><div class="knoepfe kv1" style="--f:var(--lila)"><a class="sortierung" href="../aehnlichkeit/variante_1/?k=9a"><span class="nummer">Sortierung 1</span><h3>Ähnlichkeitsklassen</h3><p>Legt die Karten so zusammen, dass in jeder Gruppe ähnliche Figuren liegen.</p></a><a class="sortierung" href="../aehnlichkeit/variante_3/?k=9a"><span class="nummer">Sortierung 2</span><h3>Der Umweg</h3><p>Start und Ende sind vorgegeben.</p></a></div><p class="balken freiwillig">Freiwillig — wenn ihr noch Lust habt</p><div class="knoepfe kv1" style="--f:var(--lila)"><a class="sortierung" href="../aehnlichkeit/variante_2/?k=9a"><span class="nummer">Sortierung 3</span><h3>Welche Merkmale passen?</h3><p>Wählt drei Merkmalskarten und legt sie in die Kreise — selbst oder mit «Zufällig füllen».</p></a><a class="sortierung" href="../aehnlichkeit/variante_4/?k=9a"><span class="nummer">Sortierung 4</span><h3>Immer – manchmal – nie</h3><p>Erster Durchgang: Ordnet jede Aussagenkarte einem der drei Felder zu und begründet jede Entscheidung.</p></a><a class="sortierung" href="../aehnlichkeit/variante_5/?k=9a"><span class="nummer">Sortierung 5</span><h3>Der Eindringling</h3><p>Jede Vierergruppe enthält eine Karte, die nicht zu den anderen passt.</p></a></div></section></main>
 <footer class="schlicht"><div class="rand"><img class="phlu" src="../../bilder/logo-phlu.png" alt="PH Luzern, Pädagogische Hochschule"><div class="worte"><p>Ein Projekt der Pädagogischen Hochschule Luzern, gefördert von der Milton Ray Hartmann Stiftung.</p><p>Wenn etwas nicht funktioniert: fragt eure Lehrperson.</p></div></div></footer>
 </body>
 </html>

@@ -5,21 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Welche Merkmale passen?</title>
 
-<!-- ERSETZT (2026-08-22, Rikes Auftrag «können wir das nicht mitgeben,
-     damit nichts von Google live geholt wird?»): Hier standen drei
-     Zeilen, die Fira Sans, Source Sans und Patrick Hand von
-     fonts.googleapis.com holten.
-
-     Sie waren das EINZIGE Externe an einer sonst selbsttragenden Seite -
-     und sie hielten sie an: Ein <link rel=stylesheet> im <head> blockiert
-     die Ausfuehrung aller nachfolgenden Skripte, bis er geladen ist.
-     Haengt Google, laeuft das Flaechenskript nie an: Seite halb da,
-     Schrift falsch, Karten unbeweglich. Genau dieses Bild am 2026-08-22.
-
-     Dazu ging bei jedem Aufruf einer Schulklasse eine IP an einen
-     Dritten. Siehe bauen/schriften/HERKUNFT.md. -->
+<!-- Schriften liegen bei, nichts wird nachgeladen. -->
 <style>
 @font-face{font-family:'Fira Sans';font-style:normal;font-weight:400;src:url('../../../schriften/FiraSans-Regular.woff') format('woff')}
+@font-face{font-family:'Fira Sans';font-style:italic;font-weight:400;src:url('../../../schriften/FiraSans-Italic.woff') format('woff')}
+@font-face{font-family:'Fira Sans';font-style:normal;font-weight:600;src:url('../../../schriften/FiraSans-SemiBold.woff') format('woff')}
+@font-face{font-family:'Fira Sans';font-style:normal;font-weight:700;src:url('../../../schriften/FiraSans-Bold.woff') format('woff')}
 @font-face{font-family:'Patrick Hand';font-style:normal;font-weight:400;src:url('../../../schriften/PatrickHand-Regular.woff') format('woff')}
 </style>
 
@@ -132,6 +123,10 @@ button.an{background:var(--braun);color:#fff;border-color:var(--braun);}
 #brett{position:absolute;left:0;top:0;pointer-events:none;}
 #teiler{position:absolute;top:0;bottom:0;
         border-left:1.5px dashed var(--linie);pointer-events:none;}
+/* Quer geteilter Tisch: Brett oben, Vorrat unten. Die Linie laeuft
+   ueber die ganze Breite; `top` setzt das JavaScript. */
+#teiler_quer{position:absolute;left:0;right:0;
+        border-top:1.5px dashed var(--linie);pointer-events:none;}
 .haelfte{position:absolute;top:8px;font-family:var(--hand);font-weight:400;
   font-size:1.1rem;color:var(--tinte-hell);letter-spacing:0;
   text-transform:none;pointer-events:none;}
@@ -156,6 +151,17 @@ button.an{background:var(--braun);color:#fff;border-color:var(--braun);}
   background:transparent;text-align:center;padding:1px 0 2px;
   pointer-events:auto;}
 .rasterfeld input.titel::placeholder{color:var(--tinte-hell);opacity:.75;}
+
+/* Die Vorratsfelder im unsortierten Teil - je Kartensorte eines.
+   Bewusst schwaecher als die Rasterfelder rechts: Das hier ist die
+   Ablage, aus der geholt wird, nicht das Ergebnis, das entsteht. Der
+   Name steht oben LINKS und nicht mittig, damit er nicht mit den
+   Feldbeschriftungen der Ergebnisseite verwechselt wird. */
+.vorratsfeld{position:absolute;border:1.5px dotted var(--feld-rand);
+  border-radius:0;background:transparent;pointer-events:none;
+  display:flex;align-items:flex-start;justify-content:flex-start;}
+.vorratsfeld span{font-family:var(--hand);font-size:.94rem;
+  color:var(--tinte-hell);margin:3px 0 0 8px;letter-spacing:.02em;}
 .rasterfeld input.titel:focus{outline:none;border-bottom-color:var(--akzent);}
 
 /* Das Feld, das ein weiteres Feld anlegt. Es steht dort, wo das nächste
@@ -375,11 +381,33 @@ const brett = document.getElementById('brett');
 const KOPF = 30;                 // Freiraum fuer die Ueberschrift
 const NACHSCHUB = ["Ein weiteres Rechteck liegt jetzt dabei.", "Zwei Rauten kommen dazu.", "Zwei Parallelogramme kommen dazu.", "Zwei weitere spitzwinklige Dreiecke.", "Zwei stumpfwinklige Dreiecke kommen dazu.", "Ein Trapez und ein Drachenviereck."];  // Begruendung je Stufe
 const SORTIERT = false;   // links nach Kartensorte getrennt
+const TYPNAMEN = {"L": "SEITEN", "K": "SEITE & WINKEL", "W": "WINKEL", "M": "MERKMAL", "A": "AUSSAGE", "F": "STRECKFAKTOR", "X": "AUFTRAG", "N": "FELD"};   // Buchstabe -> Klartext, fuer die Vorratsfelder
+const NACHSCHUBSCHRITT = 1;   // Stufen je grossem Knopf
+const VORRATSPALTEN = false;   // Vorrat in Spalten statt Baendern
+const VORRATLINKS = "MAFX";   // Kartensorten, die als Bild gelten
+const VORRATNAMEN = ["Zum Dazuholen", "Figuren"];   // ihre zwei Ueberschriften
 const FLAECHE = 'runden';                 // 'vorrat', 'tisch' oder 'runden'
 const GEDREHT = false;                   // Karten leicht schief hinlegen?
 const BRETT = {"breite": 8.6, "hoehe": 9.6, "anteil": 0.54, "felder": [[0.464, 0.068], [0.213, 0.768], [0.715, 0.768]], "feldbreite": 0.0721, "kreise": [[0.5, 0.359, 0.3023], [0.3488, 0.6416, 0.3023], [0.6512, 0.6416, 0.3023]]};
 const RASTER = null;                     // null oder Vorstrukturierung
 const HAELFTEN = null;                 // null oder zwei Tischhaelften
+
+/* NEU (2026-08-31, Rikes Auftrag): Der Tisch darf jetzt auch QUER
+   geteilt sein - grosses Brett oben fuer das Sortierte, der Vorrat
+   darunter. «So aehnlich wie bei der Kombinatorik.»
+
+   Warum das mehr ist als eine gedrehte Teilung: Laengs geteilt bekommt
+   jede Haelfte die halbe BREITE, und die Gruppenfelder stehen dann in
+   ein bis zwei schmalen Spalten untereinander - man scrollt, sobald
+   mehr als drei Figuren liegen. Quer geteilt hat das Brett die ganze
+   Breite; die Felder stehen nebeneinander, und der Vorrat unten braucht
+   nur die Hoehe, die seine Karten wirklich fuellen.
+
+   `teiler` heisst hier Anteil der HOEHE fuer oben, nicht der Breite. */
+const QUER = !!(HAELFTEN && HAELFTEN.wie === 'quer');
+function grenzeY(){
+  return QUER ? Math.round(tisch.clientHeight * HAELFTEN.teiler) : 0;
+}
 const RUNDEN = null;
 const BUENDEL = null;
 const ABL = 0.62;
@@ -534,11 +562,42 @@ function einpassen(){
   }
   if (!BRETT){
     // Ohne Brett zaehlt nur, dass die Karten nebeneinander Platz finden.
-    const anteil = HAELFTEN ? HAELFTEN.teiler : 1;
-    const frei0 = tisch.clientWidth * anteil * tisch.clientHeight;
+    // Quer geteilt gehoert dem Vorrat die ganze BREITE und der Rest der
+    // HOEHE; laengs geteilt ist es umgekehrt.
+    const frei0 = QUER
+      ? tisch.clientWidth * tisch.clientHeight * (1 - HAELFTEN.teiler)
+      : tisch.clientWidth * (HAELFTEN ? HAELFTEN.teiler : 1) * tisch.clientHeight;
     breite = Math.max(46, Math.min(200,
                Math.floor(Math.sqrt(frei0 * (SORTIERT ? 0.78 : 0.55)
                                     / (anz0 * 0.844)))));
+    // NEU (2026-08-31): Die freie Flaeche ist nicht mehr die einzige
+    // Schranke. Seit der Vorrat in SPALTEN liegt und die Gruppenfelder
+    // ZEILEN sind, geben zwei Strukturen die Kartengroesse vor - und
+    // beide waren beim ersten Ausprobieren verletzt: Die sechs
+    // Termkarten stapelten sich in einer einzigen Spalte, und eine
+    // Zeile von 4,5 Kartenbreiten passte nicht in die rechte Haelfte.
+    //
+    // Zwei Obergrenzen also, und die schaerfere gewinnt:
+    //   links   der Vorrat soll mindestens ZWEI Spalten zeigen
+    //   rechts  eine ganze Gruppenzeile muss hineinpassen
+    if (HAELFTEN && !QUER){
+      const linksBreit = tisch.clientWidth * HAELFTEN.teiler - 20;
+      const rechtsBreit = tisch.clientWidth * (1 - HAELFTEN.teiler) - 24;
+      const grenzen = [];
+      if (VORRATSPALTEN) grenzen.push(linksBreit / 2.2);
+      if (RASTER && RASTER.breite){
+        // Die Spalte am rechten Rand belegt Breite, die den Zeilen
+        // fehlt - sonst waere die Gruppenzeile zu breit fuer ihre
+        // Haelfte, sobald das Feld «weiss ich noch nicht» daneben steht.
+        const ex = !RASTER.extra ? []
+          : (Array.isArray(RASTER.extra) ? RASTER.extra : [RASTER.extra]);
+        const spalte = ex.filter(e => e.wie === 'spalte')
+                         .reduce((a, e) => a + (e.breite || 1.2), 0);
+        grenzen.push(rechtsBreit / (RASTER.breite + spalte + 0.4));
+      }
+      if (grenzen.length)
+        breite = Math.max(40, Math.min(breite, Math.floor(Math.min(...grenzen))));
+    }
     masse(); return;
   }
   const nachBreite = (tisch.clientWidth * anteilBrett()) / BRETT.breite;
@@ -609,43 +668,317 @@ function streuen(liste, streifen, h){
 }
 
 
-function nachSorten(zu, x0, x1, hoch, h){
+function nachSorten(zu, x0, x1, hoch, h, oben){
   // Ein Bereich je Kartensorte, untereinander und der Kartenzahl entsprechend
   // hoch. Innerhalb eines Bereichs wird genauso gestreut wie sonst auf dem
   // ganzen Tisch: viele Plaetze, gemischt, mit Zittern - also unregelmaessig.
+  //
+  // FEHLERBEHOBEN (2026-08-31, beim Einbau der Vorratsfelder): Der
+  // Zuschnitt der Baender kam bisher aus `zu`. Solange auslegen() immer
+  // ALLE Karten neu verteilte, war das dasselbe. Seit dem Nachlegen vom
+  // 2026-08-27 bekommt auslegen() aber nur die NEUEN Karten - und dann
+  // haette der Vorrat sich auf sie zusammengezogen: drei frische
+  // Termkarten, und das Band «TERM» waere ueber die zwoelf schon
+  // liegenden hinweggezeichnet worden.
+  //
+  // Der Zuschnitt richtet sich deshalb nach dem BESTAND: alles, was
+  // gerade im Vorratsteil liegt, plus die neuen. Verschoben wird
+  // weiterhin nur `zu`.
+  const y0 = (oben === undefined) ? KOPF + (HAELFTEN && !QUER ? 12 : 0) : oben;
+  // FEHLERBEHOBEN (2026-08-31, Rikes Befund «wenn man eine Figur dazu
+  // tut, gehen die alten Sortierungen wieder verloren»): Diese Pruefung
+  // las die Lage aus `style.left`. Dort steht sie nicht - `setzen()`
+  // schreibt eine `transform` und merkt sich die Werte in `_x`/`_y`.
+  // `parseFloat(k.style.left)` ergab also fuer JEDE Karte 0, damit galt
+  // jede als Vorrat, und das Nachlegen ordnete den ganzen Tisch neu.
+  //
+  // Zwei Aenderungen, und die zweite ist die wichtigere:
+  //   1. `_x`/`_y` lesen statt `style.left`.
+  //   2. `_gelegt` ausschliessen. Eine von Hand bewegte Karte wird nie
+  //      wieder automatisch verschoben - unabhaengig davon, WO sie
+  //      liegt. Ein reiner Koordinatentest wuerde eine Karte, die
+  //      jemand bewusst links geparkt hat, weiterhin wegraeumen.
+  const drin = k => {
+    if (k._gelegt) return false;
+    if (zu.includes(k)) return true;
+    if (k.dataset.rolle === 'ablage') return false;
+    if (QUER) return (k._y || 0) >= grenzeY() - h * 0.4;
+    const x = k._x || 0;
+    return x >= x0 - breite * 0.5 && x <= x1 + breite * 0.5;
+  };
+  const bestand = karten.filter(drin);
+  // Die Reihenfolge der Baender kommt aus dem GESAMTEN Kartensatz, nicht
+  // aus dem gerade liegenden Bestand. Sonst wechselt sie beim Nachlegen:
+  // Wer zuerst eine Termkarte im Bestand hatte, bekam TERM links - und
+  // nach dem naechsten Klick stand es rechts. Eine Spalte, die den Platz
+  // wechselt, muss man jedes Mal neu suchen.
+  // GEAENDERT (2026-08-31, Rikes Wunsch «oben ein Teil fuer die Figuren
+  // und unten einer fuer die Terme»): Gebuendelt wird nach BILD gegen
+  // NICHT-BILD, nicht mehr nach einzelner Kartensorte. Sonst bekommen
+  // Geometrie und Figurenfolge je ein eigenes Band, und statt der zwei
+  // Teile, die sie wollte, stehen drei da - beim Ausprobieren rutschte
+  // die erste Figurenfolge prompt unter die Terme.
+  //
+  // Die Zweiteilung ist nicht neu erfunden: Das Thema fuehrt sie in
+  // VORRAT_LINKS und SPALTEN, bisher nur fuer die Druckvorlage.
+  const istBild = k => VORRATLINKS.includes(k.dataset.typ || '?');
   const sorten = [];
-  zu.forEach(k => { const t = k.dataset.typ || '?';
-                    if (!sorten.includes(t)) sorten.push(t); });
-  const gruppen = sorten.map(t => zu.filter(k => (k.dataset.typ || '?') === t));
-  const gesamt = zu.length || 1;
+  bestand.forEach(k => { const t = istBild(k) ? 'B' : 'R';
+                         if (!sorten.includes(t)) sorten.push(t); });
+  sorten.sort((a, b) => (a === 'B' ? 0 : 1) - (b === 'B' ? 0 : 1));
+  const gruppen = sorten.map(t =>
+        bestand.filter(k => (istBild(k) ? 'B' : 'R') === t));
   const luft = 10;
-  const frei = Math.max(h, hoch - KOPF - luft * (gruppen.length - 1));
+  const frei = Math.max(h, hoch - y0 - luft * (gruppen.length - 1));
 
-  let y = KOPF;
-  gruppen.forEach(gruppe => {
-    const bh = Math.max(h + 4, frei * gruppe.length / gesamt);
-    const nx = Math.max(1, Math.floor((x1 - x0) / (breite * 0.62)));
-    const ny = Math.max(1, Math.floor(bh / (h * 0.42)));
+  // FEHLERBEHOBEN (2026-08-31, beim Ausprobieren des Nachlegens): Die
+  // Bandhoehe kam aus dem ANTEIL an den Karten - vier Bildkarten neben
+  // sechzehn Termkarten bekamen ein Fuenftel der Hoehe. Fuer EINE Reihe
+  // Karten reichte das, fuer zwei nicht, und die vierte Figur legte
+  // sich auf die dritte.
+  //
+  // Jetzt zaehlt der PLATZBEDARF: Wie viele Reihen braucht das Band bei
+  // vorgegebener Spaltenzahl? Danach wird die Hoehe verteilt. Bei
+  // gleicher Kartengroesse laeuft das auf dasselbe hinaus wie vorher -
+  // aber nur dann, und genau das war die stille Annahme.
+  // Zwei Gitter, und die Wahl dazwischen ist die eigentliche Frage:
+  //
+  //   LOCKER  volle Kartenbreite je Spalte - nichts ueberdeckt sich.
+  //   DICHT   0,62 · Breite quer, 0,42 · Hoehe hoch. Die Karten liegen
+  //           uebereinander wie ein echter Vorrat auf dem Tisch.
+  //
+  // Genommen wird locker, solange es aufgeht. Erst wenn der Vorrat
+  // dafuer zu gross ist, wird gestapelt - dann ist die Ueberdeckung
+  // eine Aussage ueber die Menge und kein Versehen. Vor dem
+  // 2026-08-31 gab es nur das dichte Gitter, auch fuer sieben Karten.
+  //
+  // QUER geteilt liegen die Baender NEBENEINANDER, nicht untereinander.
+  // Rikes Bild ist die Kombinatorik: oben ein breites Brett, unten die
+  // Quellflaechen in einer Reihe. Untereinander waeren sie im unteren
+  // Drittel je ein paar Dutzend Pixel hoch - unbrauchbar.
+  //
+  // Die Breite je Band richtet sich nach dem Platzbedarf: Ein Band mit
+  // vier Bildkarten braucht weniger als eines mit dreissig Termkarten.
+  // Gerechnet wird ueber die FLAECHE, die die Karten fuellen, nicht
+  // ueber ihre Zahl allein - sonst bekaeme ein Band mit wenigen Karten
+  // eine Spalte, in die keine einzige Karte passt.
+  const bandLuft = 10;
+  const gesamtB = (x1 - x0) - bandLuft * (gruppen.length - 1);
+
+  // FEHLERBEHOBEN (2026-08-31, beim Ausprobieren des Querbretts): Die
+  // Bandbreite kam zuerst aus dem ANTEIL an den Karten - vier
+  // Bildkarten neben achtzehn Termkarten bekamen ein Fuenftel der
+  // Breite. Das klingt fair und ist es nicht: In ein Fuenftel passt
+  // vielleicht EINE Spalte, und dann brauchen die vier Bildkarten vier
+  // Reihen, waehrend die Termkarten mit einer auskommen. Das ganze Band
+  // fiel damit ins dichte Gitter, und die Figuren lagen uebereinander.
+  //
+  // Gerechnet wird deshalb ueber die SPALTEN: Wie viele Reihen R
+  // braucht es, damit alle Baender nebeneinander in die Breite passen?
+  // R wird von eins an hochgezaehlt, bis es aufgeht; jedes Band bekommt
+  // dann so viele Spalten, wie es bei diesem R braucht. Danach sind
+  // alle Baender gleich hoch, und keines muss stapeln, solange die
+  // Hoehe reicht.
+  const schritt = breite * 1.02;
+  const SPALTIG = QUER || VORRATSPALTEN;
+  let bandSpalten = gruppen.map(() => 1), reihenQuer = gruppen.map(() => 1);
+  if (SPALTIG){
+    for (let R = 1; R <= 12; R++){
+      const cols = gruppen.map(g => Math.max(1, Math.ceil(g.length / R)));
+      const braucht = cols.reduce((a, b) => a + b, 0) * schritt;
+      bandSpalten = cols;
+      reihenQuer = gruppen.map(g => Math.max(1, Math.ceil(g.length / cols[gruppen.indexOf(g)])));
+      if (braucht <= gesamtB) break;
+    }
+    reihenQuer = gruppen.map((g, i) => Math.max(1, Math.ceil(g.length / bandSpalten[i])));
+  }
+  const spaltenSumme = bandSpalten.reduce((a, b) => a + b, 0) || 1;
+  const bandBreite = SPALTIG
+    ? bandSpalten.map(c => Math.max(breite * 1.06, gesamtB * c / spaltenSumme))
+    : gruppen.map(() => x1 - x0);
+
+  // Zwei Gitter, und die Wahl dazwischen ist die eigentliche Frage:
+  //
+  //   LOCKER  volle Kartenbreite je Spalte - nichts ueberdeckt sich.
+  //   DICHT   0,62 · Breite quer, 0,42 · Hoehe hoch. Die Karten liegen
+  //           uebereinander wie ein echter Vorrat auf dem Tisch.
+  //
+  // Genommen wird locker, solange es aufgeht. Erst wenn der Vorrat
+  // dafuer zu gross ist, wird gestapelt - dann ist die Ueberdeckung
+  // eine Aussage ueber die Menge und kein Versehen. Vor dem
+  // 2026-08-31 gab es nur das dichte Gitter, auch fuer sieben Karten.
+  const spalten = (bw, faktor) => Math.max(1, Math.floor(bw / (breite * faktor)));
+  const reihenBei = faktor => gruppen.map((g, i) =>
+        Math.max(1, Math.ceil(g.length / spalten(bandBreite[i], faktor))));
+
+  const reihenLocker = SPALTIG ? reihenQuer : reihenBei(1.02);
+  // Quer stehen die Baender nebeneinander - dann zaehlt die HOECHSTE
+  // Reihenzahl, nicht ihre Summe. Laengs stehen sie untereinander.
+  const brauchtLocker = (SPALTIG ? Math.max(...reihenLocker)
+                              : reihenLocker.reduce((a, b) => a + b, 0)) * (h + 6);
+  const locker = brauchtLocker <= frei;
+  const faktor = locker ? 1.02 : 0.62;
+
+  const reihen = locker ? reihenLocker : reihenBei(0.62);
+  const reihenGesamt = SPALTIG ? Math.max(...reihen)
+                            : (reihen.reduce((a, b) => a + b, 0) || 1);
+
+  // NEU (2026-08-31, Rikes Auftrag): Die Baender bekommen sichtbare
+  // Felder mit Beschriftung. «Bitte mach mal die Sortierflaechen zu den
+  // Vorratsstapel, wo sie rausholen, der unsortierte Teil, so
+  // aufgeteilt, wie wir's bei Daten und Zufall gemacht haben - mit so
+  // einem Feld fuer die Figuren, ein Feld fuer die anderen.»
+  //
+  // Getrennt lagen sie schon (nachSorten() gibt es seit laengerem), nur
+  // sah man die Trennung nicht: zwei Haufen ohne Rand und ohne Namen,
+  // die je nach Kartenzahl mal enger, mal weiter beieinanderlagen. Der
+  // Rahmen macht aus dem Nebeneinander eine Ablage.
+  document.querySelectorAll('.vorratsfeld').forEach(e => e.remove());
+  // Platz fuer die Beschriftung der Tischhaelfte darueber. Ohne den
+  // Absatz stand «GEOMETRIE» auf «noch nicht zugeordnet».
+  let y = y0 + 16, x = x0;
+  gruppen.forEach((gruppe, gi) => {
+    // Quer: alle Baender gleich hoch, nebeneinander. Laengs: volle
+    // Breite, Hoehe nach Platzbedarf, untereinander.
+    const bh = SPALTIG ? Math.max(h + 4, frei - 16)
+                    : Math.max(h + 4, frei * reihen[gi] / reihenGesamt);
+    const bw = bandBreite[gi];
+    const rahmen = document.createElement('div');
+    rahmen.className = 'vorratsfeld';
+    Object.assign(rahmen.style, {
+      left: (x - 6) + 'px', top: (y - 16) + 'px',
+      width: (bw + 12) + 'px', height: (bh + 22) + 'px'});
+    const t = document.createElement('span');
+    // Klartext, wo es ihn gibt - sonst der Buchstabe. Ein Feld ohne
+    // Namen waere ein Rahmen ohne Aussage.
+    t.textContent = sorten[gi] === 'B' ? VORRATNAMEN[0] : VORRATNAMEN[1];
+    rahmen.appendChild(t);
+    tisch.insertBefore(rahmen, tisch.firstChild);
+    // Das Gitter richtet sich nach der ZAHL der Karten im Band, nicht
+    // nach dem, was hineinpasst.
+    //
+    // FEHLERBEHOBEN (2026-08-31): Bisher wurde das dichtestmoegliche
+    // Gitter gebaut (Schritt 0,62 · Breite quer, 0,42 · Hoehe hoch) und
+    // daraus zufaellig gezogen. Bei vielen Karten fuellt das die Flaeche
+    // und sieht nach Vorrat aus - genau so war es gedacht. Seit dem
+    // Einstieg mit sieben Karten (Rikes Kuerzung vom 2026-08-31) zog es
+    // sechs Plaetze aus ueber hundert, und die lagen zufaellig
+    // nebeneinander: Die Karten stapelten sich in einer Ecke, waehrend
+    // das halbe Band leer blieb.
+    //
+    // Jetzt bekommt jede Karte ihre eigene Zelle. Ueberdeckung gibt es
+    // nur noch, wenn wirklich mehr Karten da sind als Zellen - dann ist
+    // sie unvermeidlich und gehoert zum Vorrat.
+    const n = Math.max(1, gruppe.length);
+    const ny = reihen[gi];
+    const nx = Math.max(1, Math.min(spalten(bw, faktor), Math.ceil(n / ny)));
     const plaetze = [];
     for (let r = 0; r < ny; r++)
       for (let c = 0; c < nx; c++)
-        plaetze.push([x0 + c * ((x1 - x0 - breite) / Math.max(1, nx - 1) || 0),
+        plaetze.push([x + c * ((bw - breite) / Math.max(1, nx - 1) || 0),
                       y + r * ((bh - h) / Math.max(1, ny - 1) || 0)]);
-    for (let i = plaetze.length - 1; i > 0; i--){
-      const j = Math.floor(Math.random() * (i + 1));
-      [plaetze[i], plaetze[j]] = [plaetze[j], plaetze[i]];
+    const mischen = () => {
+      for (let i = plaetze.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [plaetze[i], plaetze[j]] = [plaetze[j], plaetze[i]];
+      }
+    };
+    mischen();
+
+    /* NEU (2026-08-31, Rikes Verdacht «nicht dass die oben die richtigen
+       und unten die falschen sind»): Nachgemessen an zwoelf Auslegungen
+       ist die Mischung in Ordnung - das Auslegen weiss nichts ueber
+       richtig und falsch, und die Plaetze werden sauber durchgemischt.
+       Aber in EINER der zwoelf lagen tatsaechlich die drei richtigen
+       oben und die drei falschen unten. Das ist kein Fehler, sondern
+       Zufall: Bei sechs Karten in zwei Dreierreihen trifft es eine von
+       zwanzig Auslegungen.
+
+       Nur hilft das der Gruppe nicht, die genau diese eine erwischt -
+       fuer sie steht die Loesung auf dem Tisch. Deshalb wird eine
+       Auslegung verworfen, in der eine ganze Reihe aus Karten DERSELBEN
+       Gruppenmarke besteht, obwohl im Band mehrere vorkommen.
+       Formuliert ueber die Gruppenmarke statt ueber «richtig», damit es
+       fuer jedes Thema gilt: Eine Reihe, die genau eine Gruppe enthaelt,
+       ist immer ein Wink.
+
+       Hoechstens 20 Versuche - danach gibt es vermutlich gar keine
+       unverfaengliche Anordnung, und eine verraeterische ist besser als
+       eine Endlosschleife. */
+    // Die Reihenfolge, in der die Karten die Plaetze bekommen. Sie muss
+    // VOR der Pruefung feststehen - sonst pruefte man eine andere
+    // Anordnung als die, die nachher liegt.
+    //
+    // Fisher-Yates statt `sort(() => Math.random() - 0.5)`: Der
+    // Sortiertrick ist keine gleichmaessige Mischung, Elemente bleiben
+    // in der Naehe ihres Platzes. Bei einem Vorrat, in dem erst die
+    // richtigen und dann die falschen Terme stehen, ist das genau die
+    // falsche Eigenschaft.
+    const folge = gruppe.slice();
+    const folgeMischen = () => {
+      for (let i = folge.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [folge[i], folge[j]] = [folge[j], folge[i]];
+      }
+    };
+    folgeMischen();
+
+    const zeilenVerraten = () => {
+      const marken = new Set(folge.map(k => k.dataset.gruppe || ''));
+      if (marken.size < 2 || ny < 2) return false;
+      // Die Reihe einer Karte steht in der Y-KOORDINATE ihres Platzes,
+      // nicht in dessen Index: `plaetze` ist gemischt, der Index sagt
+      // also nichts mehr ueber die Lage.
+      const zeilen = new Map();
+      folge.forEach((k, i) => {
+        const pl = plaetze[i % plaetze.length];
+        if (!pl) return;
+        const y = Math.round(pl[1]);
+        if (!zeilen.has(y)) zeilen.set(y, []);
+        zeilen.get(y).push(k.dataset.gruppe || '');
+      });
+      for (const [, marken] of zeilen){
+        if (marken.length < 2) continue;
+        if (new Set(marken).size === 1) return true;
+      }
+      return false;
+    };
+    for (let versuch = 0; versuch < 20 && zeilenVerraten(); versuch++){
+      mischen(); folgeMischen();
     }
-    gruppe.slice().sort(() => Math.random() - 0.5).forEach((k, i) => {
-      const pl = plaetze[i % plaetze.length] || [x0, y];
+
+    // Nur die Karten aus `zu` bekommen einen neuen Platz. Beim ersten
+    // Aufbau und bei «Zurueck» ist das die ganze Gruppe; beim Nachlegen
+    // nur das Neue - was schon liegt, bleibt liegen.
+    // Neu geordnet wird der GANZE Vorrat des Bandes, nicht nur das
+    // Neue. Der Grund ist die Geometrie: Mit jeder Figur aendern sich
+    // Bandhoehe und Gitter, und die alten Karten stuenden dann auf
+    // einem Gitter, das es nicht mehr gibt - beim Ausprobieren legten
+    // sich die neuen Karten prompt auf die liegenden.
+    //
+    // Das ist KEIN Rueckfall hinter den Stand vom 2026-08-27. Dort ging
+    // es darum, dass gebildete Gruppen nicht zerfallen. Die verlassen
+    // den Vorratsteil, sobald sie gebildet sind, und liegen ausserhalb
+    // von `bestand` - sie werden hier gar nicht angefasst. Umgeordnet
+    // wird nur, was ohnehin noch unsortiert herumliegt.
+    folge.forEach((k, i) => {
+      const pl = plaetze[i % plaetze.length] || [x, y];
       k._rot = 0;
+      // Das Zittern nimmt dem Gitter das Schematische. Beim lockeren
+      // Gitter faellt es kleiner aus - dort ist gerade der Punkt, dass
+      // sich nichts ueberdeckt, und ein volles Zittern haette genau das
+      // wieder eingerissen.
+      const zitterX = locker ? 0.06 : 0.24;
+      const zitterY = locker ? 0.05 : 0.22;
       aufTisch(k,
-        Math.max(x0, Math.min(x1 - breite,
-                  pl[0] + (Math.random() - 0.5) * breite * 0.24)),
-        Math.max(KOPF, Math.min(tisch.clientHeight - h - 4,
-                  pl[1] + (Math.random() - 0.5) * h * 0.22)));
+        Math.max(x, Math.min(x + bw - breite,
+                  pl[0] + (Math.random() - 0.5) * breite * zitterX)),
+        Math.max(y0, Math.min(tisch.clientHeight - h - 4,
+                  pl[1] + (Math.random() - 0.5) * h * zitterY)));
       k.style.zIndex = ++z;
     });
-    y += bh + luft;
+    // Quer wandert das naechste Band nach RECHTS, laengs nach unten.
+    if (SPALTIG) x += bw + bandLuft; else y += bh + luft;
   });
   loeschenMarken();
 }
@@ -1383,7 +1716,12 @@ function auslegen(teilmenge){
   const h = Math.round(breite * 0.844);
   const zu = teilmenge || karten.filter(k => k.dataset.rolle !== 'ablage');
   const bereiche = [];
-  if (!BRETT){
+  if (!BRETT && QUER){
+    // Quer geteilt: Der Vorrat hat die ganze Breite und beginnt unter
+    // der Trennlinie. Der dritte Wert eines Bereichs ist seine
+    // Oberkante - dieselbe Mechanik, die das breite Brett schon nutzt.
+    bereiche.push([4, Math.max(60, tisch.clientWidth - 6), grenzeY() + 22]);
+  } else if (!BRETT){
     const grenze = HAELFTEN ? tisch.clientWidth * HAELFTEN.teiler : tisch.clientWidth;
     bereiche.push([4, Math.max(60, grenze - 10)]);
   } else {
@@ -1406,7 +1744,7 @@ function auslegen(teilmenge){
   // liegen durcheinander, verdecken sich aber nicht gegenseitig.
   const hoch = Math.max(20, tisch.clientHeight - 16);
   if (SORTIERT && bereiche.length === 1){
-    nachSorten(zu, bereiche[0][0], bereiche[0][1], hoch, h);
+    nachSorten(zu, bereiche[0][0], bereiche[0][1], hoch, h, bereiche[0][2]);
     return;
   }
   const plaetze = [];
@@ -1445,6 +1783,10 @@ function zurueck(){
     k._rot = 0; k._feld = undefined; k.classList.remove('rastet');
     k._heim.appendChild(k);
   };
+  // «Zurueck zum Ursprung» hebt auch die Handmarke auf - sonst blieben
+  // die einmal gelegten Karten von jedem spaeteren Ordnen ausgenommen,
+  // und der Ursprung waere keiner.
+  karten.forEach(k => { k._gelegt = false; });
   if (FLAECHE === 'tisch' || FLAECHE === 'runden'){
     karten.filter(k => k.dataset.rolle === 'ablage').forEach(heim);
     auslegen(); meldung.textContent = ''; return;
@@ -1489,7 +1831,10 @@ function kartenVerdrahten(liste){
   });
   ['pointerup','pointercancel'].forEach(t =>
     k.addEventListener(t, () => {
-      k.classList.remove('aktiv'); lupe(k, false); einrasten(k); }));
+      k.classList.remove('aktiv'); lupe(k, false); einrasten(k);
+      // NEU (2026-08-31, Rikes Befund): Was von Hand gelegt wurde, ist
+      // gelegt. Die Marke ueberlebt jedes Nachlegen - siehe nachSorten().
+      k._gelegt = true; }));
  });
 }
 kartenVerdrahten(karten);
@@ -1739,37 +2084,93 @@ if (FLAECHE === 'kette' && vorfuehrenMoeglich()){
 // ob schon was stimmt oder nicht.»
 /* Der Knopf zum Nachholen. Er steht nur da, wo es wirklich noch
    Material gibt - sonst waere er ein Versprechen ohne Deckung. */
+/* NEU (2026-08-31, Rikes Auftrag): ZWEI Knoepfe statt einem.
+   «Wenn's einfach moeglich ist, dann sollen die Schueler auswaehlen
+   koennen zwischen eine Figur mehr oder gleich mehrere Figuren mehr.»
+
+   Die Stufen sind seither fein - je Stufe eine Figur mit ihren Termen
+   (siehe auswahl.py). Der kleine Knopf geht eine Stufe weiter, der
+   grosse drei auf einmal. Beide arbeiten dieselbe Reihe ab; der grosse
+   ist also nur ein dreifacher Klick, kein zweiter Weg.
+
+   NACHSCHUBSCHRITT sagt, wie viele Stufen der grosse Knopf nimmt.
+   Steht er auf 1, erscheint nur der kleine - dann waeren beide
+   dasselbe, und ein zweiter Knopf ohne Unterschied ist eine Frage,
+   keine Wahl. */
 if (NACHSCHUB && NACHSCHUB.length){
-  const kn = document.createElement('button');
-  kn.id = 'mehrkarten';
-  const rest = () => document.querySelectorAll('.karte[data-stufe="'
-                        + (STUFE + 1) + '"]').length;
-  const beschriften = () => {
-    const n = rest();
-    kn.textContent = n ? 'Mehr Karten (+' + n + ')' : 'Mehr Karten';
-    kn.disabled = !n;
-    kn.style.display = n ? '' : 'none';
+  const restAb = s => document.querySelectorAll('.karte[data-stufe="'
+                         + s + '"]').length;
+  const stufenUebrig = () => {
+    let n = 0;
+    while (restAb(STUFE + n + 1)) n++;
+    return n;
   };
-  kn.onclick = () => {
-    const neue = [...document.querySelectorAll('.karte[data-stufe="'
-                    + (STUFE + 1) + '"]')];
+
+  function nachlegen(wieViele){
+    const neue = [];
+    let letzter = '';
+    for (let i = 0; i < wieViele; i++){
+      const dran = [...document.querySelectorAll('.karte[data-stufe="'
+                      + (STUFE + 1) + '"]')];
+      if (!dran.length) break;
+      STUFE++;
+      letzter = NACHSCHUB[STUFE - 1] || letzter;
+      dran.forEach(k => { k.style.display = ''; karten.push(k); neue.push(k); });
+    }
     if (!neue.length) return;
-    STUFE++;
-    neue.forEach(k => { k.style.display = ''; karten.push(k); });
     kartenVerdrahten(neue);
     // Der Satz sagt, WAS dazukommt - nicht, wie viele. Fehlt er, sagt
-    // die Flaeche lieber nichts als Werkstattsprache.
-    meldung.textContent = NACHSCHUB[STUFE - 1]
+    // die Flaeche lieber nichts als Werkstattsprache. Bei mehreren
+    // Stufen auf einmal traegt der Satz der LETZTEN Stufe; die
+    // Zwischenschritte hat niemand gesehen.
+    meldung.textContent = letzter
       || (neue.length + ' weitere Karten liegen jetzt dabei.');
+    // Das Raster waechst mit: eine Figur mehr heisst ein Feld mehr.
+    // Ohne das blieben die neuen Figuren ohne Platz, und der Tisch
+    // haette weniger Felder als Gruppen.
+    feldAnzahl = Math.max(feldAnzahl, gruppenAufDemTisch());
     if (FLAECHE === 'kette') kettenNeuZeichnen();
     else if (FLAECHE === 'buendel'){ buendelAufbau(); buendelLegen(); }
     // Nur die neuen Karten bekommen einen Platz - alles, was schon liegt,
     // bleibt unangetastet, ob sortiert oder noch lose.
-    else auslegen(neue);
+    else {
+      rasterZeichnen(rasterKnopf && rasterKnopf.classList.contains('an'));
+      auslegen(neue);
+    }
     beschriften();
+  }
+
+  const knoepfe = [];
+  const machKnopf = (id, wieViele, text) => {
+    const kn = document.createElement('button');
+    kn.id = id;
+    kn.dataset.stufen = wieViele;
+    kn.textContent = text;
+    kn.onclick = () => nachlegen(wieViele);
+    const leiste = document.querySelector('.leiste');
+    leiste.insertBefore(kn, document.getElementById('bild') || null);
+    knoepfe.push(kn);
+    return kn;
   };
-  const leiste = document.querySelector('.leiste');
-  leiste.insertBefore(kn, document.getElementById('bild') || null);
+
+  function beschriften(){
+    const uebrig = stufenUebrig();
+    knoepfe.forEach(kn => {
+      const will = +kn.dataset.stufen;
+      // Der grosse Knopf verschwindet, sobald weniger Stufen uebrig
+      // sind, als er nehmen wuerde - sonst verspricht er drei Figuren
+      // und legt eine.
+      const geht = uebrig >= will;
+      kn.disabled = !geht;
+      kn.style.display = geht ? '' : 'none';
+    });
+  }
+
+  machKnopf('mehrkarten', 1, NACHSCHUBSCHRITT > 1
+            ? '+ eine Figur' : 'Mehr Karten');
+  if (NACHSCHUBSCHRITT > 1)
+    machKnopf('mehrkarten_viele', NACHSCHUBSCHRITT,
+              '+ ' + NACHSCHUBSCHRITT + ' Figuren');
   beschriften();
 }
 document.getElementById('kleiner').onclick   = () => zoom(-22);
@@ -1778,8 +2179,19 @@ document.getElementById('zurueck').onclick   = zurueck;
 document.getElementById('bild').onclick      = () => bild(false);
 document.getElementById('drucken').onclick   = () => window.print();
 function haelftenZeichnen(){
-  document.querySelectorAll('#teiler,.haelfte').forEach(e => e.remove());
+  document.querySelectorAll('#teiler,#teiler_quer,.haelfte').forEach(e => e.remove());
   if (!HAELFTEN) return;
+  if (QUER){
+    const y = grenzeY();
+    const l = document.createElement('div'); l.id = 'teiler_quer';
+    l.style.top = y + 'px'; tisch.appendChild(l);
+    [[HAELFTEN.oben, 4], [HAELFTEN.unten, y + 4]].forEach(([t, py]) => {
+      const d = document.createElement('div');
+      d.className = 'haelfte'; d.style.left = '14px'; d.style.top = py + 'px';
+      d.textContent = t; tisch.appendChild(d);
+    });
+    return;
+  }
   const x = tisch.clientWidth * HAELFTEN.teiler;
   const l = document.createElement('div'); l.id = 'teiler';
   l.style.left = x + 'px'; tisch.appendChild(l);
@@ -1791,7 +2203,10 @@ function haelftenZeichnen(){
 }
 
 function zone(){
-  // Bereich, in dem das Raster liegt: rechte Haelfte, sonst der ganze Tisch.
+  // Bereich, in dem das Raster liegt: quer geteilt die ganze Breite
+  // (das Brett liegt oben), laengs geteilt die rechte Haelfte, sonst
+  // der ganze Tisch.
+  if (QUER) return [8, tisch.clientWidth];
   return HAELFTEN ? [tisch.clientWidth * HAELFTEN.teiler + 10, tisch.clientWidth]
                   : [8, tisch.clientWidth];
 }
@@ -1802,12 +2217,64 @@ function zone(){
 let feldAnzahl = RASTER ? RASTER.anzahl : 0;
 const feldTitel = [];
 
+/* Wie viele verschiedene Gruppen liegen gerade auf dem Tisch?
+   Gebraucht beim Nachlegen: Jede zugeschaltete Figur bringt ihre eigene
+   Gruppe mit, und das Raster soll genau so viele Felder zeigen. Karten
+   ohne Marke (Distraktoren) zaehlen nicht - fuer sie ist das Restfeld
+   da, nicht ein eigenes Gruppenfeld. */
+function gruppenAufDemTisch(){
+  const g = new Set();
+  karten.forEach(k => { if (k.dataset.gruppe) g.add(k.dataset.gruppe); });
+  return g.size;
+}
+
 function rasterZeichnen(an){
   document.querySelectorAll('.rasterfeld').forEach(e => e.remove());
   if (!an || !RASTER) return;
-  const fw = breite * RASTER.breite, fh = breite * 0.844 * RASTER.hoehe;
-  const [zx0, zx1] = zone();
+  const fw = breite * RASTER.breite;
+  let fh = breite * 0.844 * RASTER.hoehe;
+  const [zx0, zxEnde] = zone();
+
+  // NEU (2026-08-31, Rikes Auftrag): Ein Zusatzfeld darf jetzt eine
+  // SPALTE am rechten Rand sein (wie: "spalte") statt einer Zeile
+  // unterhalb. Der Grund steht bei Variante 1: Eine Zeile unten
+  // verschiebt sich, sobald oben eine Gruppenzeile dazukommt - und die
+  // Karten, die darin lagen, bleiben liegen und stehen ploetzlich in
+  // einer fremden Gruppe. Eine Spalte rechts steht fest.
+  //
+  // Die Spalte nimmt sich ihre Breite VOR den Gruppenfeldern; die
+  // bekommen den Rest.
+  const zusatzfelder = !RASTER.extra ? []
+    : (Array.isArray(RASTER.extra) ? RASTER.extra : [RASTER.extra]);
+  const spaltenfelder = zusatzfelder.filter(e => e.wie === 'spalte');
+  const zeilenfelder  = zusatzfelder.filter(e => e.wie !== 'spalte');
+  const spaltenBreit = spaltenfelder.reduce(
+        (a, e) => a + breite * (e.breite || 1.2) + 12, 0);
+  const zx1 = zxEnde - spaltenBreit;
+
   const spalten = Math.max(1, Math.floor((zx1 - zx0 - 6) / (fw + 10)));
+
+  // NEU (2026-08-31): Quer geteilt hat das Brett eine feste Hoehe - die
+  // Trennlinie. Passen die Felder samt Zusatzfeldern nicht hinein,
+  // werden sie flacher gemacht, statt unter die Linie zu rutschen. Beim
+  // ersten Ausprobieren war genau das passiert: «passt zu keiner Figur»
+  // und «weiss ich noch nicht» lagen unsichtbar hinter dem Vorrat.
+  //
+  // Gestaucht wird nur die HOEHE. Die Breite bleibt, weil sie an der
+  // Kartenbreite haengt - ein Feld, in das die Karte nicht mehr passt,
+  // waere schlimmer als ein flaches.
+  if (QUER){
+    const zeilen = Math.ceil((feldAnzahl + (RASTER.erweiterbar ? 1 : 0)) / spalten);
+    // Die Zusatzfelder haengen an fh (sie halten ihr Verhaeltnis), also
+    // steht die Gesamthoehe als Vielfaches von fh da:
+    //   zeilen · (fh + 10)  +  groesstes Zusatzfeld · fh/RASTER.hoehe
+    const zAnteil = zusatzfelder.length
+      ? Math.max(...zusatzfelder.map(e => (e.hoehe || RASTER.hoehe))) / RASTER.hoehe
+      : 0;
+    const platz = grenzeY() - 26 - 12 - 10 * (zeilen + (zAnteil ? 1 : 0));
+    if (zeilen > 0 && platz > 0) fh = Math.min(fh, platz / (zeilen + zAnteil));
+    fh = Math.max(breite * 0.5, fh);
+  }
 
   function feld(x, y, w, hh, text, zusatz, nr){
     const d = document.createElement('div');
@@ -1856,11 +2323,48 @@ function rasterZeichnen(an){
     d.onclick = () => { feldAnzahl++; rasterZeichnen(true); };
     tisch.insertBefore(d, tisch.firstChild);
   }
-  if (RASTER.extra){
+  // NEU (2026-08-31, Rikes Auftrag): `extra` darf jetzt eine LISTE sein.
+  // «Und bei den Gruppen, die man oben legen kann, vielleicht auch
+  // einfach ein Platz fuer welche, wo man nicht weiss, was man mit
+  // denen anfangen will.»
+  //
+  // Zwei Zusatzfelder sind nicht dasselbe zweimal: «passt zu keiner
+  // Figur» ist ein ERGEBNIS - man hat geprueft und entschieden. «weiss
+  // ich noch nicht» ist ein ZWISCHENSTAND. Beide in ein Feld zu werfen
+  // hiesse, die Unentschiedenen als entschieden zu zaehlen; genau das
+  // wuerde die Pruefung dann auch melden.
+  //
+  // Sie teilen sich eine Zeile, wenn beide da sind - sonst frisst das
+  // Restfeld allein die ganze Breite und der zweite Platz rutscht aus
+  // dem Bild.
+  // Zusatzfelder als ZEILE unterhalb der Gruppenfelder.
+  if (zeilenfelder.length){
     const y = 26 + (r + 1) * (fh + 10);
-    const hh = breite * 0.844 * (RASTER.extra.hoehe || RASTER.hoehe);
-    feld(zx0, y, zx1 - zx0 - 8, hh, RASTER.extra.beschriftung, true, -1);
+    const ganz = zx1 - zx0 - 8;
+    const bw = zeilenfelder.length > 1
+      ? (ganz - 10 * (zeilenfelder.length - 1)) / zeilenfelder.length : ganz;
+    zeilenfelder.forEach((ex, i) => {
+      // Die Zusatzfelder halten ihr VERHAELTNIS zum Gruppenfeld. Wird
+      // das gestaucht, weil das Brett quer nur begrenzt hoch ist,
+      // schrumpfen sie mit - sonst waeren die kleinen Ablagen ploetzlich
+      // groesser als die Felder, zu denen sie gehoeren. Genau so sah es
+      // beim ersten Ausprobieren aus.
+      const hh = fh * ((ex.hoehe || RASTER.hoehe) / RASTER.hoehe);
+      feld(zx0 + i * (bw + 10), y, bw, hh, ex.beschriftung, true, -1 - i);
+    });
   }
+
+  // Zusatzfelder als SPALTE am rechten Rand. Sie reichen von der
+  // Oberkante bis zum Boden des Tisches - was hier liegt, gehoert zu
+  // keiner einzelnen Zeile, sondern zum ganzen Sortieren. Und ihre Lage
+  // haengt an nichts, was mit den Figuren waechst.
+  let sx = zx1 + 10;
+  spaltenfelder.forEach((ex, i) => {
+    const sw = breite * (ex.breite || 1.2);
+    const sh = Math.max(fh, tisch.clientHeight - 26 - 14);
+    feld(sx, 26, sw, sh, ex.beschriftung, true, -1 - zeilenfelder.length - i);
+    sx += sw + 12;
+  });
 }
 
 const rasterKnopf = document.getElementById('raster');
