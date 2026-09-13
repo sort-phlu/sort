@@ -406,7 +406,7 @@ const brett = document.getElementById('brett');
 const KOPF = 30;                 // Freiraum fuer die Ueberschrift
 const NACHSCHUB = [];  // Begruendung je Stufe
 const SORTIERT = false;   // links nach Kartensorte getrennt
-const TYPNAMEN = {"P": "POTENZ", "T": "RECHNUNG", "R": "BEHAUPTUNG", "B": "PROBE", "A": "AUSGESCHRIEBEN", "W": "WERT", "S": "AUSSAGE", "Z": "ZAHL", "N": "FELD"};   // Buchstabe -> Klartext, fuer die Vorratsfelder
+const TYPNAMEN = {"P": "POTENZ", "T": "RECHNUNG", "R": "BEHAUPTUNG", "B": "PROBE", "A": "AUSGESCHRIEBEN", "W": "WERT", "S": "AUSSAGE", "Z": "ZAHL", "K": "ZAHL", "N": "FELD"};   // Buchstabe -> Klartext, fuer die Vorratsfelder
 const NACHSCHUBSCHRITT = 1;   // Stufen je grossem Knopf
 const VORRATSPALTEN = false;   // Vorrat in Spalten statt Baendern
 const VORRATLINKS = "BA";   // Kartensorten, die als Bild gelten
@@ -414,7 +414,12 @@ const VORRATNAMEN = ["Zum Dazuholen", "Karten"];   // ihre zwei Ueberschriften
 const FLAECHE = 'tisch';
 // Gibt es genau EINE richtige Loesung? Nur dann kann man sie zeigen.
 // Die offene Sortierung hat keine - dort bleibt «Aufloesen» weg.
-const LOESBAR = false;                 // 'vorrat', 'tisch' oder 'runden'
+const LOESBAR = false;
+// Wie wird geprueft? 'gruppe' vergleicht mit der hinterlegten
+// Zugehoerigkeit, 'reihe' schaut auf die Reihenfolge, 'fund' rechnet
+// nach, ob in einem Feld drei Karten liegen, von denen eine das Produkt
+// der beiden anderen ist.
+const PRUEFART = 'gruppe';                 // 'vorrat', 'tisch' oder 'runden'
 const GEDREHT = false;                   // Karten leicht schief hinlegen?
 const BRETT = null;
 const RASTER = {"anzahl": 2, "breite": 2.6, "hoehe": 3.3, "beschriftung": "gleicher Wert", "zwingend": true, "frei": true, "erweiterbar": true, "einrasten": true, "neu_text": "noch eine Gruppe", "extra": {"beschriftung": "passt zu keiner Gruppe", "volle_breite": true, "hoehe": 1.6}};                     // null oder Vorstrukturierung
@@ -2144,6 +2149,60 @@ function lege(drin, x, y, bw, bh){
   });
 }
 
+/* Prueft Funde: In jedem belegten Feld muessen DREI Karten liegen, von
+   denen eine das Produkt der beiden anderen ist.
+
+   NEU (2026-09-13, Rikes Entscheidung): «Muss es eindeutig loesbar
+   sein? Vielleicht nicht, das macht den Charme aus.» Also wird NICHT
+   gegen eine hinterlegte Loesung geprueft - der Satz hat nnen bis
+   zwanzig Funde, und welche drei eine Gruppe legt, ist ihre Sache.
+   Geprueft wird gegen die Sache selbst.
+
+   Die Rueckmeldung zaehlt die richtigen Funde. Sie sagt nicht, wie
+   viele es im Satz gibt - das ist die offene Frage der Aufgabe. */
+function fundPruefen(){
+  const auf = karten.filter(k => k.parentElement === tisch
+                              && k.style.display !== 'none');
+  const drin = auf.filter(k => k._feld !== undefined);
+  if (!drin.length){
+    meldung.textContent = 'Legt einen Fund in ein Feld: zwei Karten und ihr Ergebnis.';
+    return;
+  }
+  const nach = {};
+  drin.forEach(k => { (nach[k._feld] = nach[k._feld] || []).push(k); });
+  const w = k => Number(k.dataset.wert);
+  const gut = k => Math.abs(k) < 1e-9;
+
+  const schlecht = new Set();
+  let stimmt = 0, felder = 0;
+  Object.values(nach).forEach(gr => {
+    felder++;
+    let ok = false;
+    if (gr.length === 3){
+      const [a, b, c] = gr.map(w);
+      ok = gut(a * b - c) || gut(a * c - b) || gut(b * c - a);
+    }
+    if (ok) stimmt++;
+    else gr.forEach(k => schlecht.add(k));
+  });
+
+  if (pruefstufe === 1){
+    pruefstufe = 2;
+    loeschenMarken();
+    drin.forEach(k => k.classList.add(schlecht.has(k) ? 'falsch' : 'richtig'));
+    return;
+  }
+  loeschenMarken();
+  pruefstufe = 1;
+  echteRuefung = true;
+  const rest = auf.length - drin.length;
+  meldung.textContent =
+    stimmt + ' von ' + felder + ' Feld' + (felder === 1 ? '' : 'ern') +
+    ' stimmt' + (stimmt === 1 ? '' : 'en') +
+    (rest ? ' · ' + rest + ' Karten liegen noch daneben' : '') +
+    '.  Nochmals drücken zeigt, welche.';
+}
+
 function reihePruefen(){
   const alle = karten.filter(k => k.dataset.wert !== undefined
                                && k.style.display !== 'none');
@@ -2326,6 +2385,7 @@ function pruefen(){
   if (FLAECHE === 'buendel'){ buendelPruefen(); return; }
   if (FLAECHE === 'kette'){ kettePruefen(); return; }
   if (FLAECHE === 'reihe'){ reihePruefen(); return; }
+  if (PRUEFART === 'fund'){ fundPruefen(); return; }
   if (FLAECHE === 'runden'){
     const e = pruefeRunde();
     if (!e) return;
@@ -3473,7 +3533,7 @@ if (FLAECHE === 'tisch' || FLAECHE === 'runden' || FLAECHE === 'reihe'){
 }
 </script>
 <script>window.SORT_AUFGABE={thema:2,variante:2};</script>
-<script>window.KASPER_RUECKMELDUNG={abgabe:null,schluessel:"",ablage:"https://drive.switch.ch/index.php/s/NC2KaGNB6sJLWqX",projekt:"sort",immer:true,sammeln:true,stueck:"Thema 2 · Potenzen · Umgebung 2"};</script>
+<script>window.KASPER_RUECKMELDUNG={abgabe:null,schluessel:"",ablage:"https://drive.switch.ch/index.php/s/NC2KaGNB6sJLWqX",projekt:"sort",immer:true,sammeln:true,stueck:"Thema 2 · Potenzen · Umgebung 3"};</script>
 <script src="../../../paket.js"></script>
 <script src="../../../rueckmeldung.js"></script>
 </body>
