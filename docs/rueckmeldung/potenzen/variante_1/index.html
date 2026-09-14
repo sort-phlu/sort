@@ -635,7 +635,19 @@ function einpassen(){
     const tiefstes = Math.max(1, ...Object.values(belegung));
     const noetig = Math.max(RASTER.hoehe, tiefstes * 1.08);
     const nachHoehe = (tisch.clientHeight * 0.52 - 16) / (noetig * 0.844);
-    breite = Math.max(34, Math.min(150, Math.floor(
+    // GEAENDERT (2026-09-14, Rikes Beobachtung): Vorher nahm die Karte
+    // IMMER den ganzen Platz, den die Feldzahl hergab - bei fuenf
+    // Feldern also ein Sechstel der Flaeche, und das waren riesige
+    // Felder mit einer kleinen Zahl darin. Und jedes neue Feld machte
+    // alles kleiner, auch wenn noch Platz gewesen waere.
+    //
+    // Jetzt hat die Karte eine ZIELGROESSE (agent/05: rund 110 px auf
+    // dem Tablet quer), und geschrumpft wird erst, wenn die Felder
+    // sonst nicht mehr in eine Zeile passen. Die Felder sind damit von
+    // Anfang an so breit, wie die Zahlen es brauchen, und sie bleiben
+    // es, solange Platz ist.
+    const ZIEL = 110;
+    breite = Math.max(34, Math.min(ZIEL, Math.floor(
       Math.min(proFeld / RASTER.breite, nachHoehe))));
     masse(); return;
   }
@@ -1949,7 +1961,7 @@ function zurueck(){
    Bretts. Gleich grosse Karten gehoeren ins selbe Feld, und wie viele
    das am Ende sind, ist Teil der Aufgabe. Sie werden untereinander
    gesetzt, vollstaendig sichtbar. */
-let reiheTiefe = 0;          // wie viele Karten liegen im vollsten Feld
+let reiheTiefe = 0, rasterTiefe = 0;          // wie viele Karten liegen im vollsten Feld
 
 /* Ein Feld an Stelle `i` einschieben; alles rechts davon rueckt auf. */
 function feldEinschieben(i){
@@ -2025,6 +2037,17 @@ function rasterEinrasten(k){
       const alt = k._feld;
       k._feld = feldKennung(d);
       k.classList.add('rastet');
+      // Ist diese Gruppe jetzt die vollste, muessen Felder und Karten
+      // neu gerechnet werden - sonst wuerde die letzte Karte verdeckt.
+      const drin = karten.filter(a => a._feld === k._feld
+                                   && a.style.display !== 'none').length;
+      if (drin > (rasterTiefe || 0)){
+        rasterTiefe = drin;
+        einpassen(); rasterZeichnen(true);
+        alleRasterfelder().forEach(f => feldNeuSetzen(feldKennung(f)));
+        if (window.knopfWirkung) window.knopfWirkung();
+        return true;
+      }
       feldNeuSetzen(k._feld);
       if (alt !== undefined && alt !== k._feld) feldNeuSetzen(alt);
       if (window.knopfWirkung) window.knopfWirkung();
@@ -2162,24 +2185,41 @@ function loesungLegen(liste){
    aber so, dass die LETZTE noch ganz im Feld liegt. Das ist die
    Bedingung aus agent/06: durcheinander ja, ueberlappend ja,
    verdeckt nein. */
+/* Wie viele Karten passen nebeneinander in ein Feld dieser Breite? */
+function proReihe(bw){
+  return Math.max(1, Math.floor((bw - 8) / (breite + 4)));
+}
+
+/* Wie viele Zeilen braucht das vollste Feld? Danach richtet sich die
+   Feldhoehe - und notfalls die Kartengroesse. */
+function tiefsteBelegung(){
+  const zaehl = {};
+  karten.forEach(k => { if (k._feld !== undefined && k.style.display !== 'none')
+                          zaehl[k._feld] = (zaehl[k._feld] || 0) + 1; });
+  return Math.max(1, ...Object.values(zaehl), 1);
+}
+
 function lege(drin, x, y, bw, bh){
   if (!drin.length) return;
   const h = Math.round(breite * 0.844);
   // Die Beschriftung sitzt oben im Feld und ist rund 26 px hoch. Bei
   // 20 lag die erste Kartenreihe darauf - «gleicher Wert» war halb
   // verdeckt, und damit war der Feldname weg, der die Aufgabe stellt.
-  const kopf = 30;                                  // Platz fuer die Beschriftung
-  const spalten = Math.max(1, Math.min(drin.length,
-                     Math.floor((bw - 8) / (breite * 0.58))));
-  const reihen = Math.ceil(drin.length / spalten);
-  const dx = spalten > 1 ? Math.min(breite + 6, (bw - 8 - breite) / (spalten - 1)) : 0;
-  const dy = reihen > 1
-      ? Math.min(h + 4, Math.max(h * 0.34, (bh - kopf - 6 - h) / (reihen - 1)))
-      : 0;
+  const kopf = 30;
+  // GEAENDERT (2026-09-14, Rikes Beobachtung): Vorher wurden die Karten
+  // enger und enger geschoben, je mehr in ein Feld kamen - «dann kann
+  // ich die Zahlen gar nicht mehr sehen». Das verstoesst gegen agent/06:
+  // «Durcheinander ja, ueberlappend ja - verdeckt nein.»
+  //
+  // Jetzt wird NICHT mehr gestapelt. Die Karten liegen im Gitter mit
+  // vollem Abstand; passt das nicht, waechst das FELD (rasterZeichnen)
+  // und notfalls wird die Karte kleiner (einpassen). Das Feld richtet
+  // sich nach den Karten, nicht die Karten nach dem Feld.
+  const spalten = Math.min(drin.length, proReihe(bw));
   drin.forEach((k, j) => {
     k._rot = 0;
-    aufTisch(k, x + 4 + (j % spalten) * dx,
-                y + kopf + Math.floor(j / spalten) * dy);
+    aufTisch(k, x + 4 + (j % spalten) * (breite + 4),
+                y + kopf + Math.floor(j / spalten) * (h + 4));
     k.style.zIndex = ++z;
   });
 }
@@ -2821,10 +2861,23 @@ function rasterZeichnen(an){
   // rechts gelesen - und genau das ist die Aufgabe. Also: so viele
   // Spalten wie Felder, und die Feldbreite folgt daraus. Kommt ein Feld
   // dazu, werden alle etwas schmaler.
+  if (RASTER.einrasten && FLAECHE !== 'reihe'){
+    // Das Feld waechst mit der vollsten Gruppe. Alle gleich hoch,
+    // sonst stuenden die Felder stufig da.
+    const tief = tiefsteBelegung();
+    const je = proReihe(fw);
+    const reihen = Math.ceil(tief / je);
+    const noetig = (30 + reihen * (breite * 0.844 + 4) + 6) / (breite * 0.844);
+    fh = breite * 0.844 * Math.max(RASTER.hoehe, noetig);
+  }
   if (FLAECHE === 'reihe'){
     const n = feldAnzahl + (RASTER.erweiterbar ? 1 : 0);
     spalten = n;
-    fw = Math.max(24, ((zx1 - zx0 - 6) - 10 * (n - 1)) / n);
+    // Das Feld ist so breit, wie die Karte es braucht - NICHT so breit,
+    // wie die Flaeche geteilt durch die Feldzahl. Erst wenn die Reihe
+    // sonst nicht mehr in eine Zeile passt, wird enger gerueckt.
+    const platz = ((zx1 - zx0 - 6) - 10 * (n - 1)) / n;
+    fw = Math.max(24, Math.min(breite * RASTER.breite, platz));
     // Das Feld waechst mit dem vollsten Feld mit - alle gleich hoch,
     // sonst stuende die Reihe stufig da.
     const belegung = {};
@@ -3360,7 +3413,7 @@ if (SATZKARTEN.length){
     loeschenMarken();
     meldung.textContent = '';
     echteRuefung = false;
-    reiheTiefe = 0;
+    reiheTiefe = 0; rasterTiefe = 0;
     SATZKARTEN.forEach(k => {
       if (zeigbar(k, key)){
         k.style.display = '';
