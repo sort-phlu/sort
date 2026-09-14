@@ -57,7 +57,7 @@ const S = {
   beginn: null, t0: 0,
   ereignisse: [], spur: null, aufnehmer: null, brocken: [],
   laeuft: false, zuletztGezogen: {}, uhr: null, pegel: 0,
-  zwischenbilder: [], runde: 0, fenster: null, rueckmeldung: ''
+  zwischenbilder: [], runde: 0, fenster: null, rueckmeldung: '', stand: null
 };
 
 /* ============================================================
@@ -133,6 +133,20 @@ function lage(k){
   if (k._feld !== undefined && k._feld !== null) l.feld = k._feld;
   const ort = k.parentElement && k.parentElement.id;
   if (ort && ort !== 'tisch') l.ort = ort;
+  // NEU (2026-09-13, Rikes Auftrag): Ob die Karte ueberhaupt auf dem
+  // Tisch LAG. alleLagen() laeuft ueber ALLE .karte - auch ueber die,
+  // die noch hinter einer Nachschubstufe liegen und display:none
+  // tragen. Eine solche Karte hat _x = _y = 0 und sah im Protokoll
+  // bisher aus wie eine, die links oben liegt.
+  //
+  // Das ist nicht Kosmetik: Rike will der Gruppe am Schluss ihre
+  // eigene Sortierung zeigen, und zwar NUR mit den Figuren, die sie
+  // tatsaechlich in der Hand hatte. Ohne diese Marke laesst sich das
+  // aus einem abgegebenen Paket nicht mehr rekonstruieren.
+  //
+  // Additiv, mit Absicht: Die bereits abgegebenen Pakete kennen das
+  // Feld nicht, und ihre Auswertung bricht dadurch nicht.
+  if (k.style && k.style.display === 'none') l.verdeckt = 1;
   try {
     if (typeof HAELFTEN !== 'undefined' && HAELFTEN && typeof tisch !== 'undefined'){
       const b = (typeof breite !== 'undefined' ? breite : 170);
@@ -198,10 +212,18 @@ function mitschreibenStarten(){
     }, false));
 
   /* Knöpfe der Sortierfläche */
+  // NEU (2026-09-13, Rikes Auftrag): `mehrkarten` und `mehrkarten_viele`
+  // standen hier NICHT. Das Nachlegen - der Knopf, um den sich die halbe
+  // Gestaltung dreht - hinterliess keine einzige Spur im Protokoll.
+  //
+  // Damit war aus einem abgegebenen Paket nicht zu beantworten, wie weit
+  // eine Gruppe ueberhaupt gekommen ist: wie oft sie nachgelegt hat,
+  // wann, und welche Figuren sie je gesehen hat.
   const knoepfe = {
     pruefen: 'pruefen', raster: 'raster', zurueck: 'zurueck',
     kleiner: 'zoom-kleiner', groesser: 'zoom-groesser',
-    runde: 'neue-runde', zufall: 'zufaellig-fuellen', bild: 'bild-gespeichert'
+    runde: 'neue-runde', zufall: 'zufaellig-fuellen', bild: 'bild-gespeichert',
+    mehrkarten: 'nachgelegt', mehrkarten_viele: 'nachgelegt-mehrere'
   };
   Object.keys(knoepfe).forEach(id => {
     const b = document.getElementById(id);
@@ -219,6 +241,13 @@ function mitschreibenStarten(){
             k => (k.dataset.code || '?') + (k.classList.contains('richtig') ? '+' : '-'));
         }
         if (id === 'runde' || id === 'zufall') d.karten = alleLagen();
+        // Beim Nachlegen wird die erreichte Stufe mitgeschrieben und die
+        // Lage aller Karten - so steht im Protokoll, WELCHE Figuren ab
+        // hier auf dem Tisch lagen, nicht nur DASS nachgelegt wurde.
+        if (id === 'mehrkarten' || id === 'mehrkarten_viele'){
+          if (typeof STUFE !== 'undefined') d.stufe = STUFE;
+          d.karten = alleLagen();
+        }
         merken(knoepfe[id], d);
       }, 60);
     }, false);
@@ -781,6 +810,12 @@ async function beenden(){
   S.laeuft = false;
   clearInterval(S.uhr);
   merken('ende', { karten: alleLagen() });
+  // NEU (2026-09-13, Rikes Auftrag): Der eigene Stand wird JETZT
+  // festgehalten, nicht erst am Schluss. Bis das Blatt erscheint, liegen
+  // mehrere Bildschirme dazwischen; ein Fenster, das die Groesse
+  // aendert, oder ein gerolltes Brett wuerden die gemessenen Rechtecke
+  // verschieben. Der Stand gehoert zum Zeitpunkt des Abgebens.
+  S.stand = eigeneSortierung();
 
   const fertig = new Promise(f => { S.aufnehmer.onstop = f; });
   S.aufnehmer.stop();
@@ -953,6 +988,197 @@ async function beenden(){
   try { localStorage.removeItem('sort-protokoll-' + S.sitzung); } catch(e){}
 }
 
+/* ============================================================
+   Das Blatt - Rikes Auftrag vom 2026-09-13
+
+   «Ich glaub, es waer gut, wenn die Schueler am Ende, wenn sie abgegeben
+   haben, irgendeine Form von Rueckmeldung bekommen. Und das aber nicht
+   in Form von der Liste, sondern einfach auch von 'nem Bild ... Sie
+   muessten quasi Ihre Sortierung sehen und Sie muessten sehen, was
+   moegliche echte Sortierungen sind ... dass sie wirklich nur die
+   Figuren auch sehen, die sie am Ende wirklich selber auch in der Hand
+   hatten.»
+
+   Drei Entscheidungen stecken darin, alle von Rike:
+
+   KEIN ROT UND KEIN GRUEN. Nirgends steht, was falsch war. Nebeneinander
+   sieht man, dass eine Reihe links zwei Reihen rechts entspricht - und
+   genau darueber soll geredet werden. Das ist derselbe Grund, aus dem
+   PRUEFKNOPF ausgeschaltet bleibt: Nichts soll sich wegklicken lassen.
+
+   «KOENNTE» STATT «IST». Rechts steht EINE moegliche Sortierung. Wo es
+   keine gibt - «Immer - manchmal - nie» haengt an der Begruendung, nicht
+   an der Spalte -, traegt keine Karte eine Gruppenmarke, und dann
+   entfaellt die rechte Seite von selbst.
+
+   NUR DIE EIGENEN KARTEN. Rechts liegen genau die Karten, die auch links
+   liegen. Wer nie nachgelegt hat, sieht keine Figur, die er nie gesehen
+   hat.
+   ============================================================ */
+
+function sichtbareKarten(){
+  return Array.prototype.filter.call(
+    document.querySelectorAll('.karte'),
+    k => k.dataset.code && !(k.style && k.style.display === 'none'));
+}
+
+/* Welche Karte liegt in welchem Feld?
+
+   GEMESSEN, nicht abgefragt: In den Rasterfeldern rastet nichts ein -
+   `einrasten()` im Kern greift nur bei `rolle === 'ablage'`, und `_feld`
+   bleibt deshalb bei den Gruppenfeldern leer. Die Zugehoerigkeit
+   entsteht also dort, wo die Karte liegt, und genau so wird sie hier
+   gelesen: Mittelpunkt der Karte im Rechteck des Feldes.
+
+   Das ist zugleich die Auskunft, die die Gruppe erwartet - sie hat die
+   Karte ja hingelegt, nicht eingerastet. */
+function eigeneSortierung(){
+  const felder = Array.prototype.map.call(
+    document.querySelectorAll('.rasterfeld'), f => {
+      const e = f.querySelector('input.titel');
+      const s = f.querySelector('span');
+      return {
+        name:   e ? e.value.trim() : (s ? s.textContent.trim() : ''),
+        ersatz: e ? (e.placeholder || '') : (s ? s.textContent.trim() : ''),
+        r: f.getBoundingClientRect(),
+        codes: []
+      };
+    });
+  const rest = [];
+  sichtbareKarten().forEach(k => {
+    const b = k.getBoundingClientRect();
+    const x = b.left + b.width / 2, y = b.top + b.height / 2;
+    let wo = -1;
+    for (let i = 0; i < felder.length; i++){
+      const r = felder[i].r;
+      if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom){ wo = i; break; }
+    }
+    if (wo >= 0) felder[wo].codes.push(k.dataset.code);
+    else rest.push(k.dataset.code);
+  });
+  return { felder: felder.filter(f => f.codes.length), rest: rest };
+}
+
+/* Die Klassen - aber nur mit den Karten, die auf dem Tisch lagen. */
+function moeglicheSortierung(){
+  const nach = {}, folge = [];
+  sichtbareKarten().forEach(k => {
+    const g = k.dataset.gruppe;
+    if (g === undefined) return;
+    if (!nach[g]){ nach[g] = []; folge.push(g); }
+    nach[g].push(k.dataset.code);
+  });
+  // Die leere Marke sind die Einzelgaenger - sie kommen zuletzt, wie auf
+  // dem Brett auch, und tragen dort ihren eigenen Satz.
+  folge.sort((a, b) => (a === '' ? 1 : 0) - (b === '' ? 1 : 0));
+  return folge.map(g => ({ leer: g === '', codes: nach[g] }));
+}
+
+function blattKarte(code, bilder){
+  const b = el('button', 'sortauf-bk');
+  b.type = 'button';
+  b.dataset.code = code;
+  b.setAttribute('aria-label', 'Karte ' + code);
+  const q = bilder[code];
+  if (q){ const i = el('img'); i.src = q; i.alt = ''; b.appendChild(i); }
+  else   { b.textContent = code; }
+  return b;
+}
+
+function blattReihe(name, codes, bilder, still){
+  const d = el('div', 'sortauf-breihe' + (still ? ' still' : '')
+                    + (name ? '' : ' ohne-namen'));
+  const n = el('p', 'sortauf-bname');
+  n.appendChild(document.createTextNode(name));
+  n.appendChild(el('span', 'sortauf-bzahl', String(codes.length)));
+  d.appendChild(n);
+  const w = el('div', 'sortauf-bkarten');
+  codes.forEach(c => w.appendChild(blattKarte(c, bilder)));
+  d.appendChild(w);
+  return d;
+}
+
+function blattZeigen(){
+  const stand = S.stand;
+  if (!stand || (!stand.felder.length && !stand.rest.length)) return false;
+
+  // Die Bilder liegen schon in der Flaechenbeschreibung - Code auf
+  // Bildquelle. Kein zweiter Weg, keine zweite Wahrheit.
+  const bilder = {};
+  sichtbareKarten().forEach(k => {
+    const i = k.querySelector('img');
+    if (i) bilder[k.dataset.code] = i.getAttribute('src');
+  });
+
+  const loesung = moeglicheSortierung();
+  const f = document.createDocumentFragment();
+
+  f.appendChild(el('p', 'sortauf-hand', 'Geschafft'));
+  f.appendChild(el('h2', null, 'Danke – und hier ist eure Sortierung.'));
+  f.appendChild(el('p', 'sortauf-lauf', loesung.length
+    ? 'Links, wie ihr gelegt habt. Rechts, wie es auch liegen könnte. '
+      + 'Es sind dieselben Karten – nur anders gruppiert. Schaut euch die '
+      + 'Stellen an, an denen die beiden Seiten nicht übereinstimmen.'
+    : 'So habt ihr gelegt. Bei dieser Aufgabe gibt es keine eine richtige '
+      + 'Sortierung – sie hängt an eurer Begründung, nicht an der Zuordnung.'));
+
+  const seiten = el('div', 'sortauf-bseiten' + (loesung.length ? '' : ' einzeln'));
+
+  const links = el('div', 'sortauf-bseite');
+  links.appendChild(el('p', 'sortauf-bkopf', 'So habt ihr gelegt'));
+  stand.felder.forEach(g => {
+    links.appendChild(blattReihe(g.name || g.ersatz || 'ohne Namen',
+                                 g.codes, bilder, !g.name));
+  });
+  if (stand.rest.length)
+    links.appendChild(blattReihe('noch nicht zugeordnet', stand.rest, bilder, true));
+  seiten.appendChild(links);
+
+  if (loesung.length){
+    const rechts = el('div', 'sortauf-bseite loesung');
+    rechts.appendChild(el('p', 'sortauf-bkopf', 'So könnte es auch liegen'));
+    loesung.forEach(g => {
+      // Die Klassen tragen im Dokument nur ihren Schluessel, keinen
+      // Klartext. Statt einen Namen zu erfinden, den die Aufgabe nicht
+      // kennt, steht hier keiner: Das Benennen ist ja die Arbeit der
+      // Gruppe, und verglichen wird, WELCHE Karten zusammenliegen.
+      rechts.appendChild(blattReihe(
+        g.leer ? 'jede für sich allein' : '', g.codes, bilder, true));
+    });
+    seiten.appendChild(rechts);
+  }
+  f.appendChild(seiten);
+
+  if (loesung.length)
+    f.appendChild(el('p', 'sortauf-bfuss',
+      'Tippt eine Karte an – dann seht ihr, wo dieselbe Karte auf der '
+      + 'anderen Seite liegt.'));
+
+  f.appendChild(el('p', 'sortauf-klein', 'Sitzungscode:'));
+  f.appendChild(el('p', 'sortauf-code', S.sitzung));
+
+  bildschirm(f);
+  const karte = huelle.querySelector('.sortauf-karte');
+  if (karte) karte.classList.add('breit');
+
+  let hell = null;
+  huelle.addEventListener('click', e => {
+    const b = e.target.closest ? e.target.closest('.sortauf-bk') : null;
+    huelle.querySelectorAll('.sortauf-bk.leuchtet')
+          .forEach(x => x.classList.remove('leuchtet'));
+    if (!b || b.dataset.code === hell){ hell = null; return; }
+    hell = b.dataset.code;
+    huelle.querySelectorAll('.sortauf-bk[data-code="' + hell + '"]')
+          .forEach(x => x.classList.add('leuchtet'));
+  });
+
+  merken('blatt-gezeigt', { gruppen: stand.felder.length,
+                            klassen: loesung.length,
+                            karten: sichtbareKarten().length });
+  try { localStorage.removeItem('sort-protokoll-' + S.sitzung); } catch(e){}
+  return true;
+}
+
 function rueckmeldungFragen(){
   return new Promise(fertig => {
     const f = document.createDocumentFragment();
@@ -1001,6 +1227,14 @@ function rueckmeldungFragen(){
 }
 
 function danke(){
+  // GEAENDERT (2026-09-13, Rikes Auftrag): «Ich glaube, das Blatt darf
+  // nach Abgabe selbst erscheinen.» Also erscheint es hier, ohne Knopf -
+  // die Gruppe sitzt in diesem Moment noch beieinander und redet.
+  //
+  // Der Dank steht weiter oben auf dem Blatt; ein eigener Bildschirm
+  // dafuer haette das Blatt hinter einen zweiten Klick geschoben.
+  if (blattZeigen()) return;
+
   const d = document.createDocumentFragment();
   d.appendChild(el('p', 'sortauf-hand', 'Geschafft'));
   d.appendChild(el('h2', null, 'Danke für eure Arbeit!'));
@@ -1120,8 +1354,51 @@ stil.textContent = `
   border-color:var(--sa-braun);color:var(--sa-braun);}
 .sortauf-notleiste{display:flex;align-items:center;gap:12px;padding:8px 14px;
   background:var(--sa-creme);border-bottom:1px solid var(--sa-linie);}
-@media (prefers-reduced-motion:reduce){.sortauf-punkt{animation:none}}
-@media (max-width:520px){.sortauf-karte{padding:22px 20px}}
+/* ---- Das Blatt (2026-09-13) ----
+   Es braucht Breite, die uebrigen Bildschirme nicht. Deshalb eine
+   Zusatzklasse statt einer breiteren Grundkarte - sonst saehen alle
+   anderen Schritte ploetzlich anders aus. */
+.sortauf-karte.breit{max-width:1080px;}
+.sortauf-bseiten{display:grid;gap:16px;grid-template-columns:1fr 1fr;
+  align-items:start;margin:4px 0 6px;}
+.sortauf-bseiten.einzeln{grid-template-columns:1fr;}
+@media (max-width:820px){.sortauf-bseiten{grid-template-columns:1fr}}
+.sortauf-bkopf{margin:0 0 10px;font-size:.68rem;font-weight:700;
+  letter-spacing:.15em;text-transform:uppercase;color:var(--sa-hell);
+  padding-bottom:6px;border-bottom:2px solid var(--sa-linie);}
+.sortauf-bseite.loesung .sortauf-bkopf{border-bottom-color:var(--sa-braun);
+  color:var(--sa-braun);}
+.sortauf-breihe{border:1.5px dashed var(--sa-linie);border-radius:7px;
+  padding:7px 8px 8px;margin:0 0 8px;background:var(--sa-karte);}
+.sortauf-bseite.loesung .sortauf-breihe{border-color:#d9c39c;}
+.sortauf-bname{margin:0 0 5px;font-family:var(--sa-hand);font-size:1.06rem;
+  line-height:1.2;color:var(--sa-tinte);display:flex;gap:7px;align-items:baseline;
+  min-height:1.2em;}
+.sortauf-breihe.still .sortauf-bname{color:var(--sa-hell);}
+.sortauf-bzahl{font-family:var(--sa-druck);font-size:.68rem;font-weight:600;
+  color:var(--sa-hell);flex:none;}
+/* Eine Reihe ohne Namen - rechts kennt die Flaeche nur den Schluessel der
+   Klasse, keinen Klartext, und einen zu erfinden waere geraten. Dann soll
+   die Zahl auch nicht wie ein Name aussehen: sie rueckt nach rechts und
+   wird leiser. Sobald die Themen einen Klarnamen mitgeben, steht er hier. */
+.sortauf-breihe.ohne-namen .sortauf-bname{justify-content:flex-end;
+  min-height:0;margin:0 2px 4px 0;opacity:.55;}
+.sortauf-bkarten{display:flex;flex-wrap:wrap;gap:4px;}
+.sortauf-bk{width:66px;height:56px;padding:0;border:0;border-radius:3px;
+  background:var(--sa-karte);cursor:pointer;overflow:hidden;
+  filter:drop-shadow(0 1px 2px rgba(90,70,35,.22));
+  outline:2px solid transparent;outline-offset:2px;
+  font:600 .62rem/56px var(--sa-druck);color:var(--sa-hell);
+  transition:transform .14s ease,outline-color .14s ease;}
+.sortauf-bk img{width:100%;height:100%;display:block;pointer-events:none;}
+.sortauf-bk:hover{transform:translateY(-2px);}
+.sortauf-bk:focus-visible{outline-color:var(--sa-braun);}
+.sortauf-bk.leuchtet{outline-color:var(--sa-braun);transform:translateY(-2px);}
+.sortauf-bfuss{margin:6px 0 16px;font-size:.85rem;color:var(--sa-hell);}
+@media (prefers-reduced-motion:reduce){.sortauf-punkt{animation:none}
+  .sortauf-bk{transition:none}}
+@media (max-width:520px){.sortauf-karte{padding:22px 20px}
+  .sortauf-bk{width:54px;height:46px}}
 `;
 document.head.appendChild(stil);
 

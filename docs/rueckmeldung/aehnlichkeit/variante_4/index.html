@@ -89,6 +89,23 @@ button{font-family:var(--hand);font-size:1.08rem;font-weight:400;
 button:hover{background:var(--creme);border-color:var(--braun-hell);}
 button:focus-visible{outline:2px solid var(--braun);outline-offset:2px;}
 button.an{background:var(--braun);color:#fff;border-color:var(--braun);}
+/* Ein Knopf, der da ist, aber noch nicht wirkt. Nicht `disabled`: Ein
+   abgeschalteter Knopf sagt beim Druck gar nichts, und die Gruppe raet,
+   warum. So bleibt er anklickbar und erklaert sich selbst. */
+button.stumpf{opacity:.45;}
+
+/* Eine WAHL ist ein Bedienelement, nicht drei.
+   (Rikes Einwand, 2026-09-13: «sehr sehr unübersichtlich mit vielen
+   Buttons».) Die drei Zahlengrössen gehören zusammen und sehen jetzt
+   auch so aus: ein Rahmen, innen die drei Möglichkeiten ohne eigene
+   Rahmen. Das liest sich als ein Knopf mit drei Stellungen. */
+.wahl{display:inline-flex;align-items:stretch;border:1px solid var(--linie);
+      border-radius:0;overflow:hidden;}
+.wahl > .marke{font-family:var(--druck);font-size:.78rem;letter-spacing:.04em;
+      text-transform:uppercase;color:var(--tinte-hell);align-self:center;
+      padding:0 9px 0 11px;white-space:nowrap;}
+.wahl button{border:none;border-left:1px solid var(--linie);border-radius:0;}
+.wahl button:first-of-type{border-left:1px solid var(--linie);}
 .trenner{width:1px;height:20px;background:var(--linie);margin:0 4px;}
 #meldung{font-family:var(--hand);font-size:1.04rem;color:var(--braun);
          margin-left:8px;}
@@ -142,6 +159,13 @@ button.an{background:var(--braun);color:#fff;border-color:var(--braun);}
 .rasterfeld span{font-family:var(--hand);font-size:1.02rem;
   color:var(--tinte-hell);margin-top:5px;}
 
+/* Rechenfeld: drei Plaetze, dazwischen · und =. Die Zeichen stehen fest
+   im Feld, nicht auf den Karten - so sieht man, welche zwei Karten
+   multipliziert werden und welche das Ergebnis ist. */
+.rasterfeld span.rechenzeichen{position:absolute;margin-top:0;
+  text-align:center;font-family:var(--hand);color:var(--tinte-hell);
+  pointer-events:none;}
+
 /* Frei beschriftbares Feld: Die Gruppe schreibt selbst hin, wonach sie
    geordnet hat. Das Feld selbst laesst Klicks durch (die Karten liegen
    darunter), die Schreiblinie nimmt sie an. */
@@ -166,6 +190,13 @@ button.an{background:var(--braun);color:#fff;border-color:var(--braun);}
 
 /* Das Feld, das ein weiteres Feld anlegt. Es steht dort, wo das nächste
    Feld entstehen wird - ein Knopf in der Leiste sagt nicht, was er tut. */
+.einfuegen{position:absolute;border-radius:4px;cursor:pointer;
+   background:transparent;transition:background .15s ease;z-index:2;}
+.einfuegen:hover{background:var(--creme);}
+.einfuegen span{font-family:var(--hand);color:var(--tinte-hell);
+   font-size:1.0rem;opacity:0;transition:opacity .15s ease;
+   position:absolute;left:50%;top:6px;transform:translateX(-50%);}
+.einfuegen:hover span{opacity:1;color:var(--akzent);}
 .rasterfeld.neu{border-style:dashed;border-color:var(--feld-rand);
   opacity:.55;align-items:center;cursor:pointer;pointer-events:auto;
   transition:opacity .12s;}
@@ -340,6 +371,11 @@ const karten = [...document.querySelectorAll('.karte')]
     return st === 0;
   });
 let z = 1, breite = 170, pruefstufe = 0, rundeNr = 1;
+// Hat eine ECHTE Pruefung stattgefunden? Nicht jeder Druck auf «Pruefen»
+// ist eine: Solange Karten im Vorrat liegen, meldet die Reihenpruefung
+// nur, wie viele fehlen. Ein solcher Druck darf «Aufloesen» nicht
+// freischalten - sonst umgeht man die Bedingung mit einem Klick ins Leere.
+let echteRuefung = false;
 const brett = document.getElementById('brett');
 const KOPF = 30;                 // Freiraum fuer die Ueberschrift
 const NACHSCHUB = [""];  // Begruendung je Stufe
@@ -349,7 +385,15 @@ const NACHSCHUBSCHRITT = 1;   // Stufen je grossem Knopf
 const VORRATSPALTEN = false;   // Vorrat in Spalten statt Baendern
 const VORRATLINKS = "MAFX";   // Kartensorten, die als Bild gelten
 const VORRATNAMEN = ["Zum Dazuholen", "Figuren"];   // ihre zwei Ueberschriften
-const FLAECHE = 'tisch';                 // 'vorrat', 'tisch' oder 'runden'
+const FLAECHE = 'tisch';
+// Gibt es genau EINE richtige Loesung? Nur dann kann man sie zeigen.
+// Die offene Sortierung hat keine - dort bleibt «Aufloesen» weg.
+const LOESBAR = false;
+// Wie wird geprueft? 'gruppe' vergleicht mit der hinterlegten
+// Zugehoerigkeit, 'reihe' schaut auf die Reihenfolge, 'fund' rechnet
+// nach, ob in einem Feld drei Karten liegen, von denen eine das Produkt
+// der beiden anderen ist.
+const PRUEFART = 'gruppe';                 // 'vorrat', 'tisch' oder 'runden'
 const GEDREHT = false;                   // Karten leicht schief hinlegen?
 const BRETT = {"breite": 11.5, "hoehe": 4.6, "felder": [], "feldbreite": 0.0, "anteil": 0.92, "unten": true, "hoehenanteil": 0.52};
 const RASTER = null;                     // null oder Vorstrukturierung
@@ -453,6 +497,8 @@ tisch.addEventListener('pointerdown', e => {
 function einrasten(k){
   if (FLAECHE === 'buendel') return buendelEinrasten(k);
   if (FLAECHE === 'kette') return kettenEinrasten(k);
+  if (FLAECHE === 'reihe') return reiheEinrasten(k);
+  if (RASTER && RASTER.einrasten) return rasterEinrasten(k);
   if (!BRETT || !BRETT.felder.length || k.dataset.rolle !== 'ablage') return false;
   const w = breite * ABL, h = breite * 0.844 * ABL;
   const mx = k._x + w / 2, my = k._y + h / 2;
@@ -472,6 +518,11 @@ function einrasten(k){
   return false;
 }
 function zoom(d){
+  // Bei der Reihe bestimmt die ZAHL DER FELDER die Kartenbreite: Alle
+  // Felder stehen in einer Zeile, und die Karte muss hineinpassen. Ein
+  // Zoom wuerde die Karten aus ihren Feldern treiben. Die Lupe auf der
+  // einzelnen Karte (Antippen) bleibt - zum Lesen genuegt sie.
+  if (FLAECHE === 'reihe' && RASTER) return;   // Knoepfe sind ausgeblendet
   breite = Math.max(50, Math.min(320, breite + d));
   masse();
   // Die Rasterfelder sind Vielfache der Kartenbreite - sie muessen
@@ -504,6 +555,41 @@ function anteilBrett(){
 
 function einpassen(){
   const anz0 = karten.filter(k => k.dataset.rolle !== 'ablage').length || 1;
+  // Bei der Reihe richtet sich die KARTE nach dem Feld, nicht umgekehrt:
+  // Alle Felder stehen in einer Zeile, also wird die Karte schmaler,
+  // sobald ein Feld dazukommt. Sonst ragt sie hinaus.
+  if (FLAECHE === 'reihe' && RASTER){
+    const n = feldAnzahl + (RASTER.erweiterbar ? 1 : 0);
+    const [rx0, rx1] = zone();
+    const proFeld = ((rx1 - rx0 - 6) - 10 * (n - 1)) / n;
+    // Die Hoehe richtet sich nach dem VOLLSTEN Feld. Entworfen sind
+    // hoechstens drei Karten untereinander, aber eine Gruppe kann beim
+    // Arbeiten mehr in ein Feld legen - dann ragte die unterste bisher
+    // heraus (gemessen: ab fuenf Karten). Statt sie abzuschneiden oder
+    // uebereinanderzuschieben werden ALLE Karten kleiner, genau wie sie
+    // es in der Breite schon tun, wenn ein Feld dazukommt.
+    const belegung = {};
+    karten.forEach(k => { if (k._feld !== undefined && k.style.display !== 'none')
+                            belegung[k._feld] = (belegung[k._feld] || 0) + 1; });
+    const tiefstes = Math.max(1, ...Object.values(belegung));
+    const noetig = Math.max(RASTER.hoehe, tiefstes * 1.08);
+    const nachHoehe = (tisch.clientHeight * 0.52 - 16) / (noetig * 0.844);
+    // GEAENDERT (2026-09-14, Rikes Beobachtung): Vorher nahm die Karte
+    // IMMER den ganzen Platz, den die Feldzahl hergab - bei fuenf
+    // Feldern also ein Sechstel der Flaeche, und das waren riesige
+    // Felder mit einer kleinen Zahl darin. Und jedes neue Feld machte
+    // alles kleiner, auch wenn noch Platz gewesen waere.
+    //
+    // Jetzt hat die Karte eine ZIELGROESSE (agent/05: rund 110 px auf
+    // dem Tablet quer), und geschrumpft wird erst, wenn die Felder
+    // sonst nicht mehr in eine Zeile passen. Die Felder sind damit von
+    // Anfang an so breit, wie die Zahlen es brauchen, und sie bleiben
+    // es, solange Platz ist.
+    const ZIEL = 110;
+    breite = Math.max(34, Math.min(ZIEL, Math.floor(
+      Math.min(proFeld / RASTER.breite, nachHoehe))));
+    masse(); return;
+  }
   if (FLAECHE === 'buendel'){
     const n = BUENDEL.plaetze;
     const nachReihe = (tisch.clientWidth - 60) / (n + 1.6);
@@ -1746,16 +1832,505 @@ function zurueck(){
     k._rot = 0; k._feld = undefined; k.classList.remove('rastet');
     k._heim.appendChild(k);
   };
+  // NEU (2026-09-13): 'reihe' steht ueberall dort, wo bisher 'tisch'
+  // und 'runden' standen - die Karten liegen von Anfang an offen da,
+  // werden gleich ausgelegt und gleich zurueckgesetzt. Verschieden ist
+  // nur das Pruefen (reihePruefen statt Gruppenvergleich). Beim ersten
+  // Bauen fehlte 'reihe' in dieser Liste, und die elf Karten lagen
+  // unsichtbar uebereinander in der linken oberen Ecke.
+  //
   // «Zurueck zum Ursprung» hebt auch die Handmarke auf - sonst blieben
   // die einmal gelegten Karten von jedem spaeteren Ordnen ausgenommen,
   // und der Ursprung waere keiner.
   karten.forEach(k => { k._gelegt = false; });
-  if (FLAECHE === 'tisch' || FLAECHE === 'runden'){
+  if (FLAECHE === 'tisch' || FLAECHE === 'runden' || FLAECHE === 'reihe'){
     karten.filter(k => k.dataset.rolle === 'ablage').forEach(heim);
     auslegen(); meldung.textContent = ''; return;
   }
   karten.forEach(heim);
   loeschenMarken(); meldung.textContent = '';
+}
+
+// ---------------------------------------------------------------- Reihe
+// NEU (2026-09-13, Rikes Auftrag «nach Groesse ordnen»): Bis hierher
+// konnte die Flaeche nur GRUPPEN pruefen - sie schaut, welche Karten
+// nebeneinanderliegen, und vergleicht deren data-gruppe. Eine
+// Reihenfolge laesst sich damit nicht beurteilen: Ob 2^3 links von 3^2
+// liegt, ist keine Frage der Gruppenzugehoerigkeit.
+//
+// Diese Pruefung liest data-wert und schaut auf die Uebergaenge von
+// links nach rechts. Gleich grosse Karten duerfen in beliebiger
+// Reihenfolge stehen - deshalb wird auf «nicht kleiner» geprueft und
+// nicht auf «groesser».
+//
+// WAS SIE NICHT SAGT (agent/02): mit welchem Wert gerechnet wurde und
+// wohin eine Karte gehoert. Sie meldet, WIE VIELE Uebergaenge stimmen,
+// und markiert auf den zweiten Druck die Karten an einem Bruch. Die
+// Werte stehen nirgends - sonst waere das Ordnen erledigt, bevor es
+// beginnt.
+// Die Reihe als SPALTEN lesen.
+//
+// NEU (2026-09-13, Rikes Entscheidung): Gleich grosse Karten werden
+// UEBEREINANDER gelegt, nicht nebeneinander. Damit ist die Gleichheit
+// sichtbar und wird zur Aussage der Gruppe - dass drei Nullkarten auf
+// einem Stapel landen, ist der Ertrag der Aufgabe und soll nicht bloss
+// im Pruefknopf stecken.
+//
+// Gelesen wird deshalb in SPALTEN: Karten, deren Mitten waagrecht nahe
+// beieinanderliegen, bilden eine Spalte. Die Spalten werden von links
+// nach rechts verglichen, innerhalb einer Spalte muessen alle Karten
+// denselben Wert haben.
+//
+// Der Preis: Ein Stapel und ein Zeilenumbruch waeren beide «Karte liegt
+// tiefer», also muss eine Runde in EINE Zeile passen. Deshalb haben die
+// Saetze hoechstens neun verschiedene Werte.
+/* Einrasten in die nummerierten Felder der Reihe.
+
+   NEU (2026-09-13, Rikes Auftrag): Vorher lagen die Karten frei, und die
+   Pruefung leitete die Spalten aus den Abstaenden ab. Das ging, war aber
+   auf saubere Ablage angewiesen - eine Karte auf halbem Weg zwischen
+   zwei Spalten war nicht eindeutig zuzuordnen.
+
+   Jetzt rasten die Karten in Felder ein, und die Pruefung liest die
+   FELDNUMMER. Damit ist die Zuordnung eindeutig, und ein Zeilenumbruch
+   der Feldreihe spielt keine Rolle mehr - die Nummer zaehlt, nicht der
+   Ort.
+
+   Ein Feld nimmt BELIEBIG VIELE Karten auf, anders als die Felder eines
+   Bretts. Gleich grosse Karten gehoeren ins selbe Feld, und wie viele
+   das am Ende sind, ist Teil der Aufgabe. Sie werden untereinander
+   gesetzt, vollstaendig sichtbar. */
+let reiheTiefe = 0, rasterTiefe = 0;          // wie viele Karten liegen im vollsten Feld
+
+/* Ein Feld an Stelle `i` einschieben; alles rechts davon rueckt auf. */
+function feldEinschieben(i){
+  karten.forEach(k => { if (k._feld !== undefined && k._feld >= i) k._feld += 1; });
+  feldAnzahl += 1;
+  einpassen();
+  rasterZeichnen(true);
+  reiheAllesSetzen();
+  loeschenMarken();
+  meldung.textContent = '';
+}
+
+function reiheAllesSetzen(){
+  reiheFelder().forEach(f => reiheSetzen(f, Number(f.dataset.nr)));
+}
+
+function reiheFelder(){
+  return [...document.querySelectorAll('.rasterfeld')]
+           .filter(d => d.dataset.nr !== undefined)
+           .sort((a, b) => Number(a.dataset.nr) - Number(b.dataset.nr));
+}
+
+function reiheSetzen(feld, nr){
+  // Alle Karten dieses Feldes neu untereinander setzen.
+  const h = Math.round(breite * 0.844);
+  const x = parseFloat(feld.style.left), y = parseFloat(feld.style.top);
+  const bw = parseFloat(feld.style.width), bh = parseFloat(feld.style.height);
+  const drin = karten.filter(a => a._feld === nr && a.style.display !== 'none');
+  const luft = Math.max(2, h * 0.08);
+  const schritt = drin.length > 1
+      ? Math.min(h + luft, Math.max(h * 0.5, (bh - 8 - h) / (drin.length - 1)))
+      : 0;
+  drin.forEach((a, i) => {
+    a._rot = 0;
+    a.classList.add('rastet');
+    setzen(a, x + Math.max(2, (bw - breite) / 2), y + 4 + i * schritt);
+  });
+}
+
+/* Einrasten in Rasterfelder, fuer die Flaechen mit Gruppen.
+
+   NEU (2026-09-13): Dasselbe wie bei der Reihe, nur liegen die Karten
+   im Feld als Gitter statt als Spalte. Der Gewinn ist derselbe: Die
+   Zuordnung steht in der FELDNUMMER und nicht in den Abstaenden - die
+   Pruefung haengt nicht mehr daran, wie sauber gelegt wurde.
+
+   Zusatzfelder («passt zu keiner Gruppe») tragen keine Nummer; sie
+   bekommen die Kennung 'z'. */
+function alleRasterfelder(){
+  return [...document.querySelectorAll('.rasterfeld')]
+           .filter(d => !d.classList.contains('neu'));
+}
+
+function feldKennung(d){
+  return d.dataset.zusatz === '1' ? 'z' : Number(d.dataset.nr);
+}
+
+function feldNeuSetzen(kennung){
+  const d = alleRasterfelder().find(f => feldKennung(f) === kennung);
+  if (!d) return;
+  const drin = karten.filter(a => a._feld === kennung && a.style.display !== 'none');
+  lege(drin, parseFloat(d.style.left), parseFloat(d.style.top),
+       parseFloat(d.style.width), parseFloat(d.style.height));
+}
+
+function rasterEinrasten(k){
+  const h = Math.round(breite * 0.844);
+  const mx = k._x + breite / 2, my = k._y + h / 2;
+  for (const d of alleRasterfelder()){
+    const x = parseFloat(d.style.left), y = parseFloat(d.style.top);
+    const bw = parseFloat(d.style.width), bh = parseFloat(d.style.height);
+    if (mx >= x && mx <= x + bw && my >= y && my <= y + bh){
+      const alt = k._feld;
+      k._feld = feldKennung(d);
+      k.classList.add('rastet');
+      // Im Rechenfeld entscheidet der Ablegeort, welcher der drei
+      // Plaetze gemeint ist - sonst koennte die Gruppe nicht sagen,
+      // welche Karte das Ergebnis sein soll.
+      if (RASTER.rechnung){
+        const [px] = rechenPlaetze(bw);
+        let best = 0;
+        px.forEach((v, j) => {
+          if (Math.abs(mx - x - v - breite / 2)
+              < Math.abs(mx - x - px[best] - breite / 2)) best = j;
+        });
+        k._platz = best;
+      }
+      // Ist diese Gruppe jetzt die vollste, muessen Felder und Karten
+      // neu gerechnet werden - sonst wuerde die letzte Karte verdeckt.
+      const drin = karten.filter(a => a._feld === k._feld
+                                   && a.style.display !== 'none').length;
+      if (drin > (rasterTiefe || 0)){
+        rasterTiefe = drin;
+        einpassen(); rasterZeichnen(true);
+        alleRasterfelder().forEach(f => feldNeuSetzen(feldKennung(f)));
+        if (window.knopfWirkung) window.knopfWirkung();
+        return true;
+      }
+      feldNeuSetzen(k._feld);
+      if (alt !== undefined && alt !== k._feld) feldNeuSetzen(alt);
+      if (window.knopfWirkung) window.knopfWirkung();
+      return true;
+    }
+  }
+  if (k._feld !== undefined){
+    const alt = k._feld;
+    k._feld = undefined;
+    k.classList.remove('rastet');
+    feldNeuSetzen(alt);
+  }
+  if (window.knopfWirkung) window.knopfWirkung();
+  return false;
+}
+
+function reiheEinrasten(k){
+  const h = Math.round(breite * 0.844);
+  const mx = k._x + breite / 2, my = k._y + h / 2;
+  const felder = reiheFelder();
+  for (const f of felder){
+    const x = parseFloat(f.style.left), y = parseFloat(f.style.top);
+    const bw = parseFloat(f.style.width), bh = parseFloat(f.style.height);
+    if (mx >= x && mx <= x + bw && my >= y - h * 0.3 && my <= y + bh + h * 0.3){
+      const alt = k._feld;
+      k._feld = Number(f.dataset.nr);
+      // Ist dieses Feld jetzt voller als alle bisherigen, muss die ganze
+      // Reihe neu gerechnet werden - Karten und Felder werden kleiner.
+      const drin = karten.filter(a => a._feld === k._feld
+                                   && a.style.display !== 'none').length;
+      if (drin > (reiheTiefe || 0)){
+        reiheTiefe = drin;
+        einpassen(); rasterZeichnen(true);
+        reiheAllesSetzen();
+        if (window.knopfWirkung) window.knopfWirkung();
+        return true;
+      }
+      reiheSetzen(f, k._feld);
+      if (alt !== undefined && alt !== k._feld){
+        const af = felder.find(d => Number(d.dataset.nr) === alt);
+        if (af) reiheSetzen(af, alt);
+      }
+      if (window.knopfWirkung) window.knopfWirkung();
+      return true;
+    }
+  }
+  if (k._feld !== undefined){
+    const alt = k._feld;
+    k._feld = undefined;
+    k.classList.remove('rastet');
+    const af = felder.find(d => Number(d.dataset.nr) === alt);
+    if (af) reiheSetzen(af, alt);
+  }
+  if (window.knopfWirkung) window.knopfWirkung();
+  return false;
+}
+
+function spalten(liste){
+  const nah = breite * 0.55;
+  const sortiert = liste.slice().sort((a, b) => a._x - b._x);
+  const aus = [];
+  sortiert.forEach(k => {
+    const letzte = aus[aus.length - 1];
+    if (letzte && Math.abs(k._x - letzte.x) <= nah) letzte.karten.push(k);
+    else aus.push({x: k._x, karten: [k]});
+  });
+  return aus;
+}
+
+/* Die richtige Loesung hinlegen.
+
+   Zwei Faelle, mehr gibt es nicht:
+   - Reihe:  nach Wert sortieren, Gleiches auf einen Stapel.
+   - Felder: jede Gruppe in ein Rasterfeld, Karten ohne Gruppe ins
+             Zusatzfeld, wenn es eines gibt.
+
+   Gerufen wird das NUR ueber den Knopf «Aufloesen», und der wirkt erst
+   nach einem Prueflauf. Die Loesung steht also nirgends, wo die Klasse
+   sie liest, bevor sie gearbeitet hat (agent/02). */
+function loesungLegen(liste){
+  loeschenMarken();
+  const h = Math.round(breite * 0.844);
+  if (FLAECHE === 'reihe'){
+    const nach = liste.slice().sort((a, b) => Number(a.dataset.wert) - Number(b.dataset.wert));
+    // Erst die noetige Zahl Felder herstellen, dann Wert fuer Wert
+    // hineinlegen. Gleich grosse Karten kommen ins selbe Feld.
+    const werte = [];
+    nach.forEach(k => { const v = Number(k.dataset.wert);
+                        if (!werte.includes(v)) werte.push(v); });
+    feldAnzahl = Math.max(feldAnzahl, werte.length);
+    if (rasterKnopf){ rasterKnopf.classList.add('an'); rasterZeichnen(true); }
+    const felder = reiheFelder();
+    nach.forEach(k => { k._feld = werte.indexOf(Number(k.dataset.wert)); });
+    werte.forEach((v, i) => { if (felder[i]) reiheSetzen(felder[i], i); });
+    return;
+  }
+  // Felderfall: nach Gruppe sammeln, Reihenfolge wie im Kartenvorrat.
+  const gruppen = [];
+  liste.forEach(k => { const g = k.dataset.gruppe || '';
+                       if (!gruppen.includes(g)) gruppen.push(g); });
+  const mitGruppe = gruppen.filter(g => g);
+  feldAnzahl = Math.max(feldAnzahl, mitGruppe.length);
+  if (RASTER && rasterKnopf) { rasterKnopf.classList.add('an'); rasterZeichnen(true); }
+  // Nach der Feldnummer, nicht nach der DOM-Folge - siehe feld().
+  const felder = [...document.querySelectorAll('.rasterfeld')]
+                   .filter(d => !d.classList.contains('neu') && d.dataset.nr !== undefined)
+                   .sort((a, b) => Number(a.dataset.nr) - Number(b.dataset.nr));
+  const zusatzfelder = [...document.querySelectorAll('.rasterfeld')]
+                   .filter(d => d.dataset.zusatz === '1');
+  mitGruppe.forEach((g, i) => {
+    const f = felder[i];
+    if (!f) return;
+    const x = parseFloat(f.style.left), y = parseFloat(f.style.top);
+    const bw = parseFloat(f.style.width);
+    const bh = parseFloat(f.style.height);
+    const drin = liste.filter(k => (k.dataset.gruppe || '') === g);
+    drin.forEach(k => { k._feld = Number(f.dataset.nr); });
+    lege(drin, x, y, bw, bh);
+  });
+  const ohne = liste.filter(k => !(k.dataset.gruppe || ''));
+  const zusatz = zusatzfelder[0] || felder[mitGruppe.length];
+  if (ohne.length && zusatz){
+    ohne.forEach(k => { k._feld = zusatz.dataset.zusatz === '1'
+                                  ? 'z' : Number(zusatz.dataset.nr); });
+    lege(ohne, parseFloat(zusatz.style.left), parseFloat(zusatz.style.top),
+         parseFloat(zusatz.style.width), parseFloat(zusatz.style.height));
+  }
+}
+
+/* Karten in ein Feld legen, ohne dass sie hinausragen oder die
+   Beschriftung verdecken.
+
+   Die Beschriftung steht oben im Feld, deshalb beginnt die erste Reihe
+   darunter. Passen die Karten nicht nebeneinander, ueberlappen sie -
+   aber so, dass die LETZTE noch ganz im Feld liegt. Das ist die
+   Bedingung aus agent/06: durcheinander ja, ueberlappend ja,
+   verdeckt nein. */
+/* Wie viele Karten passen nebeneinander in ein Feld dieser Breite? */
+function proReihe(bw){
+  return Math.max(1, Math.floor((bw - 8) / (breite + 4)));
+}
+
+/* Wie viele Zeilen braucht das vollste Feld? Danach richtet sich die
+   Feldhoehe - und notfalls die Kartengroesse. */
+function tiefsteBelegung(){
+  const zaehl = {};
+  karten.forEach(k => { if (k._feld !== undefined && k.style.display !== 'none')
+                          zaehl[k._feld] = (zaehl[k._feld] || 0) + 1; });
+  return Math.max(1, ...Object.values(zaehl), 1);
+}
+
+function lege(drin, x, y, bw, bh){
+  if (!drin.length) return;
+  const h = Math.round(breite * 0.844);
+  // Die Beschriftung sitzt oben im Feld und ist rund 26 px hoch. Bei
+  // 20 lag die erste Kartenreihe darauf - «gleicher Wert» war halb
+  // verdeckt, und damit war der Feldname weg, der die Aufgabe stellt.
+  const kopf = 30;
+  // GEAENDERT (2026-09-14, Rikes Beobachtung): Vorher wurden die Karten
+  // enger und enger geschoben, je mehr in ein Feld kamen - «dann kann
+  // ich die Zahlen gar nicht mehr sehen». Das verstoesst gegen agent/06:
+  // «Durcheinander ja, ueberlappend ja - verdeckt nein.»
+  //
+  // Jetzt wird NICHT mehr gestapelt. Die Karten liegen im Gitter mit
+  // vollem Abstand; passt das nicht, waechst das FELD (rasterZeichnen)
+  // und notfalls wird die Karte kleiner (einpassen). Das Feld richtet
+  // sich nach den Karten, nicht die Karten nach dem Feld.
+  // RECHENFELD (2026-09-14, Rikes Auftrag): «Man sieht nicht genau,
+  // welche zwei geben die dritte.» Im Fundfeld stehen deshalb drei feste
+  // Plaetze mit · und = dazwischen. Die Karte rutscht auf den naechsten
+  // freien Platz, und damit steht auf dem Tisch: erstes · zweites =
+  // drittes. Eine vierte Karte im selben Feld faellt darunter - sie ist
+  // dann sichtbar zu viel, und genau das soll sie sein.
+  if (RASTER && RASTER.rechnung){
+    const [px] = rechenPlaetze(bw);
+    const belegt = [null, null, null], ueber = [];
+    drin.forEach(k => {
+      const w = Math.min(2, Math.max(0, k._platz || 0));
+      if (belegt[w] === null){ belegt[w] = k; return; }
+      const frei = belegt.indexOf(null);
+      if (frei >= 0){ belegt[frei] = k; k._platz = frei; } else ueber.push(k);
+    });
+    belegt.forEach((k, j) => {
+      if (!k) return;
+      k._rot = 0; aufTisch(k, x + px[j], y + kopf); k.style.zIndex = ++z;
+    });
+    ueber.forEach((k, j) => {
+      k._rot = 0; aufTisch(k, x + px[Math.min(2, j)], y + kopf + h + 6);
+      k.style.zIndex = ++z;
+    });
+    return;
+  }
+  const spalten = Math.min(drin.length, proReihe(bw));
+  drin.forEach((k, j) => {
+    k._rot = 0;
+    aufTisch(k, x + 4 + (j % spalten) * (breite + 4),
+                y + kopf + Math.floor(j / spalten) * (h + 4));
+    k.style.zIndex = ++z;
+  });
+}
+
+/* Die drei Plaetze im Rechenfeld: linke Kanten und die Luecke zwischen
+   ihnen, in der die Zeichen stehen. */
+function rechenPlaetze(bw){
+  const pad = 5;
+  const luecke = Math.max(14, (bw - 2 * pad - 3 * breite) / 2);
+  return [[0, 1, 2].map(j => pad + j * (breite + luecke)), luecke];
+}
+
+/* Prueft Funde: In jedem belegten Feld muessen DREI Karten liegen, von
+   denen eine das Produkt der beiden anderen ist.
+
+   NEU (2026-09-13, Rikes Entscheidung): «Muss es eindeutig loesbar
+   sein? Vielleicht nicht, das macht den Charme aus.» Also wird NICHT
+   gegen eine hinterlegte Loesung geprueft - der Satz hat nnen bis
+   zwanzig Funde, und welche drei eine Gruppe legt, ist ihre Sache.
+   Geprueft wird gegen die Sache selbst.
+
+   Die Rueckmeldung zaehlt die richtigen Funde. Sie sagt nicht, wie
+   viele es im Satz gibt - das ist die offene Frage der Aufgabe. */
+function fundPruefen(){
+  const auf = karten.filter(k => k.parentElement === tisch
+                              && k.style.display !== 'none');
+  const drin = auf.filter(k => k._feld !== undefined);
+  if (!drin.length){
+    meldung.textContent = 'Legt einen Fund in ein Feld: zwei Karten und ihr Ergebnis.';
+    return;
+  }
+  const nach = {};
+  drin.forEach(k => { (nach[k._feld] = nach[k._feld] || []).push(k); });
+  const w = k => Number(k.dataset.wert);
+  const gut = k => Math.abs(k) < 1e-9;
+
+  const schlecht = new Set();
+  let stimmt = 0, felder = 0;
+  Object.values(nach).forEach(gr => {
+    felder++;
+    let ok = false;
+    if (gr.length === 3){
+      if (RASTER && RASTER.rechnung){
+        // Im Rechenfeld steht die Rechnung DA: erstes · zweites =
+        // drittes. Dann muss sie auch so stimmen - sonst waere das
+        // gedruckte Gleichheitszeichen eine Luege.
+        gr.sort((p, q) => (p._platz || 0) - (q._platz || 0));
+        const [a, b, c] = gr.map(w);
+        ok = gut(a * b - c);
+      } else {
+        const [a, b, c] = gr.map(w);
+        ok = gut(a * b - c) || gut(a * c - b) || gut(b * c - a);
+      }
+    }
+    if (ok) stimmt++;
+    else gr.forEach(k => schlecht.add(k));
+  });
+
+  if (pruefstufe === 1){
+    pruefstufe = 2;
+    loeschenMarken();
+    drin.forEach(k => k.classList.add(schlecht.has(k) ? 'falsch' : 'richtig'));
+    return;
+  }
+  loeschenMarken();
+  pruefstufe = 1;
+  echteRuefung = true;
+  const rest = auf.length - drin.length;
+  meldung.textContent =
+    stimmt + ' von ' + felder + ' Feld' + (felder === 1 ? '' : 'ern') +
+    ' stimmt' + (stimmt === 1 ? '' : 'en') +
+    // «liegen noch daneben» waere hier falsch: Uebrige Karten sind kein
+    // Versaeumnis, sondern die Kennzahl der Aufgabe. Zwei bleiben
+    // immer, und weniger als zwei geht nicht.
+    (rest ? ' · ' + rest + (rest === 1 ? ' Karte ist' : ' Karten sind')
+            + ' übrig' : ' · keine Karte mehr übrig') +
+    '.  Nochmals drücken zeigt, welche Felder nicht stimmen.';
+}
+
+function reihePruefen(){
+  const alle = karten.filter(k => k.dataset.wert !== undefined
+                               && k.style.display !== 'none');
+  // ERST AM ENDE PRUEFEN (Rikes Vorgabe, 2026-09-13). Solange noch
+  // Karten im Vorrat liegen, ist jede Rueckmeldung eine Teilauskunft -
+  // und verfuehrt dazu, nach jeder Karte nachzufragen, statt zu Ende zu
+  // denken. Die Gruppe sagt mit dem letzten Ablegen selbst, dass sie
+  // fertig ist.
+  const offen = alle.filter(k => k._feld === undefined);
+  if (offen.length){
+    meldung.textContent = offen.length === 1
+      ? 'Eine Karte liegt noch nicht in einem Feld.'
+      : offen.length + ' Karten liegen noch nicht in einem Feld.';
+    pruefstufe = 1;
+    return;
+  }
+  if (alle.length < 2){ meldung.textContent = 'Auf der Fläche liegt noch nichts.'; return; }
+  echteRuefung = true;
+  if (window.knopfWirkung) window.knopfWirkung();
+
+  // Gelesen wird ueber die FELDNUMMER, nicht ueber den Ort. Leere
+  // Felder werden uebersprungen - eine Luecke ist kein Fehler, sie
+  // entsteht beim Einschieben.
+  const nach = {};
+  alle.forEach(k => { (nach[k._feld] = nach[k._feld] || []).push(k); });
+  const nummern = Object.keys(nach).map(Number).sort((x, y) => x - y);
+  const w = k => Number(k.dataset.wert);
+
+  const schlecht = new Set();
+  let brueche = 0, stellen = 0;
+  nummern.forEach(n => {
+    stellen++;
+    const werte = new Set(nach[n].map(w));
+    if (werte.size > 1){ brueche++; nach[n].forEach(k => schlecht.add(k)); }
+  });
+  for (let i = 0; i < nummern.length - 1; i++){
+    stellen++;
+    if (w(nach[nummern[i]][0]) >= w(nach[nummern[i + 1]][0])){
+      brueche++;
+      nach[nummern[i]].forEach(k => schlecht.add(k));
+      nach[nummern[i + 1]].forEach(k => schlecht.add(k));
+    }
+  }
+
+  if (pruefstufe === 1){                       // zweiter Druck: markieren
+    pruefstufe = 2;
+    loeschenMarken();
+    alle.forEach(k => k.classList.add(schlecht.has(k) ? 'falsch' : 'richtig'));
+    return;
+  }
+  loeschenMarken();
+  pruefstufe = 1;
+  meldung.textContent = brueche === 0
+    ? 'Die Reihe stimmt durchgehend — alle ' + stellen + ' Stellen.'
+    : (stellen - brueche) + ' von ' + stellen + ' Stellen stimmen.' +
+      '  Nochmals drücken zeigt, wo es hakt.';
 }
 
 function loeschenMarken(){
@@ -1881,6 +2456,8 @@ function pruefeRunde(){
 function pruefen(){
   if (FLAECHE === 'buendel'){ buendelPruefen(); return; }
   if (FLAECHE === 'kette'){ kettePruefen(); return; }
+  if (FLAECHE === 'reihe'){ reihePruefen(); return; }
+  if (PRUEFART === 'fund'){ fundPruefen(); return; }
   if (FLAECHE === 'runden'){
     const e = pruefeRunde();
     if (!e) return;
@@ -1900,8 +2477,67 @@ function pruefen(){
       ' Karten liegen richtig.  Nochmals drücken zeigt, welche.';
     return;
   }
-  const auf = karten.filter(k => k.parentElement === tisch);
+  const auf = karten.filter(k => k.parentElement === tisch
+                              && k.style.display !== 'none');
   if (auf.length < 2){ meldung.textContent = 'Auf der Fläche liegt noch nichts.'; return; }
+
+  /* ERST AM ENDE PRUEFEN, auch hier (Rikes Vorgabe, 2026-09-13, zuerst
+     nur fuer die Reihe verlangt - es gilt genauso fuer die Gruppen).
+     Solange Karten im Vorrat liegen, ist jede Rueckmeldung eine
+     Teilauskunft. */
+  if (RASTER && RASTER.einrasten){
+    const offen = auf.filter(k => k._feld === undefined);
+    if (offen.length){
+      meldung.textContent = offen.length === 1
+        ? 'Eine Karte liegt noch nicht in einem Feld.'
+        : offen.length + ' Karten liegen noch nicht in einem Feld.';
+      pruefstufe = 1;
+      return;
+    }
+  }
+  echteRuefung = true;
+  if (window.knopfWirkung) window.knopfWirkung();
+
+  /* Eingerastet wird nach FELDNUMMER geprueft, nicht nach Naehe. Das
+     ist der Gewinn des Einrastens: Eine Karte am Rand zweier Haufen ist
+     nicht mehr mehrdeutig. */
+  if (RASTER && RASTER.einrasten){
+    const nach = {};
+    auf.forEach(k => { (nach[k._feld] = nach[k._feld] || []).push(k); });
+    const gesamt0 = {};
+    karten.forEach(k => { if (k.style.display === 'none') return;
+                          const g = k.dataset.gruppe;
+                          if (g) gesamt0[g] = (gesamt0[g] || 0) + 1; });
+    let stimmt0 = 0, gruppen0 = 0, rest0 = 0;
+    const haufen0 = {};
+    Object.entries(nach).forEach(([f, gr]) => {
+      haufen0[f] = gr;
+      const marken = [...new Set(gr.map(k => k.dataset.gruppe))];
+      if (marken.length === 1 && marken[0] === ''){ rest0++; return; }
+      gruppen0++;
+      const ok = marken.length === 1 && gr.length === gesamt0[marken[0]];
+      if (ok) stimmt0++;
+    });
+    if (pruefstufe === 1){
+      pruefstufe = 2;
+      loeschenMarken();
+      Object.values(haufen0).forEach(gr => {
+        const marken = [...new Set(gr.map(k => k.dataset.gruppe))];
+        if (marken.length === 1 && marken[0] === '') return;
+        const ok = marken.length === 1 && gr.length === gesamt0[marken[0]];
+        gr.forEach(k => k.classList.add(ok ? 'richtig' : 'falsch'));
+      });
+      return;
+    }
+    loeschenMarken();
+    pruefstufe = 1;
+    meldung.textContent = gruppen0 + ' Gruppe' + (gruppen0 === 1 ? '' : 'n') +
+      ' gelegt, ' + stimmt0 + ' davon vollständig' +
+      (rest0 ? ' · dazu ' + rest0 + ' Feld' + (rest0 === 1 ? '' : 'er') +
+               ' mit Karten, die nirgends passen' : '') +
+      '.  Nochmals drücken zeigt, welche.';
+    return;
+  }
   if (pruefstufe === 1){                       // zweiter Druck: markieren
     pruefstufe = 2; return;
   }
@@ -2192,9 +2828,9 @@ function gruppenAufDemTisch(){
 }
 
 function rasterZeichnen(an){
-  document.querySelectorAll('.rasterfeld').forEach(e => e.remove());
+  document.querySelectorAll('.rasterfeld, .einfuegen').forEach(e => e.remove());
   if (!an || !RASTER) return;
-  const fw = breite * RASTER.breite;
+  let fw = breite * RASTER.breite;
   let fh = breite * 0.844 * RASTER.hoehe;
   const [zx0, zxEnde] = zone();
 
@@ -2215,7 +2851,38 @@ function rasterZeichnen(an){
         (a, e) => a + breite * (e.breite || 1.2) + 12, 0);
   const zx1 = zxEnde - spaltenBreit;
 
-  const spalten = Math.max(1, Math.floor((zx1 - zx0 - 6) / (fw + 10)));
+  let spalten = Math.max(1, Math.floor((zx1 - zx0 - 6) / (fw + 10)));
+
+  // DIE REIHE BLEIBT EINE ZEILE (Rikes Vorgabe, 2026-09-13). Rutscht ein
+  // Feld in eine zweite Zeile, wird die Reihe nicht mehr von links nach
+  // rechts gelesen - und genau das ist die Aufgabe. Also: so viele
+  // Spalten wie Felder, und die Feldbreite folgt daraus. Kommt ein Feld
+  // dazu, werden alle etwas schmaler.
+  if (RASTER.einrasten && FLAECHE !== 'reihe'){
+    // Das Feld waechst mit der vollsten Gruppe. Alle gleich hoch,
+    // sonst stuenden die Felder stufig da.
+    const tief = tiefsteBelegung();
+    const je = RASTER.rechnung ? 3 : proReihe(fw);
+    const reihen = Math.ceil(tief / je);
+    const noetig = (30 + reihen * (breite * 0.844 + 4) + 6) / (breite * 0.844);
+    fh = breite * 0.844 * Math.max(RASTER.hoehe, noetig);
+  }
+  if (FLAECHE === 'reihe'){
+    const n = feldAnzahl + (RASTER.erweiterbar ? 1 : 0);
+    spalten = n;
+    // Das Feld ist so breit, wie die Karte es braucht - NICHT so breit,
+    // wie die Flaeche geteilt durch die Feldzahl. Erst wenn die Reihe
+    // sonst nicht mehr in eine Zeile passt, wird enger gerueckt.
+    const platz = ((zx1 - zx0 - 6) - 10 * (n - 1)) / n;
+    fw = Math.max(24, Math.min(breite * RASTER.breite, platz));
+    // Das Feld waechst mit dem vollsten Feld mit - alle gleich hoch,
+    // sonst stuende die Reihe stufig da.
+    const belegung = {};
+    karten.forEach(k => { if (k._feld !== undefined && k.style.display !== 'none')
+                            belegung[k._feld] = (belegung[k._feld] || 0) + 1; });
+    const tiefstes = Math.max(1, ...Object.values(belegung));
+    fh = breite * 0.844 * Math.max(RASTER.hoehe, tiefstes * 1.08);
+  }
 
   // NEU (2026-08-31): Quer geteilt hat das Brett eine feste Hoehe - die
   // Trennlinie. Passen die Felder samt Zusatzfeldern nicht hinein,
@@ -2242,6 +2909,12 @@ function rasterZeichnen(an){
   function feld(x, y, w, hh, text, zusatz, nr){
     const d = document.createElement('div');
     d.className = 'rasterfeld';
+    // Die Felder werden mit insertBefore(..., firstChild) eingehaengt,
+    // stehen im DOM also RUECKWAERTS - und die Zusatzfelder mittendrin.
+    // Wer sie der Reihe nach braucht (etwa «Aufloesen»), darf sich
+    // deshalb nicht auf die DOM-Folge verlassen. Diese Merkmale sagen,
+    // was das Feld ist und das wievielte.
+    if (zusatz) d.dataset.zusatz = '1'; else d.dataset.nr = String(nr);
     Object.assign(d.style, {left:x + 'px', top:y + 'px', width:w + 'px',
       height:hh + 'px', borderColor: zusatz ? F.akzent() : F.rand()});
     if (RASTER.frei && !zusatz){
@@ -2253,6 +2926,23 @@ function rasterZeichnen(an){
     } else {
       const t = document.createElement('span');
       t.textContent = text; d.appendChild(t);
+    }
+    if (RASTER.rechnung && !zusatz){
+      const [px, luecke] = rechenPlaetze(w);
+      const kh = breite * 0.844;
+      ['\u00b7', '='].forEach((zeichen, j) => {
+        const e = document.createElement('span');
+        e.className = 'rechenzeichen';
+        e.textContent = zeichen;
+        Object.assign(e.style, {
+          left: (px[j] + breite) + 'px', top: '30px',
+          width: luecke + 'px', height: kh + 'px', lineHeight: kh + 'px',
+          // Der Malpunkt ist als Zeichen viel kleiner als das
+          // Gleichheitszeichen; ohne den Zuschlag verschwindet er.
+          fontSize: Math.round(Math.min(luecke, breite)
+                               * (j === 0 ? 1.05 : 0.62)) + 'px'});
+        d.appendChild(e);
+      });
     }
     tisch.insertBefore(d, tisch.firstChild);
   }
@@ -2272,6 +2962,34 @@ function rasterZeichnen(an){
     feld(zx0 + (n % spalten) * (fw + 10), 26 + r * (fh + 10), fw, fh,
          beschriftung(n), false, n);
   }
+  /* Zwischen zwei Feldern ein neues einschieben.
+
+     Rikes Frage (2026-09-13): «Wie gehen wir damit um, wenn man
+     zwischen zwei was setzt?» Von Hand aufruecken waere die Antwort -
+     bei acht belegten Feldern sind das acht Zuege, und die Gruppe
+     verliert dabei leicht den Ueberblick.
+
+     Stattdessen: Der Zwischenraum zwischen zwei Feldern ist anklickbar.
+     Ein Klick schiebt dort ein Feld ein und rueckt alles rechts davon
+     um eins weiter - die Karten wandern mit, weil sie ihre Feldnummer
+     tragen und nicht ihren Ort.
+
+     Das Bedienelement sitzt am Ort seiner Wirkung (agent/06) und
+     braucht kein Wort Erklaerung: Man faehrt in die Luecke, dort
+     erscheint ein Plus. */
+  if (FLAECHE === 'reihe' && feldAnzahl > 1){
+    for (let i = 1; i < feldAnzahl; i++){
+      const d = document.createElement('div');
+      d.className = 'einfuegen';
+      const x = zx0 + i * (fw + 10) - 11;
+      Object.assign(d.style, {left: x + 'px', top: 26 + 'px',
+                              width: '12px', height: fh + 'px'});
+      const t = document.createElement('span'); t.textContent = '+';
+      d.appendChild(t);
+      d.onclick = () => feldEinschieben(i);
+      tisch.insertBefore(d, tisch.firstChild);
+    }
+  }
   if (RASTER.erweiterbar){
     // Steht dort, wo das nächste Feld entsteht - so ist ohne Erklärung
     // sichtbar, was der Klick bewirkt.
@@ -2283,7 +3001,23 @@ function rasterZeichnen(an){
     const t = document.createElement('span');
     t.textContent = '+  ' + (RASTER.neu_text || 'noch eine Gruppe');
     d.appendChild(t);
-    d.onclick = () => { feldAnzahl++; rasterZeichnen(true); };
+    d.onclick = () => {
+      feldAnzahl++;
+      // FEHLERBEHOBEN (2026-09-13, Rike beim Ausprobieren): Hier wurde
+      // nur das Raster neu gezeichnet. Bei der Reihe haengt die
+      // FELDBREITE aber an der Zahl der Felder - die Felder wurden also
+      // schmaler, und die Karten blieben liegen, wo sie waren. Sie
+      // rutschten damit aus ihren Feldern heraus.
+      //
+      // Also: erst die Groessen neu rechnen, dann zeichnen, dann die
+      // Karten in ihre Felder zuruecksetzen. Sie tragen ihre Feldnummer,
+      // deshalb landet jede wieder dort, wo sie hingehoert.
+      if (FLAECHE === 'reihe'){
+        einpassen(); rasterZeichnen(true); reiheAllesSetzen();
+      } else {
+        rasterZeichnen(true);
+      }
+    };
     tisch.insertBefore(d, tisch.firstChild);
   }
   // NEU (2026-08-31, Rikes Auftrag): `extra` darf jetzt eine LISTE sein.
@@ -2369,7 +3103,7 @@ if (pk) pk.onclick = () => {
 });
 const saeule = document.querySelector('.saeule');
 if (saeule && !saeule.querySelector('.karte')) saeule.style.display = 'none';
-if (FLAECHE === 'tisch' || FLAECHE === 'runden'){
+if (FLAECHE === 'tisch' || FLAECHE === 'runden' || FLAECHE === 'reihe'){
   const zweite = document.getElementById('vorratTerm').closest('.fach');
   if (zweite) zweite.style.display = 'none';
   // Karten, die schon im Tisch stehen, haben dort ihr Zuhause.
@@ -2605,6 +3339,261 @@ if (FLAECHE === 'buendel'){
     einpassen(); buendelAufbau(); buendelLegen();
   });
 }
+/* ---------- Grad und Runde waehlt die GRUPPE -----------------------
+   NEU (2026-09-13, Rikes Auftrag): Bisher stellte die Lehrperson vor dem
+   Erzeugen ein, welcher Kartensatz erscheint. Das ist eine
+   Vorbereitungseinstellung und keine Bedienung waehrend der Arbeit -
+   genau die Unterscheidung, die in AUFTRAGSLISTE_sort.md unter B2 steht.
+
+   Jetzt liegen ALLE Saetze in der Seite. Traegt eine Karte data-satz in
+   der Form "grad|nummer", erscheint oben eine Gradwahl und «Neue
+   Runde». Das gilt fuer JEDE Flaechenform, nicht nur fuer die Reihe.
+
+   Beim Rundenwechsel wird der Stand als Bild gesichert - sonst waere die
+   Runde weg, bevor jemand sie angeschaut hat (agent/04: «Beim
+   Rundenwechsel automatisch ein Bild sichern»).
+
+   Die Bezeichnungen nennen die Zahlengroesse und bewerten nicht. «Klein»
+   ist nicht die leichte Fassung: Dort liegen die vollstaendigen Reihen
+   und damit die Nullkarten. */
+/* Ein Knopf, der nichts tut, gehoert weg - nicht gestumpft, nicht mit
+   einer Meldung versehen. Bei der Reihe richtet sich die Kartengroesse
+   nach den Feldern, also gibt es hier nichts zu zoomen. Zum Lesen
+   genuegt das Antippen einer einzelnen Karte. */
+if (FLAECHE === 'reihe' && RASTER){
+  ['kleiner', 'groesser'].forEach(id => {
+    const b = document.getElementById(id);
+    if (b) b.style.display = 'none';
+  });
+  const tr = document.querySelector('.leiste .trenner');
+  if (tr) tr.style.display = 'none';
+}
+
+const SATZKARTEN = karten.filter(k => k.dataset.satz);
+if (SATZKARTEN.length){
+  const schluessel = [];
+  SATZKARTEN.forEach(k => { if (!schluessel.includes(k.dataset.satz))
+                              schluessel.push(k.dataset.satz); });
+  const grade = [];
+  schluessel.forEach(s => { const g = s.split('|')[0];
+                            if (!grade.includes(g)) grade.push(g); });
+  const NAME = {klein: 'kleine Zahlen', gross: 'grosse Zahlen',
+                sehrgross: 'sehr grosse Zahlen'};
+  let grad = schluessel[0].split('|')[0], runde = 0;
+  const versteck = document.createElement('div');
+  versteck.style.display = 'none';
+  document.body.appendChild(versteck);
+
+  /* Bild sichern, aber nie darauf haengen bleiben.
+
+     FEHLERBEHOBEN (2026-09-13, beim Ausprobieren gefunden): «Neue Runde»
+     und «Aufloesen» warteten auf bild(). Das endet in c.toBlob(), und
+     der Rueckruf kommt nicht, wenn der Browser den Download unterbindet -
+     auf einem verwalteten Tablet ist das der Regelfall. Dann wechselt
+     die Runde NIE, ohne jede Meldung.
+
+     Also: hoechstens drei Sekunden warten, Fehler schlucken, weitermachen.
+     Ein verlorenes Bild ist aergerlich, eine tote Flaeche ist schlimmer. */
+  async function bildSicher(){
+    try {
+      await Promise.race([
+        bild(true),
+        new Promise(f => setTimeout(f, 3000))
+      ]);
+    } catch (e) { /* Bild konnte nicht gesichert werden - weiter im Text */ }
+  }
+
+  function aktiverSatz(){
+    const der = schluessel.filter(s => s.split('|')[0] === grad);
+    return der[runde % der.length];
+  }
+  // Karten mit negativem Exponenten sind abschaltbar. Ob eine Klasse
+  // sie schon hat, ist eine Lehrplanfrage - deshalb entscheidet es die
+  // Lehrperson an der Flaeche und nicht der Generator.
+  let negativAn = false;
+  const gibtNegativ = SATZKARTEN.some(k => k.dataset.negativ);
+
+  function zeigbar(k, key){
+    if (k.dataset.satz !== key) return false;
+    return negativAn || !k.dataset.negativ;
+  }
+  function aktiveKarten(){
+    const key = aktiverSatz();
+    return SATZKARTEN.filter(k => zeigbar(k, key));
+  }
+
+  function satzZeigen(){
+    const key = aktiverSatz();
+    loeschenMarken();
+    meldung.textContent = '';
+    echteRuefung = false;
+    reiheTiefe = 0; rasterTiefe = 0;
+    SATZKARTEN.forEach(k => {
+      if (zeigbar(k, key)){
+        k.style.display = '';
+        if (k.parentElement !== tisch) tisch.appendChild(k);
+        k._heim = tisch;
+        k._gelegt = false;
+      } else {
+        k.style.display = 'none';
+        if (k.parentElement !== versteck) versteck.appendChild(k);
+      }
+    });
+    feldAnzahl = RASTER ? RASTER.anzahl : 0;
+    einpassen();
+    if (RASTER && rasterKnopf && rasterKnopf.classList.contains('an'))
+      rasterZeichnen(true);
+    auslegen(aktiveKarten());
+    knopfStand();
+    knopfWirkung();
+  }
+
+  // Eingefuegt wird immer direkt nach «Zurueck zum Ursprung», also
+  // erscheint das ZULETZT Eingefuegte zuerst. Deshalb erst «Aufloesen»,
+  // dann «Neue Runde», dann die Grade rueckwaerts - am Ende steht die
+  // sachliche Folge da: klein, gross, sehr gross, Neue Runde, Aufloesen.
+  const leiste = document.getElementById('zurueck');
+  const knoepfe = {};
+  // Die Wahl der Zahlengroesse als EIN Bedienelement.
+  const wahl = document.createElement('div');
+  wahl.className = 'wahl';
+  const marke = document.createElement('span');
+  marke.className = 'marke'; marke.textContent = 'Zahlen';
+  wahl.appendChild(marke);
+
+  /* «Aufloesen» - und wann es erscheinen darf.
+     Es gibt Aufgaben mit genau einer richtigen Loesung (die Reihe, die
+     Wertfamilien) und solche ohne (die offene Sortierung). Nur wo es
+     eine gibt, kann man sie zeigen.
+
+     ENTSCHEIDUNG (2026-09-13): Der Knopf ist von Anfang an DA, aber
+     stumpf - er wirkt erst, wenn die Gruppe mindestens einmal geprueft
+     hat. Zwei Gruende: Ein Knopf, der ploetzlich auftaucht, erschreckt
+     und wird uebersehen; und die Aufloesung soll etwas kosten, naemlich
+     den eigenen Versuch. Wer ohne Prueflauf drueckt, bekommt den
+     Hinweis statt der Loesung. */
+  const istGeprueft = () => echteRuefung;
+
+  /* Woran man sieht, ob ein Knopf schon wirkt.
+
+     Rikes Einwand (2026-09-13): «Der Pruefknopf ist immer noch da.»
+     Er WAR schon gesperrt - er meldete nur, wie viele Karten fehlen -,
+     aber man sah es ihm nicht an. Jetzt ist er blass, solange er nicht
+     wirkt, und wird kraeftig, sobald alle Karten liegen. Dasselbe fuer
+     «Aufloesen», das erst nach dem Pruefen wirkt. */
+  function knopfWirkung(){
+    const pk = document.getElementById('pruefen');
+    // NUR WO ALLE KARTEN IN FELDER MUESSEN. Beim Fundsuchen ist genau
+    // das nicht der Fall: Zwei Karten bleiben immer uebrig, und der
+    // Knopf waere nie zu druecken gewesen.
+    if (pk && RASTER && RASTER.einrasten && PRUEFART !== 'fund'){
+      const offen = karten.filter(k => k.style.display !== 'none'
+                                    && k.dataset.rolle !== 'ablage'
+                                    && k._feld === undefined).length;
+      // Der Knopf sagt selbst, woran es liegt. Vorher stand das erst
+      // nach einem Druck in der Meldezeile - und wer nicht drueckt,
+      // erfaehrt nie, warum der Knopf blass ist.
+      pk.classList.toggle('stumpf', offen > 0);
+      pk.textContent = offen > 0 ? ('Prüfen — noch ' + offen) : 'Prüfen';
+      pk.title = offen > 0
+        ? 'Erst wenn alle Karten in Feldern liegen'
+        : 'Prüft die Reihe';
+    }
+    if (LOESBAR) aufloesen.classList.toggle('stumpf', !istGeprueft());
+  }
+  window.knopfWirkung = knopfWirkung;
+  const aufloesen = document.createElement('button');
+  // «Aufloesen» war missverstaendlich - es klingt nach «wegraeumen».
+  // (Rikes Rueckmeldung, 2026-09-13: «was heisst aufloesen, das
+  // verstehe ich auch nicht».)
+  aufloesen.textContent = 'Lösung zeigen';
+  aufloesen.title = 'erst nach dem Prüfen';
+  aufloesen.onclick = async () => {
+    if (!istGeprueft()){
+      meldung.textContent = 'Erst prüfen — dann könnt ihr die Lösung sehen.';
+      return;
+    }
+    await bildSicher();                // eigener Versuch bleibt erhalten
+    loesungLegen(aktiveKarten());
+    meldung.textContent = 'So wäre es richtig. Euer Versuch ist als Bild gesichert.';
+  };
+  if (LOESBAR && document.getElementById('pruefen')) leiste.after(aufloesen);
+
+  if (gibtNegativ){
+    /* «auch negative» allein sagt nicht, WAS negativ ist.
+       (Rikes Einwand, 2026-09-13.) Also dieselbe Bauart wie bei den
+       Zahlen: eine benannte Wahl mit zwei Stellungen, bei der beide
+       Moeglichkeiten dastehen. Dann muss niemand raten, was der
+       Gegenzustand waere. */
+    const eg = document.createElement('div');
+    eg.className = 'wahl';
+    const em = document.createElement('span');
+    em.className = 'marke'; em.textContent = 'Exponenten';
+    eg.appendChild(em);
+    const stellungen = [['nur positive', false], ['auch negative', true]];
+    const eknoepfe = [];
+    stellungen.forEach(([text, an]) => {
+      const b = document.createElement('button');
+      b.textContent = text;
+      b.onclick = () => {
+        negativAn = an;
+        eknoepfe.forEach(([bb, aa]) => bb.classList.toggle('an', aa === negativAn));
+        reiheTiefe = 0;
+        satzZeigen();
+      };
+      eg.appendChild(b);
+      eknoepfe.push([b, an]);
+    });
+    eknoepfe.forEach(([bb, aa]) => bb.classList.toggle('an', aa === negativAn));
+    leiste.after(eg);
+  }
+  const neu = document.createElement('button');
+  neu.textContent = 'Neue Runde';
+  neu.onclick = async () => {
+    // ERST PRUEFEN, DANN WEITER (Rikes Vorgabe, 2026-09-13): «Bevor sie
+    // in eine neue Runde gehen, sollen sie ihre Sachen ueberpruefen und
+    // noch mal diskutieren.» Der Knopf verweigert nicht - er erinnert
+    // einmal. Beim zweiten Druck geht es weiter, auch ungeprueft; eine
+    // Gruppe, die abbrechen will, soll das koennen.
+    if (LOESBAR && !istGeprueft() && !neu._gewarnt){
+      neu._gewarnt = true;
+      meldung.textContent = 'Prüft zuerst — dann nochmals drücken.';
+      return;
+    }
+    neu._gewarnt = false;
+    await bildSicher();
+    runde++; satzZeigen();
+  };
+  leiste.after(neu);
+  const KURZ = {klein: 'klein', gross: 'gross', sehrgross: 'sehr gross'};
+  grade.forEach(g => {
+    const b = document.createElement('button');
+    b.textContent = KURZ[g] || g;
+    b.title = NAME[g] || g;
+    b.onclick = () => { grad = g; runde = 0; satzZeigen(); };
+    wahl.appendChild(b);
+    knoepfe[g] = b;
+  });
+  leiste.after(wahl);
+
+  function knopfStand(){
+    Object.entries(knoepfe).forEach(([g, b]) => b.classList.toggle('an', g === grad));
+    const der = schluessel.filter(s => s.split('|')[0] === grad);
+    neu.textContent = der.length > 1
+      ? 'Neue Runde (' + ((runde % der.length) + 1) + ' von ' + der.length + ')'
+      : 'Neue Runde';
+  }
+  // Zweimal: Im ersten Bild steht die Hoehe der Flaeche noch nicht fest
+  // (Flex), im zweiten schon. Ohne den zweiten Lauf sind die Felder
+  // fuer die endgueltige Hoehe falsch gerechnet.
+  const ersteLage = () => {
+    satzZeigen();
+    requestAnimationFrame(satzZeigen);
+  };
+  if (document.readyState === 'complete') requestAnimationFrame(ersteLage);
+  else window.addEventListener('load', () => requestAnimationFrame(ersteLage));
+}
+
 if (RASTER && (RASTER.an || RASTER.zwingend) && rasterKnopf){
   rasterKnopf.classList.add('an');
   rasterZeichnen(true);
@@ -2615,7 +3604,7 @@ window.addEventListener('resize', () => {
   haelftenZeichnen();
   rasterZeichnen(rasterKnopf.classList.contains('an'));
 });
-if (FLAECHE === 'tisch' || FLAECHE === 'runden'){
+if (FLAECHE === 'tisch' || FLAECHE === 'runden' || FLAECHE === 'reihe'){
   // Die Sortierkarten liegen von Anfang an auf dem Tisch, wie im
   // Klassenzimmer. Links bleibt nur die Ablage fuer die Bausteine.
   //
@@ -2628,10 +3617,24 @@ if (FLAECHE === 'tisch' || FLAECHE === 'runden'){
   //
   // Statt einer laengeren Frist - die waere nur ein anderer geratener
   // Wert - wird auf das Ereignis gewartet, das es wirklich sagt.
-  const legen = () => { auslegen(); meldung.textContent = ''; };
-  const start = () => requestAnimationFrame(legen);
-  if (document.readyState === 'complete') start();
-  else window.addEventListener('load', start);
+  // FEHLERBEHOBEN (2026-09-13, Rike beim Ausprobieren): Liegen mehrere
+  // Saetze in der Datei, legt satzZeigen() die Karten aus - und dieser
+  // Block tat es GLEICHZEITIG. Zwei Auslegungen im selben Bild, und die
+  // zweite rechnete mit Massen, die die erste gerade geaendert hatte.
+  // Ergebnis: Die Karten sassen schief, bis man eine anfasste - dann
+  // rechnete das Einrasten alles neu, und ploetzlich passte es.
+  //
+  // Wer die Saetze fuehrt, legt auch aus. Dieser Block haelt sich dann
+  // heraus.
+  // Kein `return` hier - dieser Block steht nicht in einer Funktion,
+  // und ein `return` auf oberster Ebene ist ein Syntaxfehler. Dann
+  // laedt das ganze Skript nicht mehr, und die Flaeche bleibt tot.
+  if (!karten.some(k => k.dataset.satz)){
+    const legen = () => { auslegen(); meldung.textContent = ''; };
+    const start = () => requestAnimationFrame(legen);
+    if (document.readyState === 'complete') start();
+    else window.addEventListener('load', start);
+  }
 }
 </script>
 <script>window.SORT_AUFGABE={thema:2,variante:4};</script>
