@@ -159,6 +159,13 @@ button.stumpf{opacity:.45;}
 .rasterfeld span{font-family:var(--hand);font-size:1.02rem;
   color:var(--tinte-hell);margin-top:5px;}
 
+/* Rechenfeld: drei Plaetze, dazwischen · und =. Die Zeichen stehen fest
+   im Feld, nicht auf den Karten - so sieht man, welche zwei Karten
+   multipliziert werden und welche das Ergebnis ist. */
+.rasterfeld span.rechenzeichen{position:absolute;margin-top:0;
+  text-align:center;font-family:var(--hand);color:var(--tinte-hell);
+  pointer-events:none;}
+
 /* Frei beschriftbares Feld: Die Gruppe schreibt selbst hin, wonach sie
    geordnet hat. Das Feld selbst laesst Klicks durch (die Karten liegen
    darunter), die Schreiblinie nimmt sie an. */
@@ -1972,6 +1979,18 @@ function rasterEinrasten(k){
       const alt = k._feld;
       k._feld = feldKennung(d);
       k.classList.add('rastet');
+      // Im Rechenfeld entscheidet der Ablegeort, welcher der drei
+      // Plaetze gemeint ist - sonst koennte die Gruppe nicht sagen,
+      // welche Karte das Ergebnis sein soll.
+      if (RASTER.rechnung){
+        const [px] = rechenPlaetze(bw);
+        let best = 0;
+        px.forEach((v, j) => {
+          if (Math.abs(mx - x - v - breite / 2)
+              < Math.abs(mx - x - px[best] - breite / 2)) best = j;
+        });
+        k._platz = best;
+      }
       // Ist diese Gruppe jetzt die vollste, muessen Felder und Karten
       // neu gerechnet werden - sonst wuerde die letzte Karte verdeckt.
       const drin = karten.filter(a => a._feld === k._feld
@@ -2150,6 +2169,31 @@ function lege(drin, x, y, bw, bh){
   // vollem Abstand; passt das nicht, waechst das FELD (rasterZeichnen)
   // und notfalls wird die Karte kleiner (einpassen). Das Feld richtet
   // sich nach den Karten, nicht die Karten nach dem Feld.
+  // RECHENFELD (2026-09-14, Rikes Auftrag): «Man sieht nicht genau,
+  // welche zwei geben die dritte.» Im Fundfeld stehen deshalb drei feste
+  // Plaetze mit · und = dazwischen. Die Karte rutscht auf den naechsten
+  // freien Platz, und damit steht auf dem Tisch: erstes · zweites =
+  // drittes. Eine vierte Karte im selben Feld faellt darunter - sie ist
+  // dann sichtbar zu viel, und genau das soll sie sein.
+  if (RASTER && RASTER.rechnung){
+    const [px] = rechenPlaetze(bw);
+    const belegt = [null, null, null], ueber = [];
+    drin.forEach(k => {
+      const w = Math.min(2, Math.max(0, k._platz || 0));
+      if (belegt[w] === null){ belegt[w] = k; return; }
+      const frei = belegt.indexOf(null);
+      if (frei >= 0){ belegt[frei] = k; k._platz = frei; } else ueber.push(k);
+    });
+    belegt.forEach((k, j) => {
+      if (!k) return;
+      k._rot = 0; aufTisch(k, x + px[j], y + kopf); k.style.zIndex = ++z;
+    });
+    ueber.forEach((k, j) => {
+      k._rot = 0; aufTisch(k, x + px[Math.min(2, j)], y + kopf + h + 6);
+      k.style.zIndex = ++z;
+    });
+    return;
+  }
   const spalten = Math.min(drin.length, proReihe(bw));
   drin.forEach((k, j) => {
     k._rot = 0;
@@ -2157,6 +2201,14 @@ function lege(drin, x, y, bw, bh){
                 y + kopf + Math.floor(j / spalten) * (h + 4));
     k.style.zIndex = ++z;
   });
+}
+
+/* Die drei Plaetze im Rechenfeld: linke Kanten und die Luecke zwischen
+   ihnen, in der die Zeichen stehen. */
+function rechenPlaetze(bw){
+  const pad = 5;
+  const luecke = Math.max(14, (bw - 2 * pad - 3 * breite) / 2);
+  return [[0, 1, 2].map(j => pad + j * (breite + luecke)), luecke];
 }
 
 /* Prueft Funde: In jedem belegten Feld muessen DREI Karten liegen, von
@@ -2189,8 +2241,17 @@ function fundPruefen(){
     felder++;
     let ok = false;
     if (gr.length === 3){
-      const [a, b, c] = gr.map(w);
-      ok = gut(a * b - c) || gut(a * c - b) || gut(b * c - a);
+      if (RASTER && RASTER.rechnung){
+        // Im Rechenfeld steht die Rechnung DA: erstes · zweites =
+        // drittes. Dann muss sie auch so stimmen - sonst waere das
+        // gedruckte Gleichheitszeichen eine Luege.
+        gr.sort((p, q) => (p._platz || 0) - (q._platz || 0));
+        const [a, b, c] = gr.map(w);
+        ok = gut(a * b - c);
+      } else {
+        const [a, b, c] = gr.map(w);
+        ok = gut(a * b - c) || gut(a * c - b) || gut(b * c - a);
+      }
     }
     if (ok) stimmt++;
     else gr.forEach(k => schlecht.add(k));
@@ -2209,8 +2270,12 @@ function fundPruefen(){
   meldung.textContent =
     stimmt + ' von ' + felder + ' Feld' + (felder === 1 ? '' : 'ern') +
     ' stimmt' + (stimmt === 1 ? '' : 'en') +
-    (rest ? ' · ' + rest + ' Karten liegen noch daneben' : '') +
-    '.  Nochmals drücken zeigt, welche.';
+    // «liegen noch daneben» waere hier falsch: Uebrige Karten sind kein
+    // Versaeumnis, sondern die Kennzahl der Aufgabe. Zwei bleiben
+    // immer, und weniger als zwei geht nicht.
+    (rest ? ' · ' + rest + (rest === 1 ? ' Karte ist' : ' Karten sind')
+            + ' übrig' : ' · keine Karte mehr übrig') +
+    '.  Nochmals drücken zeigt, welche Felder nicht stimmen.';
 }
 
 function reihePruefen(){
@@ -2800,7 +2865,7 @@ function rasterZeichnen(an){
     // Das Feld waechst mit der vollsten Gruppe. Alle gleich hoch,
     // sonst stuenden die Felder stufig da.
     const tief = tiefsteBelegung();
-    const je = proReihe(fw);
+    const je = RASTER.rechnung ? 3 : proReihe(fw);
     const reihen = Math.ceil(tief / je);
     const noetig = (30 + reihen * (breite * 0.844 + 4) + 6) / (breite * 0.844);
     fh = breite * 0.844 * Math.max(RASTER.hoehe, noetig);
@@ -2864,6 +2929,23 @@ function rasterZeichnen(an){
     } else {
       const t = document.createElement('span');
       t.textContent = text; d.appendChild(t);
+    }
+    if (RASTER.rechnung && !zusatz){
+      const [px, luecke] = rechenPlaetze(w);
+      const kh = breite * 0.844;
+      ['\u00b7', '='].forEach((zeichen, j) => {
+        const e = document.createElement('span');
+        e.className = 'rechenzeichen';
+        e.textContent = zeichen;
+        Object.assign(e.style, {
+          left: (px[j] + breite) + 'px', top: '30px',
+          width: luecke + 'px', height: kh + 'px', lineHeight: kh + 'px',
+          // Der Malpunkt ist als Zeichen viel kleiner als das
+          // Gleichheitszeichen; ohne den Zuschlag verschwindet er.
+          fontSize: Math.round(Math.min(luecke, breite)
+                               * (j === 0 ? 1.05 : 0.62)) + 'px'});
+        d.appendChild(e);
+      });
     }
     tisch.insertBefore(d, tisch.firstChild);
   }
@@ -3404,7 +3486,10 @@ if (SATZKARTEN.length){
      «Aufloesen», das erst nach dem Pruefen wirkt. */
   function knopfWirkung(){
     const pk = document.getElementById('pruefen');
-    if (pk && RASTER && RASTER.einrasten){
+    // NUR WO ALLE KARTEN IN FELDER MUESSEN. Beim Fundsuchen ist genau
+    // das nicht der Fall: Zwei Karten bleiben immer uebrig, und der
+    // Knopf waere nie zu druecken gewesen.
+    if (pk && RASTER && RASTER.einrasten && PRUEFART !== 'fund'){
       const offen = karten.filter(k => k.style.display !== 'none'
                                     && k.dataset.rolle !== 'ablage'
                                     && k._feld === undefined).length;
