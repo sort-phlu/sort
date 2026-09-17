@@ -57,7 +57,9 @@ const S = {
   beginn: null, t0: 0,
   ereignisse: [], spur: null, aufnehmer: null, brocken: [],
   laeuft: false, zuletztGezogen: {}, uhr: null, pegel: 0,
-  zwischenbilder: [], runde: 0, fenster: null, rueckmeldung: '', stand: null
+  zwischenbilder: [], runde: 0, fenster: null, rueckmeldung: '', stand: null,
+  // Die Abzuege des Hintergrundes und die einmal abgelegten Bilder dazu.
+  hintergruende: [], hgBilder: [], hgZuletzt: -1
 };
 
 /* ============================================================
@@ -386,6 +388,246 @@ function flaechengemessen(){
   };
 }
 
+/* ============================================================
+   Der Hintergrund, so wie er dasteht
+   ============================================================ */
+/* NEU (2026-09-16, Rikes Befund «es werden nicht die Hintergruende in
+   exakt der Form angezeigt, wie die SuS sie gesehen haben»):
+
+   flaechengemessen() oben liest eine FESTE LISTE von Feldarten
+   (`.rasterfeld`, `.feld`, `.haelfte`, `#teiler`). Nachgezaehlt ueber
+   alle 21 Flaechen der Erprobung: Auf ACHT davon findet diese Liste
+   ueberhaupt nichts, obwohl der Tisch voll ist -
+
+     Aehnlichkeit 2, Faktorisieren 2   3 Venn-Kreise, Slots, Aussenfeld
+     Aehnlichkeit 3                    die Kette: 9 Teile, Pfeil-SVG, Schreibfeld
+     Aehnlichkeit 5, Potenzen 7,
+     Variablen 6                       je 24 Buendelteile
+     Aehnlichkeit 4, Faktorisieren 5   das SVG-Hintergrundbild auf `#brett`
+
+   Diese Sitzungen kamen im Abspielgeraet als weisse Flaeche mit
+   schwebenden Karten an. Auf den uebrigen dreizehn fehlten die
+   Vorratsfelder, die quere Trennlinie (`#teiler_quer` - gemessen wurde
+   nur `#teiler`), die Fuellung der Zusatzfelder, die Rechenzeichen
+   `·` und `=` und die halbe Deckkraft von «noch eine Gruppe».
+
+   Die Ursache ist nicht, WAS in der Liste steht, sondern dass es eine
+   Liste ist. Der Kommentar bei flaechengemessen() verspricht schon das
+   Richtige - «was hier nicht gemessen wurde, kann drueben auch nicht
+   falsch geraten werden, auch bei Feldarten, die es heute noch nicht
+   gibt». Eine Aufzaehlung kann dieses Versprechen nicht halten; sie
+   veraltet mit der naechsten neuen Flaechenart.
+
+   Deshalb wird jetzt ABGEZOGEN statt aufgezaehlt: alles, was auf dem
+   Tisch liegt und keine Karte ist, mit seiner gemessenen Lage und
+   seinen AUSGERECHNETEN Stilen. Heraus kommt ein Stueck HTML, das ohne
+   das Stylesheet der Aufgabenseite genauso dasteht. Eine neue Feldart
+   kommt ohne eine Zeile Code mit.
+
+   Und es wird MEHRMALS abgezogen. Bisher wurde einmal gemessen, ganz
+   am Schluss - die ganze Sitzung lief mit dem Endzustand im Hintergrund
+   ab, obwohl Zoom, dazugekommene Felder und mit der Belegung wachsende
+   Feldhoehen ihn waehrenddessen mehrfach aendern. Ein Beobachter meldet
+   jede Aenderung, gleiche Abzuege werden zusammengelegt.
+
+   `gemessen` bleibt daneben stehen. Es kostet wenig, und ein aelteres
+   Abspielgeraet kann ein neues Paket damit weiter lesen. */
+
+/* Was mitkommt. Die erste Gruppe IMMER (ohne sie steht das Element
+   nicht, wo es stand), die zweite nur, wenn sie vom Uebrigen abweicht. */
+const HG_STILE = [
+  'position','left','top','width','height','box-sizing','display','z-index',
+  'right','bottom','align-items','justify-content','flex-direction','overflow',
+  'margin-top','margin-right','margin-bottom','margin-left',
+  'padding-top','padding-right','padding-bottom','padding-left',
+  'border-top-width','border-right-width','border-bottom-width','border-left-width',
+  'border-top-style','border-right-style','border-bottom-style','border-left-style',
+  'border-top-color','border-right-color','border-bottom-color','border-left-color',
+  'border-radius','background-color','background-image','background-size',
+  'background-position','background-repeat','opacity','color',
+  'font-family','font-size','font-weight','font-style','line-height',
+  'letter-spacing','text-align','text-transform','white-space',
+  'transform','transform-origin'
+];
+const HG_HALT = new Set(['position','left','top','width','height',
+                         'box-sizing','display','z-index']);
+// Werte, die nichts aussagen. `0px` steht hier, weil eine Randbreite von
+// null dasselbe heisst wie kein Rand - bei `left` und `top` wuerde es
+// das Element verschieben, deshalb stehen die in HG_HALT.
+const HG_LEER = new Set(['auto','none','normal','0px','0%','visible','repeat',
+                         'rgba(0, 0, 0, 0)','start','row','1','0% 0%','400']);
+
+function hgText(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* FEHLERBEHOBEN (2026-09-16, beim ersten Durchlauf gegen die echte
+   Flaeche gemessen): Der ausgerechnete Stil enthaelt ANFUEHRUNGSZEICHEN
+   - `font-family:"Fira Sans", ...` bei jedem Element und
+   `background-image:url("data:image/svg+xml;base64,...")` beim Brett.
+   Ungeschuetzt in ein `style="..."` geschrieben, schliessen sie das
+   Attribut mitten im Wert.
+
+   Gemessen an Aehnlichkeit 4: Der Abzug kam mit 333 Zeichen und einem
+   Bild richtig heraus und stand im Rahmen trotzdem leer da, weil das
+   Attribut vor dem `url(` endete. Bei den Venn-Kreisen fiel es nicht
+   auf - Rand und Fuellung stehen VOR der Schriftart, es ging nur das
+   Dahinterliegende verloren. Der leisere und darum schlimmere Fall. */
+function hgAttribut(s){
+  return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+}
+
+function hgStil(e){
+  const s = getComputedStyle(e), w = {};
+  for (const n of HG_STILE){
+    const v = s.getPropertyValue(n);
+    if (!v) continue;
+    if (!HG_HALT.has(n) && HG_LEER.has(v)) continue;
+    w[n] = v;
+  }
+  /* Was nichts mehr bewirkt, wird gestrichen. Nicht aus Sparsamkeit:
+     Ein `bottom`, das neben `top` und `height` steht, ist ueberbestimmt
+     und wird ohnehin ignoriert - aber es steht dann im Abzug und sieht
+     aus wie eine Angabe. Ein Abzug soll nur enthalten, was traegt. */
+  if (w.left  && w.width)  delete w.right;
+  if (w.top   && w.height) delete w.bottom;
+  if (!w.transform) delete w['transform-origin'];
+  ['top','right','bottom','left'].forEach(seite => {
+    if (!w['border-' + seite + '-width'] || !w['border-' + seite + '-style'])
+      delete w['border-' + seite + '-color'];
+  });
+  return Object.keys(w).map(n => n + ':' + w[n]).join(';');
+}
+
+function hgKnoten(e){
+  const k = e.classList;
+  // Die Karten sind der Vordergrund und stehen im Protokoll. Die
+  // Aufnahme-Oberflaeche gehoert uns, nicht der Aufgabe.
+  if (k && (k.contains('karte') || k.contains('sortauf-huelle'))) return '';
+  if (typeof e.className === 'string' && /\bsortauf-/.test(e.className)) return '';
+  const s = getComputedStyle(e);
+  if (s.display === 'none' || s.visibility === 'hidden' || s.opacity === '0') return '';
+  // SVG traegt sein Aussehen in Attributen, nicht im Stylesheet, und
+  // kommt deshalb unveraendert mit (die Pfeile der Kette).
+  if (e.namespaceURI === 'http://www.w3.org/2000/svg') return e.outerHTML;
+  // Ein Eingabefeld wird zu Text: Der getippte WERT steht nur in der
+  // Eigenschaft, nicht im Quelltext, und ginge sonst verloren. Genau
+  // das sind die selbst gewaehlten Gruppennamen.
+  if (e.tagName === 'INPUT')
+    return '<div style="' + hgAttribut(hgStil(e)) + '">'
+         + hgText(e.value || e.placeholder || '') + '</div>';
+  let innen = '';
+  for (const kind of e.childNodes){
+    if (kind.nodeType === 3) innen += hgText(kind.nodeValue);
+    else if (kind.nodeType === 1) innen += hgKnoten(kind);
+  }
+  // Alles wird ein <div>: Ob es eine Zeile bildet oder nicht, steht als
+  // ausgerechnetes `display` im Stil und haengt nicht mehr am Tag.
+  return '<div style="' + hgAttribut(hgStil(e)) + '">' + innen + '</div>';
+}
+
+function hintergrundAbzug(){
+  const t = document.getElementById('tisch');
+  if (!t) return null;
+  let html = '', tief = 0;
+  for (const kind of t.children){
+    const stueck = hgKnoten(kind);
+    if (!stueck) continue;
+    html += stueck;
+    tief = Math.max(tief, kind.offsetTop + kind.offsetHeight);
+  }
+  // Eingebettete Bilder (das SVG auf `#brett` sind rund 42 kB base64)
+  // stehen EINMAL im Paket und in den Abzuegen nur als Marke. Sonst
+  // truege jeder Abzug seine eigene Kopie.
+  html = html.replace(/url\(&quot;(data:[^&]{200,})&quot;\)/g, function(_, u){
+    let i = S.hgBilder.indexOf(u);
+    if (i < 0) i = S.hgBilder.push(u) - 1;
+    return 'url(&quot;«bild' + i + '»&quot;)';
+  });
+  return { h: Math.ceil(tief), html: html };
+}
+
+/* Wieviel Platz alle Abzuege zusammen hoechstens einnehmen duerfen.
+
+   Gemessen: Eine Fläche hat im Lauf einer Stunde eine Handvoll
+   Zustaende - sechs bei «Wonach kann man diese Karten ordnen?», je 0,4
+   bis 15 kB. Die Schranke ist also nicht fuer den erwarteten Fall da,
+   sondern fuer den unerwarteten. Sie zaehlt Bytes und nicht Abzuege,
+   weil das die Sorge genau trifft: Eine Aufnahme darf nie so gross
+   werden, dass die Abgabe einer Gruppe scheitert.
+
+   Ist sie erreicht, wird weiter auf die bekannten Abzuege verwiesen -
+   nur kein neuer mehr angelegt. Die Aufnahme laeuft dadurch nicht
+   schlechter, der Hintergrund bleibt nur ab da stehen. */
+const HG_HOECHSTENS = 1500 * 1024;
+
+function hintergrundPruefen(){
+  /* Die Aufnahme laeuft in einer Schulstunde und darf die Flaeche unter
+     keinen Umstaenden anhalten. Wenn hier etwas schiefgeht, fehlt ein
+     Abzug - die Gruppe sortiert weiter und merkt nichts. Dieselbe
+     Haltung wie bei flaechenbild() weiter oben. */
+  try {
+    const a = hintergrundAbzug();
+    if (!a || !a.html) return;
+    /* Gegen ALLE bisherigen vergleichen, nicht nur gegen den letzten.
+
+       Grund: Zwei CSS-Regeln aendern das Aussehen eines Feldes, ohne
+       dass sich im Baum etwas ruehrt - `.rasterfeld.neu:hover` (Deck-
+       kraft 0,55 auf 1) und `.einfuegen:hover`. Faehrt die Gruppe
+       waehrend eines Neuzeichnens gerade darueber, entsteht ein Abzug
+       mit Hover-Zustand, danach wieder einer ohne. Beim Vergleich nur
+       mit dem letzten wuerde die Liste bei jedem Hin und Her wachsen;
+       so kostet der Wechsel zwei Eintraege, einmal, und danach nichts
+       mehr. */
+    for (let i = 0; i < S.hintergruende.length; i++){
+      if (S.hintergruende[i].h === a.h && S.hintergruende[i].html === a.html){
+        // Nur melden, wenn gerade ein anderer galt - sonst stuende
+        // dasselbe zehnmal hintereinander im Protokoll.
+        if (S.hgZuletzt !== i){ S.hgZuletzt = i; merken('hintergrund', { nr: i }); }
+        return;
+      }
+    }
+    const bisher = S.hintergruende.reduce((s, x) => s + x.html.length, 0);
+    if (bisher + a.html.length > HG_HOECHSTENS) return;
+    S.hintergruende.push(a);
+    S.hgZuletzt = S.hintergruende.length - 1;
+    merken('hintergrund', { nr: S.hgZuletzt });
+  } catch(e){ /* Ein fehlender Abzug ist kein Grund, die Stunde zu stoeren. */ }
+}
+
+function hintergrundBeobachten(){
+  const t = document.getElementById('tisch');
+  if (!t) return;
+  let warten = null;
+  const anstossen = () => {
+    clearTimeout(warten);
+    // Abwarten: Zoomen und Feld-Einschieben zeichnen den Tisch in
+    // mehreren Schritten neu. Ein Abzug je Schritt waere Papierkrieg.
+    warten = setTimeout(hintergrundPruefen, 350);
+  };
+  new MutationObserver(function(meldungen){
+    for (const m of meldungen){
+      // Kartenbewegungen loesen keinen Abzug aus - sonst liefe der
+      // Beobachter bei jedem Ziehen mit, fuenfzigmal in der Sekunde.
+      if (m.target.nodeType === 1 && m.target.closest
+          && m.target.closest('.karte')) continue;
+      if (m.type === 'childList'){
+        const knoten = [].concat([].slice.call(m.addedNodes),
+                                 [].slice.call(m.removedNodes));
+        if (knoten.length && knoten.every(n => n.nodeType === 1 && n.classList
+                                            && n.classList.contains('karte')))
+          continue;
+      }
+      anstossen();
+      return;
+    }
+  }).observe(t, { childList: true, subtree: true, attributes: true,
+                  attributeFilter: ['style', 'class'] });
+  // Ein getippter Gruppenname aendert kein Attribut; der Beobachter
+  // saehe ihn nie.
+  t.addEventListener('input', anstossen, true);
+}
+
 function flaechenbeschreibung(){
   const karten = {}, gruppen = {};
   document.querySelectorAll('.karte').forEach(k => {
@@ -404,6 +646,14 @@ function flaechenbeschreibung(){
     karten: karten,
     gruppen: gruppen,
     gemessen: flaechengemessen(),
+    // Der Abzug des Hintergrundes samt seiner Zeitpunkte. `gemessen`
+    // bleibt daneben stehen, damit ein aelteres Abspielgeraet ein neues
+    // Paket weiter lesen kann.
+    hintergrund: S.hintergruende.length
+      ? { tisch: (typeof tisch !== 'undefined' && tisch)
+                   ? [tisch.clientWidth, tisch.clientHeight] : null,
+          bilder: S.hgBilder, stuecke: S.hintergruende }
+      : null,
     haelften: (typeof HAELFTEN !== 'undefined') ? HAELFTEN : null,
     raster:   (typeof RASTER   !== 'undefined') ? RASTER   : null,
     farben: {
@@ -748,6 +998,9 @@ function starten(){
   leiste();
   mitschreibenStarten();
   rundenbilderAbfangen();
+  // Der erste Abzug gehoert zum Anfang, nicht zur ersten Aenderung.
+  hintergrundPruefen();
+  hintergrundBeobachten();
 
   addEventListener('beforeunload', e => {
     if (!S.laeuft) return;
@@ -810,6 +1063,10 @@ async function beenden(){
   S.laeuft = false;
   clearInterval(S.uhr);
   merken('ende', { karten: alleLagen() });
+  // Der Abzug des Hintergrundes gehoert zum Zeitpunkt des Abgebens,
+  // aus demselben Grund wie S.stand zwei Zeilen weiter unten: Bis das
+  // Blatt erscheint, liegen mehrere Bildschirme dazwischen.
+  hintergrundPruefen();
   // NEU (2026-09-13, Rikes Auftrag): Der eigene Stand wird JETZT
   // festgehalten, nicht erst am Schluss. Bis das Blatt erscheint, liegen
   // mehrere Bildschirme dazwischen; ein Fenster, das die Groesse

@@ -6,7 +6,25 @@
 <title>SORT – Sitzungen ansehen</title>
 <style>
 /* Bewusst ohne Schriften aus dem Netz: diese Seite stellt keine einzige
-   Anfrage nach draussen. Die Pakete bleiben auf dem eigenen Rechner. */
+   Anfrage nach draussen. Die Pakete bleiben auf dem eigenen Rechner.
+
+   NEU (2026-09-16): Die beiden Schriften der Sortierflaechen werden von
+   NEBENAN geholt - `../schriften/` auf der Erprobungsseite. Seit der
+   Hintergrund als Abzug mitkommt, stehen die Feldbeschriftungen hier in
+   derselben Handschrift wie auf dem Tisch; ohne diesen Block waeren sie
+   in der Systemschrift gesetzt. Wer abspielen.html einzeln auf den
+   Schreibtisch legt, bekommt still die Systemschrift - kein Fehler,
+   nur ein anderer Schnitt. Nach draussen geht weiterhin nichts. */
+@font-face{font-family:'Fira Sans';font-style:normal;font-weight:400;
+  src:url('../schriften/FiraSans-Regular.woff') format('woff')}
+@font-face{font-family:'Fira Sans';font-style:italic;font-weight:400;
+  src:url('../schriften/FiraSans-Italic.woff') format('woff')}
+@font-face{font-family:'Fira Sans';font-style:normal;font-weight:600;
+  src:url('../schriften/FiraSans-SemiBold.woff') format('woff')}
+@font-face{font-family:'Fira Sans';font-style:normal;font-weight:700;
+  src:url('../schriften/FiraSans-Bold.woff') format('woff')}
+@font-face{font-family:'Patrick Hand';font-style:normal;font-weight:400;
+  src:url('../schriften/PatrickHand-Regular.woff') format('woff')}
 :root{
   --papier:#fbf8f3; --creme:#f6ecdf; --karte:#fffefb;
   --tinte:#2d2924;  --hell:#6c6357;  --braun:#935100;
@@ -585,6 +603,13 @@ function noetigeHoehe(){
     if (e.karten) e.karten.forEach(k => tief = Math.max(tief, (k.y||0) + kh));
     if (e.y != null) tief = Math.max(tief, e.y + kh);
   });
+  // Liegt ein Abzug bei, sagt der tiefste Abzug, wie tief es reicht.
+  const HG = hgAbzuege();
+  if (HG){
+    HG.stuecke.forEach(s => tief = Math.max(tief, s.h || 0));
+    return Math.ceil(tief + 16);
+  }
+
   // Ist das Feld gemessen mitgekommen, sagt die Messung, wie tief es reicht.
   const G = S.flaeche && S.flaeche.gemessen;
   if (G && G.felder && G.felder.length){
@@ -615,10 +640,46 @@ function passen(){
 }
 addEventListener('resize', () => { if (S.aktiv !== null) passen(); });
 
+/* Liegt zu dieser Sitzung ein Abzug des Hintergrundes bei? */
+function hgAbzuege(){
+  const h = S.flaeche && S.flaeche.hintergrund;
+  return (h && h.stuecke && h.stuecke.length) ? h : null;
+}
+
+/* Die eingebetteten Bilder stehen einmal im Paket, in den Abzuegen nur
+   als Marke - sonst truege jeder Abzug seine eigene Kopie der rund
+   42 kB des Spaltenbildes. */
+function hgEinsetzen(html, bilder){
+  return String(html).replace(/\u00abbild(\d+)\u00bb/g,
+                              (_, i) => bilder[+i] || '');
+}
+
 function strukturZeichnen(breite, rasterAn){
   const grund = $('grund');
   if (!grund) return;
   grund.innerHTML = '';
+
+  /* NEU (2026-09-16, Rikes Befund «es werden nicht die Hintergruende in
+     exakt der Form angezeigt, wie die SuS sie gesehen haben»): Liegt ein
+     ABZUG bei, wird er eingesetzt und sonst nichts getan.
+
+     Der Abzug ist das, was auf dem Tisch stand - jedes Element mit
+     seiner gemessenen Lage und seinen ausgerechneten Stilen, von
+     aufnahme.js beim Aufnehmen abgenommen und bei jeder Aenderung neu.
+     Hier wird deshalb nicht gezeichnet, sondern eingehaengt: Es gibt
+     keine zweite Zeichnung, die auseinanderlaufen koennte, und eine
+     Feldart, die es heute noch nicht gibt, kommt von selbst mit.
+
+     Alles Weitere in dieser Funktion gilt nur noch fuer Pakete OHNE
+     Abzug - also fuer die, die vor heute abgegeben wurden. */
+  const HG = hgAbzuege();
+  if (HG){
+    const st = HG.stuecke[Math.min(Math.max(0, S.hgNr || 0),
+                                   HG.stuecke.length - 1)];
+    grund.innerHTML = hgEinsetzen(st.html, HG.bilder || []);
+    return;
+  }
+
   const F = (S.flaeche && S.flaeche.farben) || {};
   const H = S.flaeche && S.flaeche.haelften;
   const B = S.tisch[0], HH = S.hoehe || S.tisch[1];
@@ -748,6 +809,10 @@ function zustandBei(t){
   // Liegt eine Messung bei, ist der Anfang nicht geraten, sondern
   // gerechnet: Gemessen wird am Ende, und jedes Ein- und Ausblenden
   // steht als Ereignis dazwischen. Ungerade Anzahl -> vorher andersherum.
+  // Welcher Abzug gilt zu diesem Zeitpunkt? Der letzte, der bis hierhin
+  // gemeldet wurde.
+  S.hgNr = 0;
+
   let rasterAn;
   const G0 = S.flaeche && S.flaeche.gemessen;
   if (G0 && typeof G0.sichtbar === 'boolean'){
@@ -767,6 +832,7 @@ function zustandBei(t){
     letzte = i;
     if (e.karten) e.karten.forEach(k => lage[k.karte] = Object.assign({}, k));
     if (e.breite) breite = e.breite;
+    if (e.was === 'hintergrund') S.hgNr = e.nr;
     if (e.was === 'raster') rasterAn = !rasterAn;
     if (e.was === 'greifen') greift = e.karte;
     if (e.was === 'ziehen' || e.was === 'ablegen'){
