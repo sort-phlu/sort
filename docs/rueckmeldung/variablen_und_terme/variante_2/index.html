@@ -357,6 +357,15 @@ const karten = [...document.querySelectorAll('.karte')]
     return st === 0;
   });
 let z = 1, breite = 170, pruefstufe = 0, rundeNr = 1;
+/* NEU (2026-09-17, Rikes Entscheidung): Die Rechenart ist eine Wahl der
+   GRUPPE, keine Eigenschaft der Aufgabe - deshalb eine Laufzeitgroesse
+   und keine Baukonstante. Sie steht hier bei den anderen, weil sowohl
+   das Zeichnen des Feldes als auch die Pruefung sie lesen. */
+let ZEICHEN = '\u00b7';
+// Hat jemand die Kartengroesse VON HAND gestellt? Siehe zoom() und
+// einpassenWennAutomatisch() - von da an rechnet die Flaeche die Groesse
+// nicht mehr selbst aus.
+let breiteVonHand = false;
 // Hat eine ECHTE Pruefung stattgefunden? Nicht jeder Druck auf «Pruefen»
 // ist eine: Solange Karten im Vorrat liegen, meldet die Reihenpruefung
 // nur, wie viele fehlen. Ein solcher Druck darf «Aufloesen» nicht
@@ -510,12 +519,33 @@ function zoom(d){
   // einzelnen Karte (Antippen) bleibt - zum Lesen genuegt sie.
   if (FLAECHE === 'reihe' && RASTER) return;   // Knoepfe sind ausgeblendet
   breite = Math.max(50, Math.min(320, breite + d));
+  breiteVonHand = true;
   masse();
   // Die Rasterfelder sind Vielfache der Kartenbreite - sie muessen
   // mitwachsen, sonst passen die Karten irgendwann nicht mehr hinein.
   haelftenZeichnen();
   rasterZeichnen(rasterKnopf && rasterKnopf.classList.contains('an'));
   rasterBeschriften();
+  // FEHLERBEHOBEN (2026-09-14, Maurus' Rueckmeldung zu Potenzen V1, V2,
+  // V5, V6: «Beim Vergroessern sind die Kaertchen nicht mehr am
+  // richtigen Ort»): Das Raster wurde neu gezeichnet, die eingerasteten
+  // Karten aber nicht mit umgesetzt. Sie blieben auf ihren alten
+  // Bildpunkten liegen, waehrend ihr Feld woanders hinwanderte.
+  //
+  // Gemessen an «Wonach kann man diese Karten ordnen?»: Bei breite 156
+  // brechen die vier Gruppenfelder aus EINER Zeile in eine SPALTE um
+  // (Feld 1 auf y 378, Feld 2 auf 731, Feld 3 auf 1083). Die vier
+  // Karten standen weiter alle auf y 122 - drei von vier lagen ausserhalb
+  // der Gruppe, zu der `_feld` sie weiterhin zaehlte.
+  //
+  // Dieselbe Lehre steht schon bei «Gruppe hinzufuegen» (siehe dort):
+  // erst rechnen, dann zeichnen, dann die Karten in ihre Felder
+  // zuruecksetzen. Sie tragen ihre Feldnummer, also findet jede zurueck.
+  if (RASTER && RASTER.einrasten){
+    alleRasterfelder().forEach(f => {
+      if (Number.isFinite(parseFloat(f.style.left))) feldNeuSetzen(feldKennung(f));
+    });
+  }
   // FEHLERBEHOBEN (2026-08-21, Rikes Befund «wenn man auf Groesser
   // klickt, werden nur die Karten groesser»): Das Brett von «kette» und
   // «buendel» wird aus der Kartenbreite GERECHNET - Felder, Pfeile,
@@ -537,6 +567,31 @@ function anteilBrett(){
   // daneben. Sagt das Brett nichts, bleibt es bei den bisherigen Werten.
   if (BRETT && BRETT.anteil) return BRETT.anteil;
   return FLAECHE === 'runden' ? 0.34 : 0.52;
+}
+
+/* FEHLERBEHOBEN (2026-09-14, Maurus' Rueckmeldung zu Potenzen V1 und V5:
+   «Zudem springt der Zoom wieder auf Klein, wenn man ein Kaertchen
+   platziert»).
+
+   Ursache: Wird ein Feld voller als jedes bisherige, rechnen
+   rasterEinrasten() und reiheEinrasten() die Kartengroesse neu - damit
+   die unterste Karte nicht verdeckt wird. `einpassen()` rechnet sie
+   aber von Grund auf aus der freien Flaeche und der Kartenzahl. Eine
+   von Hand gestellte Groesse war damit weg. Gemessen an «Wonach kann
+   man diese Karten ordnen?»: breite 156 -> 46, sobald die zweite Karte
+   in eine Gruppe kam.
+
+   Die Regel, die jetzt gilt: Wer die Groesse selbst gestellt hat,
+   behaelt sie. Das Raster wird trotzdem neu gezeichnet, die Felder
+   wachsen also weiter mit der Tiefe; nur die KARTE bleibt, wie sie
+   gewuenscht war. Wird es zu eng, stellt dieselbe Hand sie wieder
+   kleiner - das ist eine Zeile weniger Bevormundung, nicht mehr.
+
+   Nur hier, nicht in einpassen() selbst: Beim ersten Aufbau und beim
+   Aendern der Fenstergroesse SOLL gerechnet werden. */
+function einpassenWennAutomatisch(){
+  if (breiteVonHand) return;
+  einpassen();
 }
 
 function einpassen(){
@@ -1798,6 +1853,25 @@ function auslegen(teilmenge){
   }
   zu.forEach((k, i) => {
     const p = plaetze[i % plaetze.length] || [8, 8, tisch.clientWidth];
+    /* FEHLERBEHOBEN (2026-09-17, Rikes Frage «gehen die Karten wieder
+       zurueck auf den Durcheinanderstapel?»).
+
+       URSACHE: auslegen() warf die Karten neu auf den Tisch, loeste sie
+       aber nie aus ihrem Feld. `_feld` und `_platz` blieben stehen, die
+       Karte behielt sogar die Klasse `rastet`. Die Flaeche behauptete
+       danach eine Zuordnung, die nirgends zu sehen war.
+
+       GEMESSEN an variante_5, Fund 4 · 8 = 32 im ersten Feld, danach
+       «Zurueck zum Ursprung»: Die drei Karten lagen auf (7,498),
+       (180,215) und (87,91) - also mitten im Vorrat, das Feld beginnt
+       erst bei (814,313) -, und der Pruefknopf meldete trotzdem «1 von
+       1 Feld stimmt». Dasselbe ueber den Grad-Knopf und ueber «Neue
+       Runde»; alle drei laufen durch auslegen().
+
+       Wer neu auslegt, legt lose aus. Wird eine Karte physisch auf den
+       Stapel geworfen, ist sie in keinem Feld mehr - das gehoert an
+       diese Stelle und nicht in jeden einzelnen Aufrufer. */
+    k._feld = undefined; k.classList.remove('rastet');
     k._rot = GEDREHT ? (Math.random() * 12 - 6).toFixed(1) : 0;
     const xmax = Math.min(tisch.clientWidth, p[2] === undefined
                           ? tisch.clientWidth : p[2]) - breite - 4;
@@ -1980,7 +2054,7 @@ function rasterEinrasten(k){
                                    && a.style.display !== 'none').length;
       if (drin > (rasterTiefe || 0)){
         rasterTiefe = drin;
-        einpassen(); rasterZeichnen(true);
+        einpassenWennAutomatisch(); rasterZeichnen(true);
         alleRasterfelder().forEach(f => feldNeuSetzen(feldKennung(f)));
         if (window.knopfWirkung) window.knopfWirkung();
         return true;
@@ -2017,7 +2091,7 @@ function reiheEinrasten(k){
                                    && a.style.display !== 'none').length;
       if (drin > (reiheTiefe || 0)){
         reiheTiefe = drin;
-        einpassen(); rasterZeichnen(true);
+        einpassenWennAutomatisch(); rasterZeichnen(true);
         reiheAllesSetzen();
         if (window.knopfWirkung) window.knopfWirkung();
         return true;
@@ -2230,7 +2304,10 @@ function fundPruefen(){
         // gedruckte Gleichheitszeichen eine Luege.
         gr.sort((p, q) => (p._platz || 0) - (q._platz || 0));
         const [a, b, c] = gr.map(w);
-        ok = gut(a * b - c);
+        // Geprueft wird, was DASTEHT. Steht ':' im Feld, waere ein
+        // Nachrechnen mit '*' dieselbe Luege wie ein falsches
+        // Gleichheitszeichen.
+        ok = ZEICHEN === ':' ? (b !== 0 && gut(a / b - c)) : gut(a * b - c);
       } else {
         const [a, b, c] = gr.map(w);
         ok = gut(a * b - c) || gut(a * c - b) || gut(b * c - a);
@@ -2916,7 +2993,7 @@ function rasterZeichnen(an){
     if (RASTER.rechnung && !zusatz){
       const [px, luecke] = rechenPlaetze(w);
       const kh = breite * 0.844;
-      ['\u00b7', '='].forEach((zeichen, j) => {
+      [ZEICHEN, '='].forEach((zeichen, j) => {
         const e = document.createElement('span');
         e.className = 'rechenzeichen';
         e.textContent = zeichen;
@@ -2999,7 +3076,7 @@ function rasterZeichnen(an){
       // Karten in ihre Felder zuruecksetzen. Sie tragen ihre Feldnummer,
       // deshalb landet jede wieder dort, wo sie hingehoert.
       if (FLAECHE === 'reihe'){
-        einpassen(); rasterZeichnen(true); reiheAllesSetzen();
+        einpassenWennAutomatisch(); rasterZeichnen(true); reiheAllesSetzen();
       } else {
         rasterZeichnen(true);
       }
@@ -3078,6 +3155,27 @@ rasterKnopf.onclick = e => {
 };
 const pk = document.getElementById('pruefen');
 if (pk) pk.onclick = () => {
+  /* FEHLERBEHOBEN (2026-09-17, Maurus zu Potenzen V5: «Pruefbutton
+     spint»).
+
+     URSACHE: fundPruefen() traegt seine Stufen SELBST - erst die
+     Meldung, beim naechsten Druck die gruenen und roten Marken. Dieser
+     Verteiler hier fing Stufe 1 aber ab und rief das ALLGEMEINE
+     markieren(). Das liest `_brett` bzw. `_merk`; beides legt nur die
+     Gruppenpruefung an, die Fund-Flaeche nie. markieren() kehrte also
+     wortlos zurueck, und fundPruefens eigener Marken-Zweig wurde nie
+     erreicht.
+
+     GEMESSEN an variante_5 mit einem gueltigen Fund (4 · 8 = 32):
+     Druck 1 meldete «1 von 1 Feld stimmt · 8 Karten sind uebrig.
+     Nochmals druecken zeigt, welche Felder nicht stimmen.» - Druck 2
+     hatte KEINE Wirkung, keine einzige Karte bekam eine Marke - Druck 3
+     loeschte die Meldung. Von drei Druecken wirkte einer, und der Satz
+     «Nochmals druecken zeigt...» war schlicht unwahr.
+
+     Die Fund-Flaeche bekommt deshalb ihren eigenen Weg, so wie
+     pruefen() es oben schon tut. */
+  if (PRUEFART === 'fund'){ fundPruefen(); return; }
   if (pruefstufe === 0) pruefen();
   else if (pruefstufe === 1){ markieren(); pruefstufe = 2; }
   else { loeschenMarken(); meldung.textContent = ''; }
@@ -3532,6 +3630,47 @@ if (SATZKARTEN.length){
     });
     eknoepfe.forEach(([bb, aa]) => bb.classList.toggle('an', aa === negativAn));
     leiste.after(eg);
+  }
+  /* NEU (2026-09-17, Rikes Entscheidung): Die Rechenart als Wahl.
+
+     WARUM SIE NICHTS KOSTET: `a · b = c` ist genau dann wahr, wenn
+     `c : a = b` wahr ist - es sind dieselben drei Karten. Die
+     Divisionsfassung findet also kein neues Tripel und verliert keines.
+     Alles, was an den Saetzen eingestellt ist, bleibt gueltig: die Zahl
+     der Funde, die Sackgassen, die Packung, der eine Stolperstein.
+
+     WARUM SIE TROTZDEM ETWAS BRINGT: Die Regel dahinter ist eine
+     andere - a^m · a^n = a^(m+n) gegen a^m : a^n = a^(m-n).
+
+     DER SATZ BLEIBT STEHEN, wie bei «auch negative» und anders als beim
+     Grad-Knopf: kein `runde = 0`. Rikes Begruendung: «Eigentlich waere
+     es ja auch eine Erkenntnis, wenn sie am Ende feststellen, hups, wir
+     haben genau die gleichen Kaertchen zusammengebaut.» Dass die Karten
+     dabei neu durcheinanderfliegen, besorgt `auslegen()` von selbst -
+     es mischt die Plaetze bei jedem Aufruf. */
+  if (RASTER && RASTER.rechnung){
+    const zg = document.createElement('div');
+    zg.className = 'wahl';
+    const zm = document.createElement('span');
+    zm.className = 'marke'; zm.textContent = 'Rechenart';
+    zg.appendChild(zm);
+    // Beide Stellungen stehen da, wie bei den Exponenten - sonst muesste
+    // jemand raten, was der Gegenzustand waere.
+    const arten = [['mal', '\u00b7'], ['geteilt durch', ':']];
+    const zknoepfe = [];
+    arten.forEach(([text, zz]) => {
+      const b = document.createElement('button');
+      b.textContent = text;
+      b.onclick = () => {
+        ZEICHEN = zz;
+        zknoepfe.forEach(([bb, z2]) => bb.classList.toggle('an', z2 === ZEICHEN));
+        satzZeigen();
+      };
+      zg.appendChild(b);
+      zknoepfe.push([b, zz]);
+    });
+    zknoepfe.forEach(([bb, z2]) => bb.classList.toggle('an', z2 === ZEICHEN));
+    leiste.after(zg);
   }
   const neu = document.createElement('button');
   neu.textContent = 'Neue Runde';
