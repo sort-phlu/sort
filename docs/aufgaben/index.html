@@ -63,6 +63,19 @@ img{max-width:100%}
 .leiste nav{margin-left:auto;display:flex;gap:22px;font-family:var(--sans);font-size:.88rem}
 .leiste nav a{text-decoration:none;font-weight:600;color:var(--tinte-hell)}
 .leiste nav a:hover{color:var(--braun);text-decoration:underline;text-underline-offset:4px}
+/* Sprachumschalter. Er sitzt links vom Hauslogo; weil beide auf der
+   rechten Seite stehen wollen, bekommt das Logo daneben eine feste
+   statt einer automatischen Einrueckung - sonst teilen sich zwei
+   `margin-left:auto` den freien Platz und der Umschalter landet
+   mitten in der Leiste. */
+.sprachwahl{margin-left:auto;display:flex;align-items:center;gap:9px;
+  font-family:var(--sans);font-size:.74rem;letter-spacing:.12em;
+  text-transform:uppercase;font-weight:700}
+.sprachwahl a{text-decoration:none;color:var(--tinte-hell)}
+.sprachwahl a:hover{color:var(--braun);text-decoration:underline;text-underline-offset:4px}
+.sprachwahl .jetzt{color:var(--braun)}
+.sprachwahl .strich{color:var(--linie);font-weight:400}
+.sprachwahl+.haus{margin-left:14px}
 
 /* ---------- Kopfbereich ---------- */
 .augen{font-family:var(--sans);font-size:.74rem;font-weight:700;letter-spacing:.16em;
@@ -213,7 +226,9 @@ footer.schlicht p{margin:0 0 5px;line-height:1.5}
 .reihe{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;
   padding:6px 0;border-top:1px solid var(--linie);font-size:.9rem}
 .reihe b{flex:1;min-width:150px;font-weight:600}
-.reihe a{display:inline-block;width:26px;height:26px;line-height:24px;
+/* GEAENDERT (2026-09-18): Hier standen 26x26 grosse Ziffernkaestchen.
+   Seit die Knoepfe den TITEL tragen, muessen sie mitwachsen. */
+.reihe a{display:inline-block;padding:3px 10px;
   text-align:center;border:1px solid var(--linie);border-radius:3px;
   text-decoration:none;color:var(--braun);font-size:.85rem;font-weight:600}
 .reihe a:hover{background:var(--creme);border-color:var(--braun)}
@@ -294,7 +309,7 @@ footer p{margin:0 0 5px}
 </head>
 <body>
 <div class="leiste"><div class="rand"><a class="haus" href="../index.html"><img src="../bilder/logo-phlu.png" alt="PH Luzern, Pädagogische Hochschule"></a></div></div>
-<div class="rand kopfklein"><p class="augen">Zum Ausprobieren</p><h1>Die Sortieraufgaben</h1><p>Eine Kostprobe aus dem Projekt. Die Kartensätze werden gerade in Klassen erprobt; hier stehen einzelne Aufgaben zum Anschauen und Ausprobieren — direkt im Browser, ohne Anmeldung und ohne Installation.</p></div><main class="rand" style="padding-top:14px"><section class="feld"><div class="feldkopf"><span class="marker" style="background:var(--blau)"></span><h2>Variablen und Terme</h2></div><p class="zeile">Streichholzmuster, Würfeltürme und Figuren – und die Terme, die man in ihnen lesen kann.</p><div class="knoepfe kv1" style="--f:var(--blau)"><a class="sortierung" href="variablen_und_terme/variante_1/"><span class="nummer">Sortierung 1</span><h3>Welche Terme passen zu dieser Figur?</h3><p>Zu jeder Figur passen drei Terme.</p></a><a class="sortierung" href="variablen_und_terme/variante_6/"><span class="nummer">Sortierung 5</span><h3>Der Eindringling</h3><p>Jede Vierergruppe zeigt eine Figur und drei Terme.</p></a></div></section><section class="feld"><div class="feldkopf"><span class="marker" style="background:var(--lila)"></span><h2>Ähnlichkeit</h2></div><p class="zeile">Figuren, Behauptungen und Vergleiche – zwischen ähnlich und nur beinahe ähnlich.</p><div class="knoepfe kv1" style="--f:var(--lila)"><a class="sortierung" href="aehnlichkeit/variante_1/"><span class="nummer">Sortierung 1</span><h3>Ähnlichkeitsklassen</h3><p>Legt die Karten so zusammen, dass in jeder Gruppe ähnliche Figuren liegen.</p></a><a class="sortierung" href="aehnlichkeit/variante_3/"><span class="nummer">Sortierung 2</span><h3>Der Umweg</h3><p>Start und Ende sind vorgegeben.</p></a></div></section></main>
+<div class="rand kopfklein"><p class="augen">Zum Ausprobieren</p><h1>Die Sortieraufgaben</h1><p>Eine Kostprobe aus dem Projekt. Die Kartensätze werden gerade in Klassen erprobt; hier stehen einzelne Aufgaben zum Anschauen und Ausprobieren — direkt im Browser, ohne Anmeldung und ohne Installation.</p></div><main class="rand" style="padding-top:14px"><section class="feld"><div class="feldkopf"><h2>Was hier steht, ist ein Zwischenstand</h2></div><p class="zeile">Die Aufgaben sind <b>noch nicht fertig</b>, und wir sagen das lieber selbst, als dass ihr es entdeckt: Mal passt die Sortierfläche nicht zur Aufgabe, mal sind es zu viele Karten, mal ist die Darstellung nicht die beste. Genau deshalb erproben wir gerade.</p><p class="zeile"><b>Und es hakt auch technisch noch.</b> Die Sortierflächen laufen direkt im Browser und sind nicht in jeder Lage stabil — beim Vergrössern kann eine Karte an die falsche Stelle rutschen, und auf kleinen Bildschirmen wird es eng. Wenn euch das begegnet, ist es kein Bedienfehler.</p><p class="zeile"><b>Erprobt ist noch nicht alles.</b> Manche dieser Aufgaben waren schon in einer Klasse, andere noch nicht. Was ihr hier seht, ist deshalb kein abgeschlossener Satz, sondern der Stand von heute.</p></section><section class="feld"><div class="feldkopf"><span class="marker" style="background:var(--blau)"></span><h2>Variablen und Terme</h2></div><p class="zeile">Streichholzmuster, Würfeltürme und Figuren – und die Terme, die man in ihnen lesen kann.</p><div class="knoepfe kv1" style="--f:var(--blau)"><a class="sortierung" href="variablen_und_terme/variante_1/"><h3>Welche Terme passen zu dieser Figur?</h3><p>Zu jeder Figur passen drei Terme.</p></a><a class="sortierung" href="variablen_und_terme/variante_6/"><h3>Der Eindringling</h3><p>Jede Vierergruppe zeigt eine Figur und drei Terme.</p></a></div></section><section class="feld"><div class="feldkopf"><span class="marker" style="background:var(--lila)"></span><h2>Ähnlichkeit</h2></div><p class="zeile">Figuren, Behauptungen und Vergleiche – zwischen ähnlich und nur beinahe ähnlich.</p><div class="knoepfe kv1" style="--f:var(--lila)"><a class="sortierung" href="aehnlichkeit/variante_1/"><h3>Ähnlichkeitsklassen</h3><p>Legt die Karten so zusammen, dass in jeder Gruppe ähnliche Figuren liegen.</p></a><a class="sortierung" href="aehnlichkeit/variante_3/"><h3>Der Umweg</h3><p>Start und Ende sind vorgegeben.</p></a></div></section></main>
 <footer><div class="rand"><div class="spalten"><div><b>Hochschule</b><p>Pädagogische Hochschule Luzern</p><p>Institut für Fachdidaktik MINT und Nachhaltigkeit</p></div><div><b>Förderung und Erprobung</b><p>Gefördert von der Milton Ray Hartmann Stiftung</p><p>Erprobt an der Kantonsschule Reussbühl und der Sekundarschule Hochdorf</p></div><div><b>Kontakt</b><p>Dr. Henrike Allmendinger</p><p><a href="mailto:henrike.allmendinger@phlu.ch">henrike.allmendinger@phlu.ch</a></p><p><a href="https://www.phlu.ch/henrike-allmendinger.html">Profil an der PH Luzern</a></p></div></div></div></footer>
 </body>
 </html>
