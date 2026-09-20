@@ -447,7 +447,7 @@ const RASTER = {"anzahl": 2, "breite": 2.6, "hoehe": 3.3, "beschriftung": "gleic
 // Die Anregung: Satzschluessel -> zwei Kartenkennungen, oder null.
 // Null heisst: Diese Aktivitaet hat keinen Anregungsknopf.
 const ANREGUNG = null;
-const ANREGUNGTEXTE = {"knopf": "Zwei Karten zeigen", "text": "", "schlaeft": ""};
+const ANREGUNGTEXTE = {"knopf": "Kommt ihr nicht weiter?", "text": ""};
 const HAELFTEN = {"links": "noch ungeordnet", "rechts": "Gruppen", "teiler": 0.4};                 // null oder zwei Tischhaelften
 
 /* NEU (2026-08-31, Rikes Auftrag): Der Tisch darf jetzt auch QUER
@@ -1982,7 +1982,6 @@ function zurueck(){
     feldTitel.length = 0;
     document.querySelectorAll('.rasterfeld input.titel')
             .forEach(e => { e.value = ''; });
-    if (window.anregungStand) window.anregungStand();
   }
   /* NEU (2026-09-19, Rikes Entscheidung): Der NACHSCHUB geht mit zurueck.
      Das war die offene Frage aus Uebergabe 3.2 - jetzt beantwortet:
@@ -3145,9 +3144,6 @@ function rasterZeichnen(an){
       e.placeholder = text; e.value = feldTitel[nr] || '';
       e.oninput = () => {
         feldTitel[nr] = e.value;
-        // Der Anregungsknopf haengt am Gruppennamen - er wird wach,
-        // sobald hier etwas steht.
-        if (window.anregungStand) window.anregungStand();
       };
       d.appendChild(e);
     } else {
@@ -3510,7 +3506,6 @@ function neueRunde(){
       feldTitel.length = 0;
       document.querySelectorAll('.rasterfeld input.titel')
               .forEach(e => { e.value = ''; });
-      if (window.anregungStand) window.anregungStand();
     }
     auslegen();
     meldung.textContent = 'Runde ' + rundeNr + '. W\u00e4hlt ' + aktiveFelder
@@ -3910,17 +3905,25 @@ if (SATZKARTEN.length){
      3. Er ZAEHLT nicht. Es gibt ein Paar je Satz und keine Anzeige
         «1 von 3» - eine Zahl luede dazu ein, alle abzuholen.
 
-     Und er SCHLAEFT, bis mindestens eine Gruppe einen Namen traegt.
-     Sonst holt man die Pointe in Minute zwei ab, ohne gesucht zu
-     haben. Blass wie der Pruefknopf, damit man ihm das ansieht. */
+     ER SCHLIEF BIS ZUM 2026-09-20, bis mindestens eine Gruppe einen
+     Namen trug - «sonst holt man die Pointe in Minute zwei ab, ohne
+     gesucht zu haben». Rike hat das aufgehoben: «das macht ja keinen
+     Sinn hier. Wenn man schon einen Namen gefunden hat...»
+
+     Sie hat recht, und der Einwand trifft die Sperre an der Wurzel: Die
+     Hilfe hing an genau dem, was sie erst hervorbringen soll. Wer schon
+     eine Gruppe benannt hatte, brauchte den Fingerzeig nicht mehr; wer
+     feststeckte, kam nicht an ihn heran. Der Satz des Knopfes passt
+     ohne einen einzigen Namen sogar besser - er laedt zum ERSTEN ein.
+
+     Die alte Sorge bleibt unbeantwortet, ist aber die kleinere: Eine
+     Gruppe kann jetzt zuerst druecken. Sie sieht dann zwei Karten und
+     hat immer noch keinen Namen. */
   let anregung = null;
   if (ANREGUNG){
     anregung = document.createElement('button');
     anregung.id = 'anregung';
     anregung.textContent = ANREGUNGTEXTE.knopf;
-    // Traegt irgendeine Gruppe einen Namen? feldTitel wird von den
-    // Titelfeldern gefuellt und ueberlebt das Neuzeichnen des Rasters.
-    const eineBenannt = () => feldTitel.some(t => t && t.trim());
     function anregungZeigen(){
       const paar = ANREGUNG[aktiverSatz()] || [];
       const gezeigt = paar
@@ -3942,10 +3945,6 @@ if (SATZKARTEN.length){
       return true;
     }
     anregung.onclick = () => {
-      if (!eineBenannt()){
-        meldung.textContent = ANREGUNGTEXTE.schlaeft;
-        return;
-      }
       // Zweiter Druck nimmt sie wieder weg. Die Anregung ist ein
       // Hinweis, kein Zustand, in dem die Flaeche steckenbleibt.
       const liegt = karten.some(k => k.classList.contains('anregung'));
@@ -3955,23 +3954,12 @@ if (SATZKARTEN.length){
     };
     leiste.after(anregung);
   }
-  /* Der Knopf muss aufwachen, sobald ein Name getippt wird - nicht
-     erst beim naechsten Satzwechsel. Deshalb global: das Titelfeld
-     ruft hier herein (siehe feld()). */
-  function anregungStand(){
-    if (!anregung) return;
-    const wach = feldTitel.some(t => t && t.trim());
-    anregung.classList.toggle('stumpf', !wach);
-    anregung.title = wach ? ANREGUNGTEXTE.text : ANREGUNGTEXTE.schlaeft;
-  }
-  window.anregungStand = anregungStand;
-  /* FEHLERBEHOBEN (2026-09-18, beim Messen gefunden): Der Knopf kam
-     KRAEFTIG auf die Welt und wurde erst blass, wenn knopfStand() das
-     erste Mal lief - das ist der zweite Lagelauf. Wer die Seite
-     oeffnet und sofort hinschaut, sieht also einen Knopf, der zu
-     wirken verspricht und dann nur eine Meldung gibt. Genau das, was
-     der blasse Zustand verhindern soll. Also gleich bei der Geburt. */
-  anregungStand();
+  /* Bis zum 2026-09-20 stand hier `anregungStand()`: Es machte den Knopf
+     blass, solange keine Gruppe einen Namen trug, und fuenf Stellen
+     riefen es. Mit der Sperre faellt auch die Buchhaltung dahinter weg -
+     ein halb gebauter Sonderfall ist schlimmer als keiner
+     (Regelwerkskandidat 16). */
+  if (anregung) anregung.title = ANREGUNGTEXTE.text;
 
   const KURZ = {klein: 'klein', gross: 'gross', sehrgross: 'sehr gross'};
   grade.forEach(g => {
@@ -3985,7 +3973,6 @@ if (SATZKARTEN.length){
   leiste.after(wahl);
 
   function knopfStand(){
-    anregungStand();
     Object.entries(knoepfe).forEach(([g, b]) => b.classList.toggle('an', g === grad));
     const der = schluessel.filter(s => s.split('|')[0] === grad);
     neu.textContent = der.length > 1
