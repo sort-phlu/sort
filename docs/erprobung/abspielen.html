@@ -153,8 +153,17 @@ select{font:inherit;font-size:.9rem;padding:7px 9px;border:1px solid var(--linie
 .stelle i{font-family:ui-monospace,Menlo,Consolas,monospace;font-style:normal;
   min-width:48px;flex:none;color:var(--braun);font-weight:600}
 .merk.ruhe{background:#eef2f7;color:#3f5b7a}
-.merk.streit{background:#fdeeee;color:var(--rot)}
-.merk.wechsel{background:#fdf4e6;color:var(--gelb)}
+.merk.umgelegt{background:#fdf4e6;color:var(--gelb)}
+.merk.umbau{background:#f6ecdf;color:var(--braun)}
+.merk.unentschieden{background:#f1ecf7;color:#6a5294}
+#stellen{max-height:340px;overflow:auto}
+details.erklaert{margin:0 0 10px;font-size:.84rem}
+details.erklaert summary{cursor:pointer;color:var(--braun);font-weight:600}
+dl.legende{display:grid;grid-template-columns:max-content 1fr;gap:5px 10px;
+  margin:8px 0 4px;align-items:baseline}
+dl.legende dt{margin:0} dl.legende dd{margin:0;color:#463f36;line-height:1.45}
+@media (max-width:560px){dl.legende{grid-template-columns:1fr}
+  dl.legende dd{margin-bottom:6px}}
 .merk.pruef{background:#fdeeee;color:var(--rot)}
 .merk.runde{background:#eef5ea;color:var(--gruen)}
 .antwort{background:var(--creme);border-left:3px solid var(--braun);padding:11px 14px;
@@ -204,6 +213,9 @@ select{font:inherit;font-size:.9rem;padding:7px 9px;border:1px solid var(--linie
     <div id="gesamt"></div>
     <h3 class="balken">Die einzelnen Gruppen</h3>
     <table id="tabelle"></table>
+    <details class="erklaert" open style="margin-top:10px">
+      <summary>Was die Hinweise bedeuten</summary><div id="legende-hinweise"></div>
+    </details>
     <h3 class="balken">Was die Gruppen mitnehmen</h3>
     <div id="antworten"></div>
   </div>
@@ -230,7 +242,11 @@ select{font:inherit;font-size:.9rem;padding:7px 9px;border:1px solid var(--linie
     <div class="unten">
       <div class="kasten"><h4>Verlauf</h4><div id="lauf"></div></div>
       <div class="kasten">
-        <h4>Hier genauer hinhören</h4><div id="stellen"></div>
+        <h4>Hier genauer hinhören</h4>
+        <details class="erklaert" open>
+          <summary>Wie die Marken entstehen</summary><div id="legende-stellen"></div>
+        </details>
+        <div id="stellen"></div>
         <h4 style="margin-top:16px">Was nehmt ihr mit?</h4><div id="antwort"></div>
         <h4 style="margin-top:16px">Bilder</h4><div id="bilder"></div>
       </div>
@@ -381,12 +397,12 @@ function auswerten(sitz){
   const oft = Object.entries(bewegt).sort((a,b) => b[1]-a[1]).slice(0,5);
 
   const merkmale = [];
-  if (dauer < 3*60*1000) merkmale.push(['kurz','unter 3 Minuten']);
+  if (dauer < 3*60*1000) merkmale.push(['kurz', HINWEISE.kurz[0]]);
   if (gesamt && angefasst / gesamt < 0.5)
-    merkmale.push(['wenig','wenig Karten bewegt']);
+    merkmale.push(['wenig', HINWEISE.wenig[0]]);
   if (gesamt && ablagen > gesamt * 2)
-    merkmale.push(['viel','viel umgelegt']);
-  if (!sitz.rueckmeldung) merkmale.push(['ohne','keine Rückmeldung']);
+    merkmale.push(['viel', HINWEISE.viel[0]]);
+  if (!sitz.rueckmeldung) merkmale.push(['ohne', HINWEISE.ohne[0]]);
 
   return { dauer, ablagen, angefasst, gesamt, erste, runden, pruefungen, oft,
            merkmale, stellen: stellenFinden(er) };
@@ -394,42 +410,109 @@ function auswerten(sitz){
 
 /* Aus dem Protokoll die Momente herauslesen, an denen genaueres
    Hinhören lohnt. Alles rein rechnerisch - es ist ein Hinweis,
-   kein Urteil. */
+   kein Urteil.
+
+   NEU (gemeinsam entschieden, 2026-09-29): Rikes Befund «die
+   Markierungen mit Streit sind nicht wirklich nachvollziehbar».
+   Nachgezaehlt an den Reussbuehl-Aufnahmen: «Streit» hiess nur «dreimal
+   abgelegt» und traf 15 bis 23 Karten je Gruppe, weil schon Vorrat ->
+   Feld -> Zurechtruecken drei Ablagen sind. «Wechsel» sah nur die zwei
+   Haelften, nie ein Feld. Und nach 25 Eintraegen wurde chronologisch
+   abgeschnitten - das Ende einer Sitzung fehlte ganz.
+
+   Jetzt zaehlt die LAGE, nicht die Zahl der Ablagen: Umgelegt ist, was
+   mehr als eine Kartenbreite von seinem vorigen Platz wegkommt. Das
+   geht auch dort, wo es keine Felder gibt, und Zurechtruecken faellt
+   heraus. Felder aus der Messung zu nehmen waere falsch: Gemessen wird
+   am Schluss, und Felder wandern waehrend der Sitzung.
+   Titel und Regeln stehen in MARKEN und werden in der Legende gezeigt -
+   eine Quelle, damit Anzeige und Erklaerung nicht auseinanderlaufen. */
+const MARKEN = {
+  ruhe:          ['Lange nichts gelegt',
+                  'Mindestens 45 Sekunden wurde keine Karte bewegt. Vermutlich wird hier geredet.'],
+  umgelegt:      ['Umgelegt',
+                  'Eine schon hingelegte Karte kommt an einen anderen Platz, mehr als eine Kartenbreite entfernt. Zurechtrücken zählt nicht.'],
+  umbau:         ['Umbau',
+                  'Mindestens drei Karten werden kurz nacheinander umgelegt, jeweils weniger als 30 Sekunden auseinander.'],
+  unentschieden: ['Unentschieden',
+                  'Eine Karte kommt an einen Platz zurück, an dem sie schon einmal lag.'],
+  pruef:         ['Geprüft', 'Die Gruppe hat «Prüfen» gedrückt.'],
+  runde:         ['Runde fertig', 'Die Gruppe hat eine Runde abgeschlossen.']
+};
+const HINWEISE = {
+  kurz:  ['sehr kurz', 'Die Sitzung dauerte weniger als 3 Minuten.'],
+  wenig: ['viele Karten unberührt', 'Weniger als die Hälfte der Karten wurde bewegt.'],
+  viel:  ['viel umgelegt', 'Mehr als doppelt so viele Ablagen wie Karten.'],
+  ohne:  ['ohne Rückmeldung', 'Die Frage «Was nehmt ihr mit?» blieb leer.']
+};
+
 function stellenFinden(er){
   const stellen = [];
-  const ablagen = er.filter(e => e.was === 'ablegen');
+  const start = er.find(e => e.was === 'start');
+  let breite = (start && start.breite) || 110;
 
-  // 1. Lange Ruhe: nichts bewegt sich, aber geredet wird vermutlich schon
-  for (let i = 1; i < er.length; i++){
-    const luecke = er[i].t - er[i-1].t;
-    if (luecke >= 45000 && er[i-1].was !== 'start'){
-      stellen.push({ t: er[i-1].t, art:'ruhe',
+  // 1. Lange nichts gelegt - gemessen nur zwischen Kartenbewegungen.
+  //    Abzuege, Zoom und Fensterwechsel sind keine Bewegung und haben
+  //    eine Pause bisher still zerschnitten.
+  const bew = er.filter(e => e.was === 'greifen' || e.was === 'ziehen'
+                          || e.was === 'ablegen');
+  for (let i = 1; i < bew.length; i++){
+    const luecke = bew[i].t - bew[i-1].t;
+    if (luecke >= 45000)
+      stellen.push({ t: bew[i-1].t, art:'ruhe',
         text: Math.round(luecke/1000) + ' s ohne Kartenbewegung' });
-    }
   }
 
-  // 2. Karten, die mehrfach neu abgelegt wurden
-  const wie = {};
-  ablagen.forEach(e => { wie[e.karte] = (wie[e.karte]||0) + 1; });
-  ablagen.forEach(e => {
-    if (wie[e.karte] >= 3 && e === ablagen.filter(x => x.karte === e.karte).pop()){
-      stellen.push({ t: e.t, art:'streit',
-        text: e.karte + ' wurde ' + wie[e.karte] + '-mal umgelegt' });
+  // 2. Umgelegt und Unentschieden - nach der Lage.
+  const lage = {}, gelegt = {}, orte = {};
+  const weit = (a, b) => Math.hypot(a[0]-b[0], a[1]-b[1]);
+  const umgelegt = [];
+  if (start) start.karten.forEach(k => lage[k.karte] = [k.x||0, k.y||0]);
+  er.forEach(e => {
+    if (e.breite) breite = e.breite;
+    // Zoom und Neuordnen setzen alle Lagen neu; das ist keine Bewegung
+    // der Gruppe und darf nichts ausloesen.
+    if (e.karten) e.karten.forEach(k => {
+      lage[k.karte] = [k.x||0, k.y||0];
+      orte[k.karte] = [];
+    });
+    if (e.was !== 'ablegen') return;
+    const c = e.karte, neu = [e.x||0, e.y||0], alt = lage[c];
+    const vorher = orte[c] || (orte[c] = []);
+    if (gelegt[c] && alt && weit(alt, neu) > breite){
+      const zurueck = vorher.slice(0, -1).some(p => weit(p, neu) <= breite * 0.6);
+      const wo = e.haelfte ? ' (' + e.haelfte + ')' : '';
+      if (zurueck)
+        stellen.push({ t: e.t, art:'unentschieden',
+          text: c + ' liegt wieder, wo sie schon einmal lag' + wo });
+      else
+        umgelegt.push({ t: e.t, art:'umgelegt', karte: c,
+          text: c + ' an einen anderen Platz gelegt' + wo });
     }
+    gelegt[c] = true;
+    vorher.push(neu);
+    lage[c] = neu;
   });
 
-  // 3. Zonenwechsel: eine Entscheidung wird zurückgenommen
-  const zuletzt = {};
-  ablagen.forEach(e => {
-    const z = e.haelfte || (e.feld != null ? 'Feld ' + e.feld : null);
-    if (z && zuletzt[e.karte] && zuletzt[e.karte] !== z){
-      stellen.push({ t: e.t, art:'wechsel',
-        text: e.karte + ': ' + zuletzt[e.karte] + ' → ' + z });
-    }
-    if (z) zuletzt[e.karte] = z;
+  // 3. Umbau: Umgelegt kurz hintereinander wird EIN Eintrag.
+  let gruppe = [];
+  const abschliessen = () => {
+    if (gruppe.length >= 3){
+      const karten = [...new Set(gruppe.map(g => g.karte))];
+      stellen.push({ t: gruppe[0].t, art:'umbau',
+        text: karten.length + ' Karten in ' + Math.max(1, Math.round(
+              (gruppe[gruppe.length-1].t - gruppe[0].t)/1000)) + ' s umgelegt: '
+              + karten.join(', ') });
+    } else gruppe.forEach(g => stellen.push(g));
+    gruppe = [];
+  };
+  umgelegt.forEach(u => {
+    if (gruppe.length && u.t - gruppe[gruppe.length-1].t > 30000) abschliessen();
+    gruppe.push(u);
   });
+  abschliessen();
 
-  // 4. Prüfen und Rundenwechsel sind ohnehin Einschnitte
+  // 4. Pruefen und Rundenwechsel sind ohnehin Einschnitte
   er.forEach(e => {
     if (e.was === 'pruefen')
       stellen.push({ t:e.t, art:'pruef', text: e.meldung || 'Prüfen gedrückt' });
@@ -437,7 +520,16 @@ function stellenFinden(er){
       stellen.push({ t:e.t, art:'runde', text: 'Runde ' + (e.nr||'') + ' beendet' });
   });
 
-  return stellen.sort((a,b) => a.t - b.t).slice(0, 25);
+  // Nicht mehr abschneiden: Das Ende einer Sitzung ist so wichtig wie
+  // ihr Anfang.
+  return stellen.sort((a,b) => a.t - b.t);
+}
+
+/* Die Legende: jede Marke mit ihrer Regel in einem Satz. */
+function legende(tafel){
+  return '<dl class="legende">' + Object.entries(tafel).map(([art, [titel, regel]]) =>
+    `<dt><span class="merk ${art}">${titel}</span></dt><dd>${regel}</dd>`).join('')
+    + '</dl>';
 }
 
 /* ============================================================
@@ -450,7 +542,7 @@ function uebersichtBauen(){
     const a = s2.angaben, z = s2.zahlen;
     const wer = (a.namen || []).join(', ') || '–';
     const merk = z.merkmale.map(([art, txt]) =>
-      `<span class="merk ${art}">${txt}</span>`).join('') || '–';
+      `<span class="merk ${art}" title="${HINWEISE[art][1]}">${txt}</span>`).join('') || '–';
     const stellen = z.stellen.length
       ? `<span class="merk viel">${z.stellen.length}</span>`
       : '<span style="color:#a49a8e">–</span>';
@@ -572,7 +664,8 @@ function waehlen(i){
   $('stellen').innerHTML = sitz.zahlen.stellen.length
     ? sitz.zahlen.stellen.map(st =>
         `<div class="stelle" data-t="${st.t}"><i>${zeitText(st.t)}</i>`
-        + `<span class="merk ${st.art}">${st.art}</span>`
+        + `<span class="merk ${st.art}" title="${MARKEN[st.art][1]}">`
+        + `${MARKEN[st.art][0]}</span>`
         + `<span>${st.text}</span></div>`).join('')
     : '<p style="color:var(--hell);font-size:.9rem;margin:0">Nichts Auffälliges.</p>';
   $('stellen').querySelectorAll('.stelle').forEach(d =>
@@ -970,6 +1063,12 @@ addEventListener('keydown', e => {
   if (e.code === 'ArrowLeft')  springen(jetztZeit() - 5000);
   if (e.code === 'ArrowRight') springen(jetztZeit() + 5000);
 });
+
+$('legende-hinweise').innerHTML = legende(HINWEISE);
+$('legende-stellen').innerHTML = legende(MARKEN)
+  + '<p style="margin:6px 0 0;color:var(--hell)">Alles rein rechnerisch aus dem '
+  + 'Protokoll – ein Hinweis, wo Hinhören lohnt, kein Urteil. Mit der Maus auf '
+  + 'eine Marke zeigen wiederholt die Regel.</p>';
 </script>
 </body>
 </html>
