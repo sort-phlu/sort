@@ -348,6 +348,7 @@ async function paketLesen(f){
   if (ton) sitz.ton = URL.createObjectURL(new Blob([inhalt[ton]]));
   sitz.bilder = Object.keys(inhalt).filter(n => /\.png$/i.test(n)).sort()
     .map(n => ({ name:n, url:URL.createObjectURL(new Blob([inhalt[n]],{type:'image/png'})) }));
+  zoomLagenNachtragen(sitz);
   sitz.probelauf = /^0\.0_/.test(f.name)
                 || /probelauf/i.test(sitz.angaben.variante || '');
   sitz.zahlen = auswerten(sitz);
@@ -373,6 +374,104 @@ async function ersatzLesen(f){
     farben:{ rand:'#c9bda6', fuell:'rgba(147,81,0,.045)', akzent:'#9b8ac4',
              linie:'#e4d9c7', hell:'#6c6357' } };
   S.sitzungen.forEach(s2 => { if (!s2.flaeche) s2.flaeche = S.ersatzflaeche; });
+}
+
+/* FEHLERBEHOBEN (2026-09-30, Rikes Befund an den 9er-Aufnahmen «wenn
+   diese auf vergroessern geklickt haben, wurde das Feld bei mir nicht
+   groesser»): Die Aufgabenseite zeichnet beim Zoomen die Felder neu und
+   setzt die Karten in ihre Felder zurueck. Die Aufnahme hat bis heute
+   nur die neue Breite mitgeschrieben, nicht die neuen Lagen. Hier wuchs
+   deshalb der Hintergrund, die Karten blieben auf ihren alten
+   Bildpunkten liegen - neben, unter oder zwischen den Feldern.
+
+   Ab heute schreibt aufnahme.js die Lagen beim Zoomen mit. Fuer die
+   Pakete davor werden sie hier NACHGERECHNET: Jede Karte, die zum
+   Zeitpunkt des Zooms in einem Feld des alten Abzugs lag, kommt an die
+   entsprechende Stelle im selben Feld des neuen Abzugs. Das ist eine
+   Naeherung - die Aufgabenseite ordnet innerhalb des Feldes neu, hier
+   wird verhaeltnisgleich umgerechnet. Die Karte liegt aber im richtigen
+   Feld, und darauf kommt es beim Hinsehen an. Karten ausserhalb der
+   Felder («noch ungeordnet») bleiben, wo sie waren; die Seite laesst sie
+   auch liegen. */
+function zoomLagenNachtragen(sitz){
+  const HG = sitz.flaeche && sitz.flaeche.hintergrund;
+  const er = sitz.ereignisse;
+  if (!HG || !HG.stuecke || !HG.stuecke.length) return;
+  if (!er.some(e => /^zoom-/.test(e.was) && !e.karten)) return;
+  const start = er.find(e => e.was === 'start');
+  if (!start) return;
+  const tischB = (start.tisch && start.tisch[0]) || 1200;
+
+  // Die Felder eines Abzugs: seine obersten Kaesten mit Lage und Groesse.
+  // Was fast die ganze Breite einnimmt (das Pfeil-SVG der Kette), ist
+  // kein Feld; was kleiner als eine halbe Karte ist, auch nicht.
+  const felderCache = {};
+  const felder = nr => {
+    if (felderCache[nr]) return felderCache[nr];
+    const d = document.createElement('div');
+    d.innerHTML = HG.stuecke[nr].html.replace(/\u00abbild\d+\u00bb/g, '');
+    const aus = [];
+    [].forEach.call(d.children, k => {
+      const st = k.style;
+      if (st.position !== 'absolute') return;
+      const x = parseFloat(st.left), y = parseFloat(st.top),
+            w = parseFloat(st.width), h = parseFloat(st.height);
+      if (![x, y, w, h].every(Number.isFinite)) return;
+      if (w < 30 || h < 30 || w > tischB * 0.9) { aus.push(null); return; }
+      aus.push({ x, y, w, h });
+    });
+    return felderCache[nr] = aus;
+  };
+  const feldVon = (liste, px, py) => {
+    let best = -1, flaeche = Infinity;
+    liste.forEach((f, i) => {
+      if (!f || px < f.x || px > f.x + f.w || py < f.y || py > f.y + f.h) return;
+      if (f.w * f.h < flaeche){ best = i; flaeche = f.w * f.h; }
+    });
+    return best;
+  };
+
+  const lage = {};
+  let breite = start.breite || 110, hgNr = 0, ausgerichtet = 0;
+  let offen = null;   // ein Zoom, dessen neuer Abzug noch aussteht
+  er.forEach(e => {
+    if (e.karten) e.karten.forEach(k => lage[k.karte] = Object.assign({}, k));
+    if (e.was === 'ziehen' || e.was === 'ablegen')
+      lage[e.karte] = Object.assign(lage[e.karte] || {}, { x:e.x, y:e.y, z:e.z },
+                                    { bewegt: e.t });
+    if (/^zoom-/.test(e.was)){
+      if (e.karten){ offen = null; ausgerichtet = -1; }
+      else if (!offen) offen = { t: e.t, vorher: hgNr, breite };
+    }
+    if (e.breite) breite = e.breite;
+    if (e.was !== 'hintergrund') return;
+    const neu = e.nr;
+    if (offen && e.t - offen.t >= 5000) offen = null;
+    if (offen && neu !== offen.vorher && neu !== ausgerichtet){
+      const alt = felder(offen.vorher), jetzt = felder(neu);
+      if (alt.length === jetzt.length){
+        const kh = offen.breite * 0.844;
+        const karten = [];
+        Object.keys(lage).forEach(c => {
+          const l = lage[c];
+          if (l.x == null) return;
+          // Seit dem Zoom schon neu gelegt: traegt die neue Lage bereits.
+          if (l.bewegt != null && l.bewegt >= offen.t) return;
+          const i = feldVon(alt, l.x + offen.breite / 2, l.y + kh / 2);
+          if (i < 0 || !jetzt[i]) return;
+          const a = alt[i], b = jetzt[i];
+          l.x = b.x + (l.x - a.x) * (b.w / a.w);
+          l.y = b.y + (l.y - a.y) * (b.h / a.h);
+          karten.push({ karte: c, x: l.x, y: l.y, z: l.z, dreh: l.dreh });
+        });
+        if (karten.length) e.karten = karten;
+      }
+      // Einmal umgerechnet ist genug: Weitere Abzuege gleich danach
+      // (nachwachsende Feldhoehen, Schriften) verschieben keine Karten.
+      ausgerichtet = neu; offen = null;
+    }
+    hgNr = neu;
+  });
 }
 
 /* ============================================================

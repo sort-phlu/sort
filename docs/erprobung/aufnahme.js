@@ -235,8 +235,17 @@ function mitschreibenStarten(){
         const m = document.getElementById('meldung');
         const d = { };
         if (m && m.textContent.trim()) d.meldung = m.textContent.trim();
-        if (id === 'kleiner' || id === 'groesser')
+        // FEHLERBEHOBEN (2026-09-30, Rikes Befund an den 9er-Aufnahmen
+        // «wenn diese auf vergroessern geklickt haben, wurde das Feld bei
+        // mir nicht groesser»): Hier stand nur die neue Breite. zoom()
+        // zeichnet aber die Felder neu und setzt die eingerasteten Karten
+        // in sie zurueck - diese Verschiebung stand nirgends im Protokoll.
+        // Im Abspielgeraet wuchsen die Felder, die Karten blieben auf
+        // ihren alten Bildpunkten liegen, neben oder unter ihrem Feld.
+        if (id === 'kleiner' || id === 'groesser'){
           d.breite = (typeof breite !== 'undefined' ? breite : null);
+          d.karten = alleLagen();
+        }
         if (id === 'pruefen'){
           d.markiert = Array.prototype.map.call(
             document.querySelectorAll('.karte.falsch, .karte.richtig'),
