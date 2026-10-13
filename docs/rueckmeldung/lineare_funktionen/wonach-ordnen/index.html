@@ -94,6 +94,26 @@ button.an{background:var(--braun);color:#fff;border-color:var(--braun);}
    warum. So bleibt er anklickbar und erklaert sich selbst. */
 button.stumpf{opacity:.45;}
 
+/* Der Beispielstreifen (2026-10-13, Rikes Auftrag «damit die SuS sehen,
+   worauf es hinausläuft»). Bis dahin stand das Beispiel als SATZ im
+   Auftrag - richtig, aber man muss es lesen und sich vorstellen. Hier
+   steht es als BILD.
+
+   Er sieht bewusst anders aus als der Tisch: eingerückt, auf hellem
+   Grund, mit einer Marke davor. Sonst sucht eine Gruppe die
+   Beispielkarten im eigenen Satz - und findet sie nicht, denn sie
+   gehören nicht dazu. Anfassen kann man sie nicht. */
+.beispiel{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  margin:10px 0 0;padding:8px 11px;border-radius:7px;
+  background:color-mix(in srgb, var(--akzent) 7%, transparent);
+  border:1px dashed color-mix(in srgb, var(--akzent) 45%, transparent)}
+.beispiel .marke{font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--fliess);opacity:.75;white-space:nowrap}
+.beispiel .karten{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.beispiel img{height:62px;width:auto;display:block;pointer-events:none;
+  border-radius:4px}
+.beispiel .dazu{font-size:.82rem;color:var(--fliess);opacity:.85;max-width:34ch}
+
 /* Die Gegenueberstellung. Sie liegt UEBER der Flaeche und ist nicht
    anfassbar - der Tisch darunter bleibt, wie er war. */
 #vergleichschau{position:fixed; inset:0; z-index:40; overflow:auto;
@@ -266,6 +286,7 @@ button.stumpf{opacity:.45;}
 <header>
   <h1>Wonach kann man diese Karten ordnen?</h1>
   <p class="auftrag">Sortiert die Karten nach einem Kriterium, das ihr selbst wählt. Schreibt über jede Gruppe, wonach ihr geordnet habt. Braucht ihr mehr Gruppen, legt eine weitere an.</p>
+  
 </header>
 
 <div class="leiste">
@@ -2991,6 +3012,135 @@ async function bild(still){
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
     f();
   }));
+}
+
+/* ---------- Das Abgabebild ----------
+
+   NEU (2026-10-13, Christine Bürlis Rückmeldung vom 24.09.): «Als LP
+   wäre es gut, wenn man die Sortierung anschauen kann. Bei Bild
+   speichern wird aber *nur* ein Screenshot gemacht, und wenn die SuS
+   alle Kärtchen stapeln, sehe ich als LP nichts. Schön wäre es, wenn es
+   ein Abgabe-Format gibt, das die Kärtchen wieder nebeneinander
+   darstellt.»
+
+   Der Punkt trifft etwas Grundsätzliches: Die Fläche WEISS mehr, als
+   ihr Bild zeigt. Zu jeder Karte ist bekannt, in welchem Feld sie
+   liegt und wie die Gruppe dieses Feld benannt hat. Das Abgabebild
+   zeichnet diesen Stand neu auf - je Feld eine Zeile, die Karten
+   nebeneinander, nichts verdeckt.
+
+   ES ERSETZT «Bild speichern» NICHT, und das ist Absicht: Dass eine
+   Gruppe gestapelt hat, ist selbst eine Beobachtung. Das eine Bild
+   zeigt, WIE sie gelegt haben, das andere, WAS sie gelegt haben.
+
+   Was frei auf dem Tisch liegt, kommt in eine letzte Zeile - von links
+   nach rechts, wie es dort lag. Eine Ordnung ohne Felder lässt sich
+   nicht aufräumen, ohne etwas zu behaupten; die Reihenfolge ist das
+   Einzige, was wirklich dasteht. */
+function abgabeZeilen(){
+  const sichtbar = karten.filter(k => k.style.display !== 'none'
+                                   && k.dataset.rolle !== 'ablage');
+  // NACH NUMMER sortieren, nicht nach DOM-Folge: Die Felder werden mit
+  // insertBefore(..., firstChild) eingehaengt und stehen deshalb
+  // rueckwaerts. Ohne diese Zeile heisst das erste Feld «Feld 4».
+  // Die Zusatzfelder haben keine Nummer und kommen ans Ende.
+  const felder = [...document.querySelectorAll('.rasterfeld')]
+        .filter(d => !d.classList.contains('neu'))
+        .sort((a, b) => {
+          const za = a.dataset.zusatz === '1', zb = b.dataset.zusatz === '1';
+          if (za !== zb) return za ? 1 : -1;
+          return Number(a.dataset.nr || 0) - Number(b.dataset.nr || 0);
+        });
+  const zeilen = [];
+  let nr = 0;
+  felder.forEach(d => {
+    const zusatz = d.dataset.zusatz === '1';
+    const kennung = zusatz ? 'z' : Number(d.dataset.nr);
+    const drin = sichtbar.filter(k => k._feld === kennung)
+                         .sort((a, b) => (a._x || 0) - (b._x || 0));
+    if (!zusatz) nr++;
+    if (!drin.length) return;
+    const e = d.querySelector('input.titel'), t = d.querySelector('span');
+    // Der selbst geschriebene Titel ist das Ergebnis und steht so da.
+    // Wo die Gruppe nichts schreiben kann, waere die Feldbeschriftung
+    // («eine Zahl») in jeder Zeile dieselbe - dann nummerieren wir
+    // lieber. Das Zusatzfeld behaelt seinen Text; der sagt etwas.
+    const eigen = !!(e && e.value.trim());
+    const titel = eigen ? e.value.trim()
+                        : (zusatz && t ? t.textContent : 'Feld ' + nr);
+    zeilen.push({titel: titel, eigen: eigen, karten: drin});
+  });
+  const rest = sichtbar.filter(k => k._feld === undefined)
+                       .sort((a, b) => (a._x || 0) - (b._x || 0));
+  if (rest.length)
+    zeilen.push({titel: 'noch auf dem Tisch', eigen: false, karten: rest});
+  return zeilen;
+}
+
+async function abgabebild(){
+  const zeilen = abgabeZeilen();
+  if (!zeilen.length){
+    meldung.textContent = 'Auf der Fläche liegt noch nichts.';
+    return;
+  }
+  const kb = 150, kh = Math.round(kb * 0.844);     // feste Kartengroesse
+  const luft = 12, kopf = 26, rand = 18;
+  // HOECHSTENS ACHT je Zeile. Ohne diese Grenze macht eine einzige
+  // Zeile mit neunzehn Karten - der Vorrat zu Beginn - ein Bild von
+  // dreitausend Pixeln Breite, das niemand ansehen kann. Laengere
+  // Zeilen laufen um; sie bleiben eine Zeile und bekommen nur mehrere
+  // Lagen.
+  const JE_ZEILE = 8;
+  const lagen = z => Math.ceil(z.karten.length / JE_ZEILE);
+  const breiteste = Math.min(JE_ZEILE,
+        Math.max(...zeilen.map(z => z.karten.length)));
+  const w = rand * 2 + breiteste * kb + (breiteste - 1) * luft;
+  const h = rand * 2 + zeilen.reduce(
+        (a, z) => a + kopf + lagen(z) * (kh + luft), 0);
+  const s = 2, c = document.createElement('canvas');
+  c.width = w * s; c.height = h * s;
+  const g = c.getContext('2d'); g.scale(s, s);
+  g.fillStyle = F.karte(); g.fillRect(0, 0, w, h);
+
+  let y = rand;
+  for (const z of zeilen){
+    g.fillStyle = z.eigen ? farbe('--tinte') : F.matt();
+    g.font = (z.eigen ? '17px "Patrick Hand", cursive'
+                      : '13px "Fira Sans", sans-serif');
+    g.textAlign = 'left'; g.textBaseline = 'top';
+    g.fillText(z.titel || ' ', rand, y + 4, w - rand * 2);
+    y += kopf;
+    let i = 0;
+    for (const k of z.karten){
+      const b = k.querySelector('img');
+      await b.decode().catch(() => {});
+      const spalte = i % JE_ZEILE, lage = Math.floor(i / JE_ZEILE);
+      g.drawImage(b, rand + spalte * (kb + luft),
+                     y + lage * (kh + luft), kb, kh);
+      i++;
+    }
+    y += lagen(z) * (kh + luft);
+  }
+  await new Promise(f => c.toBlob(b => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(b);
+    a.download = 'abgabe.png'; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    f();
+  }));
+  meldung.textContent = 'Abgabebild gespeichert — die Karten stehen darin nebeneinander.';
+}
+
+{
+  const bk = document.getElementById('bild');
+  if (bk){
+    const ab = document.createElement('button');
+    ab.id = 'abgabebild';
+    ab.textContent = 'Abgabebild';
+    ab.title = 'Speichert den Stand aufgeräumt: je Feld eine Zeile, nichts verdeckt';
+    ab.onclick = abgabebild;
+    bk.after(ab);
+  }
 }
 
 if (FLAECHE === 'kette' && vorfuehrenMoeglich()){

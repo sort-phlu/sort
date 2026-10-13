@@ -94,6 +94,43 @@ button.an{background:var(--braun);color:#fff;border-color:var(--braun);}
    warum. So bleibt er anklickbar und erklaert sich selbst. */
 button.stumpf{opacity:.45;}
 
+/* Der Beispielstreifen (2026-10-13, Rikes Auftrag «damit die SuS sehen,
+   worauf es hinausläuft»). Bis dahin stand das Beispiel als SATZ im
+   Auftrag - richtig, aber man muss es lesen und sich vorstellen. Hier
+   steht es als BILD.
+
+   Er sieht bewusst anders aus als der Tisch: eingerückt, auf hellem
+   Grund, mit einer Marke davor. Sonst sucht eine Gruppe die
+   Beispielkarten im eigenen Satz - und findet sie nicht, denn sie
+   gehören nicht dazu. Anfassen kann man sie nicht. */
+.beispiel{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  margin:10px 0 0;padding:8px 11px;border-radius:7px;
+  background:color-mix(in srgb, var(--akzent) 7%, transparent);
+  border:1px dashed color-mix(in srgb, var(--akzent) 45%, transparent)}
+.beispiel .marke{font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--fliess);opacity:.75;white-space:nowrap}
+.beispiel .karten{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.beispiel img{height:62px;width:auto;display:block;pointer-events:none;
+  border-radius:4px}
+.beispiel .dazu{font-size:.82rem;color:var(--fliess);opacity:.85;max-width:34ch}
+
+/* Die Gegenueberstellung. Sie liegt UEBER der Flaeche und ist nicht
+   anfassbar - der Tisch darunter bleibt, wie er war. */
+#vergleichschau{position:fixed; inset:0; z-index:40; overflow:auto;
+  /* Undurchsichtig: Durchscheinende Knoepfe der Flaeche darunter
+     laden zum Klicken ein, und geklickt wird dann die Ansicht. */
+  background:#faf7f1; padding:18px 16px 28px;
+  display:flex; flex-direction:column; gap:10px;}
+#vergleichschau .kopf{font-size:19px; color:#333; letter-spacing:.01em;}
+#vergleichschau .zuknopf{position:absolute; top:14px; right:16px;}
+#vergleichschau .vzeile{display:flex; align-items:flex-start; gap:6px;}
+#vergleichschau .vmarke{flex:0 0 7.2em; font-size:12px; color:#777;
+  padding-top:6px;}
+#vergleichschau .vzelle{flex:1 1 0; min-width:0; display:flex;
+  flex-direction:column; gap:3px; padding:4px;
+  border:1px dashed #d8cfbe; border-radius:6px;}
+#vergleichschau .vzelle img{width:100%; display:block;}
+
 /* Eine WAHL ist ein Bedienelement, nicht drei.
    (Rikes Einwand, 2026-09-13: «sehr sehr unübersichtlich mit vielen
    Buttons».) Die drei Zahlengrössen gehören zusammen und sehen jetzt
@@ -249,6 +286,7 @@ button.stumpf{opacity:.45;}
 <header>
   <h1>Ordnet nach der Anzahl der Teiler</h1>
   <p class="auftrag">Legt die Zahlen in eine Reihe: links die mit den wenigsten Teilern, rechts die mit den meisten. Zahlen mit gleich vielen Teilern kommen ins SELBE Feld. Geprüft wird erst, wenn alle Karten in Feldern liegen.</p>
+  
 </header>
 
 <div class="leiste">
@@ -416,6 +454,7 @@ const RUNDEN = null;
 const WAHLMARKE = "Zahlen";
 const RUNDENNAMEN = [];   // benannte zweite Achse
 const RUNDENMARKE = "Runde";
+const VERGLEICH = false;      // Gegenueberstellung der Runden
 const BUENDEL = null;
 const ABL = 0.62;
 document.documentElement.style.setProperty('--abl', ABL);
@@ -2965,6 +3004,135 @@ async function bild(still){
   }));
 }
 
+/* ---------- Das Abgabebild ----------
+
+   NEU (2026-10-13, Christine Bürlis Rückmeldung vom 24.09.): «Als LP
+   wäre es gut, wenn man die Sortierung anschauen kann. Bei Bild
+   speichern wird aber *nur* ein Screenshot gemacht, und wenn die SuS
+   alle Kärtchen stapeln, sehe ich als LP nichts. Schön wäre es, wenn es
+   ein Abgabe-Format gibt, das die Kärtchen wieder nebeneinander
+   darstellt.»
+
+   Der Punkt trifft etwas Grundsätzliches: Die Fläche WEISS mehr, als
+   ihr Bild zeigt. Zu jeder Karte ist bekannt, in welchem Feld sie
+   liegt und wie die Gruppe dieses Feld benannt hat. Das Abgabebild
+   zeichnet diesen Stand neu auf - je Feld eine Zeile, die Karten
+   nebeneinander, nichts verdeckt.
+
+   ES ERSETZT «Bild speichern» NICHT, und das ist Absicht: Dass eine
+   Gruppe gestapelt hat, ist selbst eine Beobachtung. Das eine Bild
+   zeigt, WIE sie gelegt haben, das andere, WAS sie gelegt haben.
+
+   Was frei auf dem Tisch liegt, kommt in eine letzte Zeile - von links
+   nach rechts, wie es dort lag. Eine Ordnung ohne Felder lässt sich
+   nicht aufräumen, ohne etwas zu behaupten; die Reihenfolge ist das
+   Einzige, was wirklich dasteht. */
+function abgabeZeilen(){
+  const sichtbar = karten.filter(k => k.style.display !== 'none'
+                                   && k.dataset.rolle !== 'ablage');
+  // NACH NUMMER sortieren, nicht nach DOM-Folge: Die Felder werden mit
+  // insertBefore(..., firstChild) eingehaengt und stehen deshalb
+  // rueckwaerts. Ohne diese Zeile heisst das erste Feld «Feld 4».
+  // Die Zusatzfelder haben keine Nummer und kommen ans Ende.
+  const felder = [...document.querySelectorAll('.rasterfeld')]
+        .filter(d => !d.classList.contains('neu'))
+        .sort((a, b) => {
+          const za = a.dataset.zusatz === '1', zb = b.dataset.zusatz === '1';
+          if (za !== zb) return za ? 1 : -1;
+          return Number(a.dataset.nr || 0) - Number(b.dataset.nr || 0);
+        });
+  const zeilen = [];
+  let nr = 0;
+  felder.forEach(d => {
+    const zusatz = d.dataset.zusatz === '1';
+    const kennung = zusatz ? 'z' : Number(d.dataset.nr);
+    const drin = sichtbar.filter(k => k._feld === kennung)
+                         .sort((a, b) => (a._x || 0) - (b._x || 0));
+    if (!zusatz) nr++;
+    if (!drin.length) return;
+    const e = d.querySelector('input.titel'), t = d.querySelector('span');
+    // Der selbst geschriebene Titel ist das Ergebnis und steht so da.
+    // Wo die Gruppe nichts schreiben kann, waere die Feldbeschriftung
+    // («eine Zahl») in jeder Zeile dieselbe - dann nummerieren wir
+    // lieber. Das Zusatzfeld behaelt seinen Text; der sagt etwas.
+    const eigen = !!(e && e.value.trim());
+    const titel = eigen ? e.value.trim()
+                        : (zusatz && t ? t.textContent : 'Feld ' + nr);
+    zeilen.push({titel: titel, eigen: eigen, karten: drin});
+  });
+  const rest = sichtbar.filter(k => k._feld === undefined)
+                       .sort((a, b) => (a._x || 0) - (b._x || 0));
+  if (rest.length)
+    zeilen.push({titel: 'noch auf dem Tisch', eigen: false, karten: rest});
+  return zeilen;
+}
+
+async function abgabebild(){
+  const zeilen = abgabeZeilen();
+  if (!zeilen.length){
+    meldung.textContent = 'Auf der Fläche liegt noch nichts.';
+    return;
+  }
+  const kb = 150, kh = Math.round(kb * 0.844);     // feste Kartengroesse
+  const luft = 12, kopf = 26, rand = 18;
+  // HOECHSTENS ACHT je Zeile. Ohne diese Grenze macht eine einzige
+  // Zeile mit neunzehn Karten - der Vorrat zu Beginn - ein Bild von
+  // dreitausend Pixeln Breite, das niemand ansehen kann. Laengere
+  // Zeilen laufen um; sie bleiben eine Zeile und bekommen nur mehrere
+  // Lagen.
+  const JE_ZEILE = 8;
+  const lagen = z => Math.ceil(z.karten.length / JE_ZEILE);
+  const breiteste = Math.min(JE_ZEILE,
+        Math.max(...zeilen.map(z => z.karten.length)));
+  const w = rand * 2 + breiteste * kb + (breiteste - 1) * luft;
+  const h = rand * 2 + zeilen.reduce(
+        (a, z) => a + kopf + lagen(z) * (kh + luft), 0);
+  const s = 2, c = document.createElement('canvas');
+  c.width = w * s; c.height = h * s;
+  const g = c.getContext('2d'); g.scale(s, s);
+  g.fillStyle = F.karte(); g.fillRect(0, 0, w, h);
+
+  let y = rand;
+  for (const z of zeilen){
+    g.fillStyle = z.eigen ? farbe('--tinte') : F.matt();
+    g.font = (z.eigen ? '17px "Patrick Hand", cursive'
+                      : '13px "Fira Sans", sans-serif');
+    g.textAlign = 'left'; g.textBaseline = 'top';
+    g.fillText(z.titel || ' ', rand, y + 4, w - rand * 2);
+    y += kopf;
+    let i = 0;
+    for (const k of z.karten){
+      const b = k.querySelector('img');
+      await b.decode().catch(() => {});
+      const spalte = i % JE_ZEILE, lage = Math.floor(i / JE_ZEILE);
+      g.drawImage(b, rand + spalte * (kb + luft),
+                     y + lage * (kh + luft), kb, kh);
+      i++;
+    }
+    y += lagen(z) * (kh + luft);
+  }
+  await new Promise(f => c.toBlob(b => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(b);
+    a.download = 'abgabe.png'; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    f();
+  }));
+  meldung.textContent = 'Abgabebild gespeichert — die Karten stehen darin nebeneinander.';
+}
+
+{
+  const bk = document.getElementById('bild');
+  if (bk){
+    const ab = document.createElement('button');
+    ab.id = 'abgabebild';
+    ab.textContent = 'Abgabebild';
+    ab.title = 'Speichert den Stand aufgeräumt: je Feld eine Zeile, nichts verdeckt';
+    ab.onclick = abgabebild;
+    bk.after(ab);
+  }
+}
+
 if (FLAECHE === 'kette' && vorfuehrenMoeglich()){
   const kn = document.createElement('button');
   kn.id = 'vorfuehren';
@@ -3568,6 +3736,36 @@ function aussenZeichnen(){
   tisch.appendChild(d);
 }
 
+/* Die Sammelflaeche - «hier gehoert hin, was ALLE Bedingungen erfuellt».
+
+   NEU (2026-10-12, beim Durchgang durch die neuen Flaechen gefunden):
+   Dieselbe Geschichte wie bei den Kreisen und beim Aussenfeld.
+   BRETT.sammel traegt seine Masse, die Pruefung rechnet damit - und
+   gezeichnet hat es nie jemand. Solange das Brett nur im
+   Hintergrundbild stand, fiel das nicht auf; «Finde alle Funktionen,
+   die ...» hat kein Hintergrundbild, und die Flaeche war schlicht
+   leer. Zwei kleine Felder oben rechts, sonst nichts - man sah nicht,
+   wohin man legen soll.
+
+   Beschriftet wird sie NICHT mit dem, was hineingehoert. «Alle, die
+   passen» stuende sonst als Anleitung auf dem Brett; der Auftrag sagt
+   es einmal, das genuegt. */
+function sammelZeichnen(){
+  document.querySelectorAll('.sammelfeld').forEach(e => e.remove());
+  if (!BRETT || !BRETT.sammel) return;
+  const [fx, fy, fw, fh] = BRETT.sammel;
+  const bw = brett.offsetWidth, bh = brett.offsetHeight;
+  const bx = parseFloat(brett.style.left) || 0, by = parseFloat(brett.style.top) || 0;
+  const d = document.createElement('div');
+  d.className = 'sammelfeld';
+  Object.assign(d.style, {position:'absolute', pointerEvents:'none',
+    left:(bx + fx * bw) + 'px', top:(by + fy * bh) + 'px',
+    width:(fw * bw) + 'px', height:(fh * bh) + 'px',
+    border:'2px solid ' + F.akzent(), borderRadius:'12px',
+    background:F.akzent() + '0e', zIndex:0});
+  tisch.appendChild(d);
+}
+
 /* Die Ablagefelder des Bretts - dort, wo eine Karte hingehoert.
 
    FEHLERBEHOBEN (2026-08-21): Sie standen ebenfalls nur im
@@ -3600,6 +3798,7 @@ function brettfelderZeichnen(){
 function felderZeichnen(){
   kreiseZeichnen();
   aussenZeichnen();
+  sammelZeichnen();
   brettfelderZeichnen();
   if (FLAECHE !== 'runden') return;
   document.querySelectorAll('.slot').forEach(e => e.remove());
@@ -3817,6 +4016,88 @@ if (SATZKARTEN.length){
   function aktiveKarten(){
     const key = aktiverSatz();
     return SATZKARTEN.filter(k => zeigbar(k, key));
+  }
+
+  /* ---------- Die Gegenüberstellung ----------
+
+     NEU (2026-10-12, Rikes Befund und Rikes Idee): «Das Coole wäre
+     natürlich, wenn man am Ende die drei Einteilungen gegenüberstellen
+     kann und dann sieht, ob man die gleichen passenden Terme hat.»
+
+     Das Problem war, dass jede Runde die vorige löschte. Was die
+     Aufgabe trägt - dass dieselben Funktionen in jeder Darstellung
+     dieselbe Reihe ergeben -, sah die Gruppe nie nebeneinander.
+
+     WARUM EINE EIGENE ANSICHT und nicht drei Zeilen auf dem Tisch:
+     Lägen alle drei offen da, könnte eine Gruppe die zweite Zeile
+     unter die erste sortieren, ohne die zweite Darstellung zu lesen -
+     sie ordnete dann nach der Karte darüber. Die Frage «wo sieht man
+     es am besten?» fiele aus. Hier ist die vorige Reihe erst zu sehen,
+     wenn die neue steht: Sie ist Probe, nicht Abkürzung.
+
+     Und sie ist NICHT anfassbar. Die Ansicht liegt über der Fläche,
+     zeigt Bilder und sonst nichts; der Tisch darunter bleibt, wie er
+     war. Damit kann sie weder das Prüfen noch das Legen stören.
+
+     WAS SIE NICHT SAGT: ob die Reihen übereinstimmen. «In sieben von
+     sieben Spalten steht dieselbe Funktion» wäre genau die Einsicht,
+     die die Gruppe selbst machen soll (agent/02). Sie stellt
+     nebeneinander und schweigt. */
+  const LAGEN = {};              // Satzschlüssel -> {Kartencode: Feld}
+
+  function lageSichern(){
+    const key = aktiverSatz();
+    const lage = {};
+    karten.forEach(k => {
+      if (k.dataset.satz === key && k._feld !== undefined)
+        lage[k.dataset.code] = k._feld;
+    });
+    if (Object.keys(lage).length) LAGEN[key] = lage;
+    if (window.vergleichStand) window.vergleichStand();
+  }
+
+  function vergleichbar(){
+    return schluessel.filter(sl => sl.split('|')[0] === grad && LAGEN[sl]);
+  }
+
+  function vergleichZeigen(){
+    lageSichern();
+    const sl = vergleichbar();
+    if (!sl.length) return;
+    const schau = document.createElement('div');
+    schau.id = 'vergleichschau';
+    const zu = document.createElement('button');
+    zu.textContent = 'schliessen';
+    zu.className = 'zuknopf';
+    zu.onclick = () => schau.remove();
+    const kopf = document.createElement('div');
+    kopf.className = 'kopf';
+    kopf.textContent = grad;
+    schau.append(kopf, zu);
+
+    sl.forEach((key, i) => {
+      const lage = LAGEN[key];
+      const felder = Math.max(0, ...Object.values(lage).map(Number)) + 1;
+      const zeile = document.createElement('div');
+      zeile.className = 'vzeile';
+      const marke = document.createElement('span');
+      marke.className = 'vmarke';
+      marke.textContent = (RUNDENNAMEN && RUNDENNAMEN[i]) || ('Runde ' + (i + 1));
+      zeile.appendChild(marke);
+      for (let f = 0; f < felder; f++){
+        const zelle = document.createElement('div');
+        zelle.className = 'vzelle';
+        Object.keys(lage).forEach(code => {
+          if (Number(lage[code]) !== f) return;
+          const k = karten.find(a => a.dataset.code === code);
+          const img = k && k.querySelector('img');
+          if (img) zelle.appendChild(img.cloneNode(true));
+        });
+        zeile.appendChild(zelle);
+      }
+      schau.appendChild(zeile);
+    });
+    document.body.appendChild(schau);
   }
 
   function satzZeigen(){
@@ -4054,6 +4335,25 @@ if (SATZKARTEN.length){
   };
   if (!RUNDENNAMEN || !RUNDENNAMEN.length) leiste.after(neu);
 
+  let vergleichknopf = null;
+  if (VERGLEICH){
+    vergleichknopf = document.createElement('button');
+    vergleichknopf.id = 'vergleichen';
+    vergleichknopf.textContent = 'Gegenüberstellen';
+    vergleichknopf.title = 'legt die Runden dieses Kriteriums nebeneinander';
+    vergleichknopf.onclick = vergleichZeigen;
+    leiste.after(vergleichknopf);
+    // Stumpf, solange nur die laufende Runde vorliegt: Eine einzelne
+    // Reihe gegenueberzustellen ergibt nichts.
+    window.vergleichStand = () => {
+      const n = vergleichbar().length
+              + (karten.some(k => k.dataset.satz === aktiverSatz()
+                                && k._feld !== undefined) ? 1 : 0);
+      vergleichknopf.classList.toggle('stumpf', n < 2);
+    };
+    window.vergleichStand();
+  }
+
   // Die zweite Achse als benannte Reihe, wenn die Variante sie benennt.
   let rknoepfe = [];
   if (RUNDENNAMEN && RUNDENNAMEN.length){
@@ -4067,7 +4367,8 @@ if (SATZKARTEN.length){
       b.textContent = name;
       b.onclick = async () => {
         if (i === runde) return;
-        await bildSicher();
+        lageSichern();              // sonst ist die Runde weg, bevor sie
+        await bildSicher();         // sich vergleichen laesst
         runde = i;
         satzZeigen();
       };
@@ -4155,13 +4456,14 @@ if (SATZKARTEN.length){
     const b = document.createElement('button');
     b.textContent = KURZ[g] || g;
     b.title = NAME[g] || g;
-    b.onclick = () => { grad = g; runde = 0; satzZeigen(); };
+    b.onclick = () => { lageSichern(); grad = g; runde = 0; satzZeigen(); };
     wahl.appendChild(b);
     knoepfe[g] = b;
   });
   leiste.after(wahl);
 
   function knopfStand(){
+    if (window.vergleichStand) window.vergleichStand();
     Object.entries(knoepfe).forEach(([g, b]) => b.classList.toggle('an', g === grad));
     const der = schluessel.filter(s => s.split('|')[0] === grad);
     neu.textContent = der.length > 1

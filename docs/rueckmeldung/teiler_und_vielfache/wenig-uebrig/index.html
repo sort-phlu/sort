@@ -94,6 +94,26 @@ button.an{background:var(--braun);color:#fff;border-color:var(--braun);}
    warum. So bleibt er anklickbar und erklaert sich selbst. */
 button.stumpf{opacity:.45;}
 
+/* Der Beispielstreifen (2026-10-13, Rikes Auftrag «damit die SuS sehen,
+   worauf es hinausläuft»). Bis dahin stand das Beispiel als SATZ im
+   Auftrag - richtig, aber man muss es lesen und sich vorstellen. Hier
+   steht es als BILD.
+
+   Er sieht bewusst anders aus als der Tisch: eingerückt, auf hellem
+   Grund, mit einer Marke davor. Sonst sucht eine Gruppe die
+   Beispielkarten im eigenen Satz - und findet sie nicht, denn sie
+   gehören nicht dazu. Anfassen kann man sie nicht. */
+.beispiel{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  margin:10px 0 0;padding:8px 11px;border-radius:7px;
+  background:color-mix(in srgb, var(--akzent) 7%, transparent);
+  border:1px dashed color-mix(in srgb, var(--akzent) 45%, transparent)}
+.beispiel .marke{font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--fliess);opacity:.75;white-space:nowrap}
+.beispiel .karten{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.beispiel img{height:62px;width:auto;display:block;pointer-events:none;
+  border-radius:4px}
+.beispiel .dazu{font-size:.82rem;color:var(--fliess);opacity:.85;max-width:34ch}
+
 /* Die Gegenueberstellung. Sie liegt UEBER der Flaeche und ist nicht
    anfassbar - der Tisch darunter bleibt, wie er war. */
 #vergleichschau{position:fixed; inset:0; z-index:40; overflow:auto;
@@ -265,7 +285,8 @@ button.stumpf{opacity:.45;}
 
 <header>
   <h1>Wie wenige Karten bleiben übrig?</h1>
-  <p class="auftrag">Baut Reihen: zuerst eine Zahl, dann Vielfache von ihr. Eine Reihe gilt ab drei Karten — zum Beispiel 7, 14, 21, denn 14 und 21 sind Vielfache von 7. (Diese drei liegen nicht auf dem Tisch.) Jede Karte könnt ihr nur einmal verwenden, und viele Zahlen passen in mehrere Reihen. Legt so, dass möglichst wenige Karten übrig bleiben. Reicht der Platz nicht, legt mit dem Plus eine weitere Reihe an.</p>
+  <p class="auftrag">Baut Reihen: zuerst eine Zahl, dann Vielfache von ihr. Eine Reihe gilt ab drei Karten. Jede Karte könnt ihr nur einmal verwenden, und viele Zahlen passen in mehrere Reihen. Legt so, dass möglichst wenige Karten übrig bleiben. Reicht der Platz nicht, legt mit dem Plus eine weitere Reihe an.</p>
+  <div class="beispiel"><span class="marke">So sieht eine Reihe aus</span><span class="karten"><img alt="" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIKICAiaHR0cDovL3d3dy53My5vcmcvR3JhcGhpY3MvU1ZHLzEuMS9EVEQvc3ZnMTEuZHRkIj4KPHN2ZyB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgd2lkdGg9IjE4MS40MTczMjNwdCIgaGVpZ2h0PSIxNTMuMDcwODY2cHQiIHZpZXdCb3g9IjAgMCAxODEuNDE3MzIzIDE1My4wNzA4NjYiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmVyc2lvbj0iMS4xIj4KIDxtZXRhZGF0YT4KICA8cmRmOlJERiB4bWxuczpkYz0iaHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8iIHhtbG5zOmNjPSJodHRwOi8vY3JlYXRpdmVjb21tb25zLm9yZy9ucyMiIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+CiAgIDxjYzpXb3JrPgogICAgPGRjOnR5cGUgcmRmOnJlc291cmNlPSJodHRwOi8vcHVybC5vcmcvZGMvZGNtaXR5cGUvU3RpbGxJbWFnZSIvPgogICAgPGRjOmZvcm1hdD5pbWFnZS9zdmcreG1sPC9kYzpmb3JtYXQ+CiAgICA8ZGM6Y3JlYXRvcj4KICAgICA8Y2M6QWdlbnQ+CiAgICAgIDxkYzp0aXRsZT5NYXRwbG90bGliIHYzLjExLjEsIGh0dHBzOi8vbWF0cGxvdGxpYi5vcmcvPC9kYzp0aXRsZT4KICAgICA8L2NjOkFnZW50PgogICAgPC9kYzpjcmVhdG9yPgogICA8L2NjOldvcms+CiAgPC9yZGY6UkRGPgogPC9tZXRhZGF0YT4KIDxkZWZzPgogIDxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+KntzdHJva2UtbGluZWpvaW46IHJvdW5kOyBzdHJva2UtbGluZWNhcDogYnV0dH08L3N0eWxlPgogPC9kZWZzPgogPGcgaWQ9ImZpZ3VyZV8xIj4KICA8ZyBpZD0icGF0Y2hfMSI+CiAgIDxwYXRoIGQ9Ik0gMCAxNTMuMDcwODY2IApMIDE4MS40MTczMjMgMTUzLjA3MDg2NiAKTCAxODEuNDE3MzIzIDAgCkwgMCAwIApMIDAgMTUzLjA3MDg2NiAKegoiIHN0eWxlPSJmaWxsOiBub25lIi8+CiAgPC9nPgogIDxnIGlkPSJheGVzXzEiPgogICA8ZyBpZD0icGF0Y2hfMiI+CiAgICA8cGF0aCBkPSJNIDExLjkwNTUxMiAxNDguNTM1NDMzIApMIDE2OS41MTE4MTEgMTQ4LjUzNTQzMyAKUSAxNzYuODgxODkgMTQ4LjUzNTQzMyAxNzYuODgxODkgMTQxLjE2NTM1NCAKTCAxNzYuODgxODkgMTEuOTA1NTEyIApRIDE3Ni44ODE4OSA0LjUzNTQzMyAxNjkuNTExODExIDQuNTM1NDMzIApMIDExLjkwNTUxMiA0LjUzNTQzMyAKUSA0LjUzNTQzMyA0LjUzNTQzMyA0LjUzNTQzMyAxMS45MDU1MTIgCkwgNC41MzU0MzMgMTQxLjE2NTM1NCAKUSA0LjUzNTQzMyAxNDguNTM1NDMzIDExLjkwNTUxMiAxNDguNTM1NDMzIAp6CiIgY2xpcC1wYXRoPSJ1cmwoI3BhMzhhODUxODFmKSIgc3R5bGU9ImZpbGw6ICNmZmZmZmY7IHN0cm9rZTogI2I4ODYwYjsgc3Ryb2tlLXdpZHRoOiAxLjU7IHN0cm9rZS1saW5lam9pbjogbWl0ZXIiLz4KICAgPC9nPgogICA8ZyBpZD0icGF0Y2hfMyI+CiAgICA8cGF0aCBkPSJNIDQuNTM1NDMzIDI1Ljc5NTI3NiAKTCAxNzYuODgxODkgMjUuNzk1Mjc2IApMIDE3Ni44ODE4OSA0LjUzNTQzMyAKTCA0LjUzNTQzMyA0LjUzNTQzMyAKegoiIGNsaXAtcGF0aD0idXJsKCNwYTM4YTg1MTgxZikiIHN0eWxlPSJmaWxsOiAjYjg4NjBiOyBvcGFjaXR5OiAwLjExIi8+CiAgIDwvZz4KICAgPGcgaWQ9InBhdGNoXzQiPgogICAgPHBhdGggZD0iTSAxNC4xNzMyMjggMjIuOTYwNjMgCkwgMjEuODI2NzcyIDIyLjk2MDYzIApRIDI1Ljc5NTI3NiAyMi45NjA2MyAyNS43OTUyNzYgMTguOTkyMTI2IApMIDI1Ljc5NTI3NiAxMS4zMzg1ODMgClEgMjUuNzk1Mjc2IDcuMzcwMDc5IDIxLjgyNjc3MiA3LjM3MDA3OSAKTCAxNC4xNzMyMjggNy4zNzAwNzkgClEgMTAuMjA0NzI0IDcuMzcwMDc5IDEwLjIwNDcyNCAxMS4zMzg1ODMgCkwgMTAuMjA0NzI0IDE4Ljk5MjEyNiAKUSAxMC4yMDQ3MjQgMjIuOTYwNjMgMTQuMTczMjI4IDIyLjk2MDYzIAp6CiIgY2xpcC1wYXRoPSJ1cmwoI3BhMzhhODUxODFmKSIgc3R5bGU9ImZpbGw6ICNiODg2MGIiLz4KICAgPC9nPgogICA8ZyBpZD0idGV4dF8xIj4KICAgIDxwYXRoIGQ9Ik0gMzUuODUwNSAxMi4xMjA0MTcgCkwgMzIuMzE1MDk0IDEyLjEyMDQxNyAKTCAzMi4zMTUwOTQgMTIuODA4NDE3IApMIDM0Ljk2NDk2OSAxMi44MDg0MTcgCkwgMzIuMDA2MDMxIDE3LjM5MzI5MiAKTCAzMi4wMDYwMzEgMTguMDQ2MzU0IApMIDM1Ljc1NTA5NCAxOC4wNDYzNTQgCkwgMzUuODUwNSAxNy4zNTAyOTIgCkwgMzIuOTE3MDk0IDE3LjM1MDI5MiAKTCAzNS44NTA1IDEyLjc4Mjg4NiAKTCAzNS44NTA1IDEyLjEyMDQxNyAKegpNIDQwLjI1Mzk2OSAxOC4wNDYzNTQgCkwgNDEuMTEzOTY5IDE4LjA0NjM1NCAKTCAzOS4yMjE5NjkgMTIuMTIwNDE3IApMIDM4LjE4OTk2OSAxMi4xMjA0MTcgCkwgMzYuMjg4NTYzIDE4LjA0NjM1NCAKTCAzNy4xMTQ5NjkgMTguMDQ2MzU0IApMIDM3LjU2MjQzOCAxNi41NTg4MjMgCkwgMzkuODA2NSAxNi41NTg4MjMgCkwgNDAuMjUzOTY5IDE4LjA0NjM1NCAKegpNIDM3Ljc1OTk2OSAxNS44OTYzNTQgCkwgMzguNjg4NSAxMi44MDAzNTQgCkwgMzkuNjA4OTY5IDE1Ljg5NjM1NCAKTCAzNy43NTk5NjkgMTUuODk2MzU0IAp6Ck0gNDUuMzM2MDMxIDE4LjA0NjM1NCAKTCA0Ni4xNTMwMzEgMTguMDQ2MzU0IApMIDQ2LjE1MzAzMSAxMi4xMjA0MTcgCkwgNDUuMzM2MDMxIDEyLjEyMDQxNyAKTCA0NS4zMzYwMzEgMTQuNTk4MjkyIApMIDQyLjg0MjAzMSAxNC41OTgyOTIgCkwgNDIuODQyMDMxIDEyLjEyMDQxNyAKTCA0Mi4wMjUwMzEgMTIuMTIwNDE3IApMIDQyLjAyNTAzMSAxOC4wNDYzNTQgCkwgNDIuODQyMDMxIDE4LjA0NjM1NCAKTCA0Mi44NDIwMzEgMTUuMjY4ODIzIApMIDQ1LjMzNjAzMSAxNS4yNjg4MjMgCkwgNDUuMzM2MDMxIDE4LjA0NjM1NCAKegpNIDQ4LjY5MDAzMSAxMi4xMjA0MTcgCkwgNDcuODczMDMxIDEyLjEyMDQxNyAKTCA0Ny44NzMwMzEgMTguMDQ2MzU0IApMIDUxLjAyOTUgMTguMDQ2MzU0IApMIDUxLjEyMzU2MyAxNy4zMzI4MjMgCkwgNDguNjkwMDMxIDE3LjMzMjgyMyAKTCA0OC42OTAwMzEgMTIuMTIwNDE3IAp6CiIgc3R5bGU9ImZpbGw6ICNiODg2MGI7IHN0cm9rZTogI2I4ODYwYjsgc3Ryb2tlLXdpZHRoOiAwLjQ1Ii8+CiAgICA8cGF0aCBkPSJNIDM1Ljg1MDUgMTIuMTIwNDE3IApMIDMyLjMxNTA5NCAxMi4xMjA0MTcgCkwgMzIuMzE1MDk0IDEyLjgwODQxNyAKTCAzNC45NjQ5NjkgMTIuODA4NDE3IApMIDMyLjAwNjAzMSAxNy4zOTMyOTIgCkwgMzIuMDA2MDMxIDE4LjA0NjM1NCAKTCAzNS43NTUwOTQgMTguMDQ2MzU0IApMIDM1Ljg1MDUgMTcuMzUwMjkyIApMIDMyLjkxNzA5NCAxNy4zNTAyOTIgCkwgMzUuODUwNSAxMi43ODI4ODYgCkwgMzUuODUwNSAxMi4xMjA0MTcgCnoKTSA0MC4yNTM5NjkgMTguMDQ2MzU0IApMIDQxLjExMzk2OSAxOC4wNDYzNTQgCkwgMzkuMjIxOTY5IDEyLjEyMDQxNyAKTCAzOC4xODk5NjkgMTIuMTIwNDE3IApMIDM2LjI4ODU2MyAxOC4wNDYzNTQgCkwgMzcuMTE0OTY5IDE4LjA0NjM1NCAKTCAzNy41NjI0MzggMTYuNTU4ODIzIApMIDM5LjgwNjUgMTYuNTU4ODIzIApMIDQwLjI1Mzk2OSAxOC4wNDYzNTQgCnoKTSAzNy43NTk5NjkgMTUuODk2MzU0IApMIDM4LjY4ODUgMTIuODAwMzU0IApMIDM5LjYwODk2OSAxNS44OTYzNTQgCkwgMzcuNzU5OTY5IDE1Ljg5NjM1NCAKegpNIDQ1LjMzNjAzMSAxOC4wNDYzNTQgCkwgNDYuMTUzMDMxIDE4LjA0NjM1NCAKTCA0Ni4xNTMwMzEgMTIuMTIwNDE3IApMIDQ1LjMzNjAzMSAxMi4xMjA0MTcgCkwgNDUuMzM2MDMxIDE0LjU5ODI5MiAKTCA0Mi44NDIwMzEgMTQuNTk4MjkyIApMIDQyLjg0MjAzMSAxMi4xMjA0MTcgCkwgNDIuMDI1MDMxIDEyLjEyMDQxNyAKTCA0Mi4wMjUwMzEgMTguMDQ2MzU0IApMIDQyLjg0MjAzMSAxOC4wNDYzNTQgCkwgNDIuODQyMDMxIDE1LjI2ODgyMyAKTCA0NS4zMzYwMzEgMTUuMjY4ODIzIApMIDQ1LjMzNjAzMSAxOC4wNDYzNTQgCnoKTSA0OC42OTAwMzEgMTIuMTIwNDE3IApMIDQ3Ljg3MzAzMSAxMi4xMjA0MTcgCkwgNDcuODczMDMxIDE4LjA0NjM1NCAKTCA1MS4wMjk1IDE4LjA0NjM1NCAKTCA1MS4xMjM1NjMgMTcuMzMyODIzIApMIDQ4LjY5MDAzMSAxNy4zMzI4MjMgCkwgNDguNjkwMDMxIDEyLjEyMDQxNyAKegoiIHN0eWxlPSJmaWxsOiAjYjg4NjBiIi8+CiAgIDwvZz4KICAgPGcgaWQ9InRleHRfMiI+CiAgICA8IS0tIDcgLS0+CiAgICA8ZyBzdHlsZT0iZmlsbDogIzExMTExMSIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoODUuODIzOTc0IDk1LjEyMzcwMykgc2NhbGUoMC4yMiAtMC4yMikiPgogICAgIDxkZWZzPgogICAgICA8cGF0aCBpZD0iRmlyYVNhbnMtUmVndWxhci04OTEiIGQ9Ik0gMjY1MCA0MjgyIApMIDE2MCA0MjgyIApMIDE2MCAzODAyIApMIDIwNTQgMzgwMiAKTCA1MTIgMTE1IApMIDEwNTAgLTY0IApMIDI2NTAgMzg0MCAKTCAyNjUwIDQyODIgCnoKIiB0cmFuc2Zvcm09InNjYWxlKDAuMDE1NjI1KSIvPgogICAgIDwvZGVmcz4KICAgICA8dXNlIHhsaW5rOmhyZWY9IiNGaXJhU2Fucy1SZWd1bGFyLTg5MSIvPgogICAgPC9nPgogICA8L2c+CiAgPC9nPgogPC9nPgogPGRlZnM+CiAgPGNsaXBQYXRoIGlkPSJwYTM4YTg1MTgxZiI+CiAgIDxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSIxODEuNDE3MzIzIiBoZWlnaHQ9IjE1My4wNzA4NjYiLz4KICA8L2NsaXBQYXRoPgogPC9kZWZzPgo8L3N2Zz4K"><img alt="" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIKICAiaHR0cDovL3d3dy53My5vcmcvR3JhcGhpY3MvU1ZHLzEuMS9EVEQvc3ZnMTEuZHRkIj4KPHN2ZyB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgd2lkdGg9IjE4MS40MTczMjNwdCIgaGVpZ2h0PSIxNTMuMDcwODY2cHQiIHZpZXdCb3g9IjAgMCAxODEuNDE3MzIzIDE1My4wNzA4NjYiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmVyc2lvbj0iMS4xIj4KIDxtZXRhZGF0YT4KICA8cmRmOlJERiB4bWxuczpkYz0iaHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8iIHhtbG5zOmNjPSJodHRwOi8vY3JlYXRpdmVjb21tb25zLm9yZy9ucyMiIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+CiAgIDxjYzpXb3JrPgogICAgPGRjOnR5cGUgcmRmOnJlc291cmNlPSJodHRwOi8vcHVybC5vcmcvZGMvZGNtaXR5cGUvU3RpbGxJbWFnZSIvPgogICAgPGRjOmZvcm1hdD5pbWFnZS9zdmcreG1sPC9kYzpmb3JtYXQ+CiAgICA8ZGM6Y3JlYXRvcj4KICAgICA8Y2M6QWdlbnQ+CiAgICAgIDxkYzp0aXRsZT5NYXRwbG90bGliIHYzLjExLjEsIGh0dHBzOi8vbWF0cGxvdGxpYi5vcmcvPC9kYzp0aXRsZT4KICAgICA8L2NjOkFnZW50PgogICAgPC9kYzpjcmVhdG9yPgogICA8L2NjOldvcms+CiAgPC9yZGY6UkRGPgogPC9tZXRhZGF0YT4KIDxkZWZzPgogIDxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+KntzdHJva2UtbGluZWpvaW46IHJvdW5kOyBzdHJva2UtbGluZWNhcDogYnV0dH08L3N0eWxlPgogPC9kZWZzPgogPGcgaWQ9ImZpZ3VyZV8xIj4KICA8ZyBpZD0icGF0Y2hfMSI+CiAgIDxwYXRoIGQ9Ik0gMCAxNTMuMDcwODY2IApMIDE4MS40MTczMjMgMTUzLjA3MDg2NiAKTCAxODEuNDE3MzIzIDAgCkwgMCAwIApMIDAgMTUzLjA3MDg2NiAKegoiIHN0eWxlPSJmaWxsOiBub25lIi8+CiAgPC9nPgogIDxnIGlkPSJheGVzXzEiPgogICA8ZyBpZD0icGF0Y2hfMiI+CiAgICA8cGF0aCBkPSJNIDExLjkwNTUxMiAxNDguNTM1NDMzIApMIDE2OS41MTE4MTEgMTQ4LjUzNTQzMyAKUSAxNzYuODgxODkgMTQ4LjUzNTQzMyAxNzYuODgxODkgMTQxLjE2NTM1NCAKTCAxNzYuODgxODkgMTEuOTA1NTEyIApRIDE3Ni44ODE4OSA0LjUzNTQzMyAxNjkuNTExODExIDQuNTM1NDMzIApMIDExLjkwNTUxMiA0LjUzNTQzMyAKUSA0LjUzNTQzMyA0LjUzNTQzMyA0LjUzNTQzMyAxMS45MDU1MTIgCkwgNC41MzU0MzMgMTQxLjE2NTM1NCAKUSA0LjUzNTQzMyAxNDguNTM1NDMzIDExLjkwNTUxMiAxNDguNTM1NDMzIAp6CiIgY2xpcC1wYXRoPSJ1cmwoI3BhMzhhODUxODFmKSIgc3R5bGU9ImZpbGw6ICNmZmZmZmY7IHN0cm9rZTogI2I4ODYwYjsgc3Ryb2tlLXdpZHRoOiAxLjU7IHN0cm9rZS1saW5lam9pbjogbWl0ZXIiLz4KICAgPC9nPgogICA8ZyBpZD0icGF0Y2hfMyI+CiAgICA8cGF0aCBkPSJNIDQuNTM1NDMzIDI1Ljc5NTI3NiAKTCAxNzYuODgxODkgMjUuNzk1Mjc2IApMIDE3Ni44ODE4OSA0LjUzNTQzMyAKTCA0LjUzNTQzMyA0LjUzNTQzMyAKegoiIGNsaXAtcGF0aD0idXJsKCNwYTM4YTg1MTgxZikiIHN0eWxlPSJmaWxsOiAjYjg4NjBiOyBvcGFjaXR5OiAwLjExIi8+CiAgIDwvZz4KICAgPGcgaWQ9InBhdGNoXzQiPgogICAgPHBhdGggZD0iTSAxNC4xNzMyMjggMjIuOTYwNjMgCkwgMjEuODI2NzcyIDIyLjk2MDYzIApRIDI1Ljc5NTI3NiAyMi45NjA2MyAyNS43OTUyNzYgMTguOTkyMTI2IApMIDI1Ljc5NTI3NiAxMS4zMzg1ODMgClEgMjUuNzk1Mjc2IDcuMzcwMDc5IDIxLjgyNjc3MiA3LjM3MDA3OSAKTCAxNC4xNzMyMjggNy4zNzAwNzkgClEgMTAuMjA0NzI0IDcuMzcwMDc5IDEwLjIwNDcyNCAxMS4zMzg1ODMgCkwgMTAuMjA0NzI0IDE4Ljk5MjEyNiAKUSAxMC4yMDQ3MjQgMjIuOTYwNjMgMTQuMTczMjI4IDIyLjk2MDYzIAp6CiIgY2xpcC1wYXRoPSJ1cmwoI3BhMzhhODUxODFmKSIgc3R5bGU9ImZpbGw6ICNiODg2MGIiLz4KICAgPC9nPgogICA8ZyBpZD0idGV4dF8xIj4KICAgIDxwYXRoIGQ9Ik0gMzUuODUwNSAxMi4xMjA0MTcgCkwgMzIuMzE1MDk0IDEyLjEyMDQxNyAKTCAzMi4zMTUwOTQgMTIuODA4NDE3IApMIDM0Ljk2NDk2OSAxMi44MDg0MTcgCkwgMzIuMDA2MDMxIDE3LjM5MzI5MiAKTCAzMi4wMDYwMzEgMTguMDQ2MzU0IApMIDM1Ljc1NTA5NCAxOC4wNDYzNTQgCkwgMzUuODUwNSAxNy4zNTAyOTIgCkwgMzIuOTE3MDk0IDE3LjM1MDI5MiAKTCAzNS44NTA1IDEyLjc4Mjg4NiAKTCAzNS44NTA1IDEyLjEyMDQxNyAKegpNIDQwLjI1Mzk2OSAxOC4wNDYzNTQgCkwgNDEuMTEzOTY5IDE4LjA0NjM1NCAKTCAzOS4yMjE5NjkgMTIuMTIwNDE3IApMIDM4LjE4OTk2OSAxMi4xMjA0MTcgCkwgMzYuMjg4NTYzIDE4LjA0NjM1NCAKTCAzNy4xMTQ5NjkgMTguMDQ2MzU0IApMIDM3LjU2MjQzOCAxNi41NTg4MjMgCkwgMzkuODA2NSAxNi41NTg4MjMgCkwgNDAuMjUzOTY5IDE4LjA0NjM1NCAKegpNIDM3Ljc1OTk2OSAxNS44OTYzNTQgCkwgMzguNjg4NSAxMi44MDAzNTQgCkwgMzkuNjA4OTY5IDE1Ljg5NjM1NCAKTCAzNy43NTk5NjkgMTUuODk2MzU0IAp6Ck0gNDUuMzM2MDMxIDE4LjA0NjM1NCAKTCA0Ni4xNTMwMzEgMTguMDQ2MzU0IApMIDQ2LjE1MzAzMSAxMi4xMjA0MTcgCkwgNDUuMzM2MDMxIDEyLjEyMDQxNyAKTCA0NS4zMzYwMzEgMTQuNTk4MjkyIApMIDQyLjg0MjAzMSAxNC41OTgyOTIgCkwgNDIuODQyMDMxIDEyLjEyMDQxNyAKTCA0Mi4wMjUwMzEgMTIuMTIwNDE3IApMIDQyLjAyNTAzMSAxOC4wNDYzNTQgCkwgNDIuODQyMDMxIDE4LjA0NjM1NCAKTCA0Mi44NDIwMzEgMTUuMjY4ODIzIApMIDQ1LjMzNjAzMSAxNS4yNjg4MjMgCkwgNDUuMzM2MDMxIDE4LjA0NjM1NCAKegpNIDQ4LjY5MDAzMSAxMi4xMjA0MTcgCkwgNDcuODczMDMxIDEyLjEyMDQxNyAKTCA0Ny44NzMwMzEgMTguMDQ2MzU0IApMIDUxLjAyOTUgMTguMDQ2MzU0IApMIDUxLjEyMzU2MyAxNy4zMzI4MjMgCkwgNDguNjkwMDMxIDE3LjMzMjgyMyAKTCA0OC42OTAwMzEgMTIuMTIwNDE3IAp6CiIgc3R5bGU9ImZpbGw6ICNiODg2MGI7IHN0cm9rZTogI2I4ODYwYjsgc3Ryb2tlLXdpZHRoOiAwLjQ1Ii8+CiAgICA8cGF0aCBkPSJNIDM1Ljg1MDUgMTIuMTIwNDE3IApMIDMyLjMxNTA5NCAxMi4xMjA0MTcgCkwgMzIuMzE1MDk0IDEyLjgwODQxNyAKTCAzNC45NjQ5NjkgMTIuODA4NDE3IApMIDMyLjAwNjAzMSAxNy4zOTMyOTIgCkwgMzIuMDA2MDMxIDE4LjA0NjM1NCAKTCAzNS43NTUwOTQgMTguMDQ2MzU0IApMIDM1Ljg1MDUgMTcuMzUwMjkyIApMIDMyLjkxNzA5NCAxNy4zNTAyOTIgCkwgMzUuODUwNSAxMi43ODI4ODYgCkwgMzUuODUwNSAxMi4xMjA0MTcgCnoKTSA0MC4yNTM5NjkgMTguMDQ2MzU0IApMIDQxLjExMzk2OSAxOC4wNDYzNTQgCkwgMzkuMjIxOTY5IDEyLjEyMDQxNyAKTCAzOC4xODk5NjkgMTIuMTIwNDE3IApMIDM2LjI4ODU2MyAxOC4wNDYzNTQgCkwgMzcuMTE0OTY5IDE4LjA0NjM1NCAKTCAzNy41NjI0MzggMTYuNTU4ODIzIApMIDM5LjgwNjUgMTYuNTU4ODIzIApMIDQwLjI1Mzk2OSAxOC4wNDYzNTQgCnoKTSAzNy43NTk5NjkgMTUuODk2MzU0IApMIDM4LjY4ODUgMTIuODAwMzU0IApMIDM5LjYwODk2OSAxNS44OTYzNTQgCkwgMzcuNzU5OTY5IDE1Ljg5NjM1NCAKegpNIDQ1LjMzNjAzMSAxOC4wNDYzNTQgCkwgNDYuMTUzMDMxIDE4LjA0NjM1NCAKTCA0Ni4xNTMwMzEgMTIuMTIwNDE3IApMIDQ1LjMzNjAzMSAxMi4xMjA0MTcgCkwgNDUuMzM2MDMxIDE0LjU5ODI5MiAKTCA0Mi44NDIwMzEgMTQuNTk4MjkyIApMIDQyLjg0MjAzMSAxMi4xMjA0MTcgCkwgNDIuMDI1MDMxIDEyLjEyMDQxNyAKTCA0Mi4wMjUwMzEgMTguMDQ2MzU0IApMIDQyLjg0MjAzMSAxOC4wNDYzNTQgCkwgNDIuODQyMDMxIDE1LjI2ODgyMyAKTCA0NS4zMzYwMzEgMTUuMjY4ODIzIApMIDQ1LjMzNjAzMSAxOC4wNDYzNTQgCnoKTSA0OC42OTAwMzEgMTIuMTIwNDE3IApMIDQ3Ljg3MzAzMSAxMi4xMjA0MTcgCkwgNDcuODczMDMxIDE4LjA0NjM1NCAKTCA1MS4wMjk1IDE4LjA0NjM1NCAKTCA1MS4xMjM1NjMgMTcuMzMyODIzIApMIDQ4LjY5MDAzMSAxNy4zMzI4MjMgCkwgNDguNjkwMDMxIDEyLjEyMDQxNyAKegoiIHN0eWxlPSJmaWxsOiAjYjg4NjBiIi8+CiAgIDwvZz4KICAgPGcgaWQ9InRleHRfMiI+CiAgICA8IS0tIDE0IC0tPgogICAgPGcgc3R5bGU9ImZpbGw6ICMxMTExMTEiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDgwLjA5MzY2MSA5NS4zNDM3MDMpIHNjYWxlKDAuMjIgLTAuMjIpIj4KICAgICA8ZGVmcz4KICAgICAgPHBhdGggaWQ9IkZpcmFTYW5zLVJlZ3VsYXItODc5IiBkPSJNIDIwNjcgNDI4MiAKTCAxNTQ5IDQyODIgCkwgMjI0IDM0NjIgCkwgNDgwIDMwNDYgCkwgMTQ3OCAzNjU0IApMIDE0NzggMCAKTCAyMDY3IDAgCkwgMjA2NyA0MjgyIAp6CiIgdHJhbnNmb3JtPSJzY2FsZSgwLjAxNTYyNSkiLz4KICAgICAgPHBhdGggaWQ9IkZpcmFTYW5zLVJlZ3VsYXItODg1IiBkPSJNIDMyMTMgMTUyMyAKTCAyNjU2IDE1MjMgCkwgMjY1NiAyNjc1IApMIDIxNDQgMjY3NSAKTCAyMDkzIDE1MjMgCkwgODc3IDE1MjMgCkwgMjAzNSA0MTQxIApMIDE1NDIgNDM0NiAKTCAyNTYgMTQ3OCAKTCAyNTYgMTA1NiAKTCAyMDg2IDEwNTYgCkwgMjA4NiAwIApMIDI2NTYgMCAKTCAyNjU2IDEwNTYgCkwgMzIxMyAxMDU2IApMIDMyMTMgMTUyMyAKegoiIHRyYW5zZm9ybT0ic2NhbGUoMC4wMTU2MjUpIi8+CiAgICAgPC9kZWZzPgogICAgIDx1c2UgeGxpbms6aHJlZj0iI0ZpcmFTYW5zLVJlZ3VsYXItODc5Ii8+CiAgICAgPHVzZSB4bGluazpocmVmPSIjRmlyYVNhbnMtUmVndWxhci04ODUiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQzLjI5Njg3NSAwKSIvPgogICAgPC9nPgogICA8L2c+CiAgPC9nPgogPC9nPgogPGRlZnM+CiAgPGNsaXBQYXRoIGlkPSJwYTM4YTg1MTgxZiI+CiAgIDxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSIxODEuNDE3MzIzIiBoZWlnaHQ9IjE1My4wNzA4NjYiLz4KICA8L2NsaXBQYXRoPgogPC9kZWZzPgo8L3N2Zz4K"><img alt="" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIKICAiaHR0cDovL3d3dy53My5vcmcvR3JhcGhpY3MvU1ZHLzEuMS9EVEQvc3ZnMTEuZHRkIj4KPHN2ZyB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgd2lkdGg9IjE4MS40MTczMjNwdCIgaGVpZ2h0PSIxNTMuMDcwODY2cHQiIHZpZXdCb3g9IjAgMCAxODEuNDE3MzIzIDE1My4wNzA4NjYiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmVyc2lvbj0iMS4xIj4KIDxtZXRhZGF0YT4KICA8cmRmOlJERiB4bWxuczpkYz0iaHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8iIHhtbG5zOmNjPSJodHRwOi8vY3JlYXRpdmVjb21tb25zLm9yZy9ucyMiIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+CiAgIDxjYzpXb3JrPgogICAgPGRjOnR5cGUgcmRmOnJlc291cmNlPSJodHRwOi8vcHVybC5vcmcvZGMvZGNtaXR5cGUvU3RpbGxJbWFnZSIvPgogICAgPGRjOmZvcm1hdD5pbWFnZS9zdmcreG1sPC9kYzpmb3JtYXQ+CiAgICA8ZGM6Y3JlYXRvcj4KICAgICA8Y2M6QWdlbnQ+CiAgICAgIDxkYzp0aXRsZT5NYXRwbG90bGliIHYzLjExLjEsIGh0dHBzOi8vbWF0cGxvdGxpYi5vcmcvPC9kYzp0aXRsZT4KICAgICA8L2NjOkFnZW50PgogICAgPC9kYzpjcmVhdG9yPgogICA8L2NjOldvcms+CiAgPC9yZGY6UkRGPgogPC9tZXRhZGF0YT4KIDxkZWZzPgogIDxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+KntzdHJva2UtbGluZWpvaW46IHJvdW5kOyBzdHJva2UtbGluZWNhcDogYnV0dH08L3N0eWxlPgogPC9kZWZzPgogPGcgaWQ9ImZpZ3VyZV8xIj4KICA8ZyBpZD0icGF0Y2hfMSI+CiAgIDxwYXRoIGQ9Ik0gMCAxNTMuMDcwODY2IApMIDE4MS40MTczMjMgMTUzLjA3MDg2NiAKTCAxODEuNDE3MzIzIDAgCkwgMCAwIApMIDAgMTUzLjA3MDg2NiAKegoiIHN0eWxlPSJmaWxsOiBub25lIi8+CiAgPC9nPgogIDxnIGlkPSJheGVzXzEiPgogICA8ZyBpZD0icGF0Y2hfMiI+CiAgICA8cGF0aCBkPSJNIDExLjkwNTUxMiAxNDguNTM1NDMzIApMIDE2OS41MTE4MTEgMTQ4LjUzNTQzMyAKUSAxNzYuODgxODkgMTQ4LjUzNTQzMyAxNzYuODgxODkgMTQxLjE2NTM1NCAKTCAxNzYuODgxODkgMTEuOTA1NTEyIApRIDE3Ni44ODE4OSA0LjUzNTQzMyAxNjkuNTExODExIDQuNTM1NDMzIApMIDExLjkwNTUxMiA0LjUzNTQzMyAKUSA0LjUzNTQzMyA0LjUzNTQzMyA0LjUzNTQzMyAxMS45MDU1MTIgCkwgNC41MzU0MzMgMTQxLjE2NTM1NCAKUSA0LjUzNTQzMyAxNDguNTM1NDMzIDExLjkwNTUxMiAxNDguNTM1NDMzIAp6CiIgY2xpcC1wYXRoPSJ1cmwoI3BhMzhhODUxODFmKSIgc3R5bGU9ImZpbGw6ICNmZmZmZmY7IHN0cm9rZTogI2I4ODYwYjsgc3Ryb2tlLXdpZHRoOiAxLjU7IHN0cm9rZS1saW5lam9pbjogbWl0ZXIiLz4KICAgPC9nPgogICA8ZyBpZD0icGF0Y2hfMyI+CiAgICA8cGF0aCBkPSJNIDQuNTM1NDMzIDI1Ljc5NTI3NiAKTCAxNzYuODgxODkgMjUuNzk1Mjc2IApMIDE3Ni44ODE4OSA0LjUzNTQzMyAKTCA0LjUzNTQzMyA0LjUzNTQzMyAKegoiIGNsaXAtcGF0aD0idXJsKCNwYTM4YTg1MTgxZikiIHN0eWxlPSJmaWxsOiAjYjg4NjBiOyBvcGFjaXR5OiAwLjExIi8+CiAgIDwvZz4KICAgPGcgaWQ9InBhdGNoXzQiPgogICAgPHBhdGggZD0iTSAxNC4xNzMyMjggMjIuOTYwNjMgCkwgMjEuODI2NzcyIDIyLjk2MDYzIApRIDI1Ljc5NTI3NiAyMi45NjA2MyAyNS43OTUyNzYgMTguOTkyMTI2IApMIDI1Ljc5NTI3NiAxMS4zMzg1ODMgClEgMjUuNzk1Mjc2IDcuMzcwMDc5IDIxLjgyNjc3MiA3LjM3MDA3OSAKTCAxNC4xNzMyMjggNy4zNzAwNzkgClEgMTAuMjA0NzI0IDcuMzcwMDc5IDEwLjIwNDcyNCAxMS4zMzg1ODMgCkwgMTAuMjA0NzI0IDE4Ljk5MjEyNiAKUSAxMC4yMDQ3MjQgMjIuOTYwNjMgMTQuMTczMjI4IDIyLjk2MDYzIAp6CiIgY2xpcC1wYXRoPSJ1cmwoI3BhMzhhODUxODFmKSIgc3R5bGU9ImZpbGw6ICNiODg2MGIiLz4KICAgPC9nPgogICA8ZyBpZD0idGV4dF8xIj4KICAgIDxwYXRoIGQ9Ik0gMzUuODUwNSAxMi4xMjA0MTcgCkwgMzIuMzE1MDk0IDEyLjEyMDQxNyAKTCAzMi4zMTUwOTQgMTIuODA4NDE3IApMIDM0Ljk2NDk2OSAxMi44MDg0MTcgCkwgMzIuMDA2MDMxIDE3LjM5MzI5MiAKTCAzMi4wMDYwMzEgMTguMDQ2MzU0IApMIDM1Ljc1NTA5NCAxOC4wNDYzNTQgCkwgMzUuODUwNSAxNy4zNTAyOTIgCkwgMzIuOTE3MDk0IDE3LjM1MDI5MiAKTCAzNS44NTA1IDEyLjc4Mjg4NiAKTCAzNS44NTA1IDEyLjEyMDQxNyAKegpNIDQwLjI1Mzk2OSAxOC4wNDYzNTQgCkwgNDEuMTEzOTY5IDE4LjA0NjM1NCAKTCAzOS4yMjE5NjkgMTIuMTIwNDE3IApMIDM4LjE4OTk2OSAxMi4xMjA0MTcgCkwgMzYuMjg4NTYzIDE4LjA0NjM1NCAKTCAzNy4xMTQ5NjkgMTguMDQ2MzU0IApMIDM3LjU2MjQzOCAxNi41NTg4MjMgCkwgMzkuODA2NSAxNi41NTg4MjMgCkwgNDAuMjUzOTY5IDE4LjA0NjM1NCAKegpNIDM3Ljc1OTk2OSAxNS44OTYzNTQgCkwgMzguNjg4NSAxMi44MDAzNTQgCkwgMzkuNjA4OTY5IDE1Ljg5NjM1NCAKTCAzNy43NTk5NjkgMTUuODk2MzU0IAp6Ck0gNDUuMzM2MDMxIDE4LjA0NjM1NCAKTCA0Ni4xNTMwMzEgMTguMDQ2MzU0IApMIDQ2LjE1MzAzMSAxMi4xMjA0MTcgCkwgNDUuMzM2MDMxIDEyLjEyMDQxNyAKTCA0NS4zMzYwMzEgMTQuNTk4MjkyIApMIDQyLjg0MjAzMSAxNC41OTgyOTIgCkwgNDIuODQyMDMxIDEyLjEyMDQxNyAKTCA0Mi4wMjUwMzEgMTIuMTIwNDE3IApMIDQyLjAyNTAzMSAxOC4wNDYzNTQgCkwgNDIuODQyMDMxIDE4LjA0NjM1NCAKTCA0Mi44NDIwMzEgMTUuMjY4ODIzIApMIDQ1LjMzNjAzMSAxNS4yNjg4MjMgCkwgNDUuMzM2MDMxIDE4LjA0NjM1NCAKegpNIDQ4LjY5MDAzMSAxMi4xMjA0MTcgCkwgNDcuODczMDMxIDEyLjEyMDQxNyAKTCA0Ny44NzMwMzEgMTguMDQ2MzU0IApMIDUxLjAyOTUgMTguMDQ2MzU0IApMIDUxLjEyMzU2MyAxNy4zMzI4MjMgCkwgNDguNjkwMDMxIDE3LjMzMjgyMyAKTCA0OC42OTAwMzEgMTIuMTIwNDE3IAp6CiIgc3R5bGU9ImZpbGw6ICNiODg2MGI7IHN0cm9rZTogI2I4ODYwYjsgc3Ryb2tlLXdpZHRoOiAwLjQ1Ii8+CiAgICA8cGF0aCBkPSJNIDM1Ljg1MDUgMTIuMTIwNDE3IApMIDMyLjMxNTA5NCAxMi4xMjA0MTcgCkwgMzIuMzE1MDk0IDEyLjgwODQxNyAKTCAzNC45NjQ5NjkgMTIuODA4NDE3IApMIDMyLjAwNjAzMSAxNy4zOTMyOTIgCkwgMzIuMDA2MDMxIDE4LjA0NjM1NCAKTCAzNS43NTUwOTQgMTguMDQ2MzU0IApMIDM1Ljg1MDUgMTcuMzUwMjkyIApMIDMyLjkxNzA5NCAxNy4zNTAyOTIgCkwgMzUuODUwNSAxMi43ODI4ODYgCkwgMzUuODUwNSAxMi4xMjA0MTcgCnoKTSA0MC4yNTM5NjkgMTguMDQ2MzU0IApMIDQxLjExMzk2OSAxOC4wNDYzNTQgCkwgMzkuMjIxOTY5IDEyLjEyMDQxNyAKTCAzOC4xODk5NjkgMTIuMTIwNDE3IApMIDM2LjI4ODU2MyAxOC4wNDYzNTQgCkwgMzcuMTE0OTY5IDE4LjA0NjM1NCAKTCAzNy41NjI0MzggMTYuNTU4ODIzIApMIDM5LjgwNjUgMTYuNTU4ODIzIApMIDQwLjI1Mzk2OSAxOC4wNDYzNTQgCnoKTSAzNy43NTk5NjkgMTUuODk2MzU0IApMIDM4LjY4ODUgMTIuODAwMzU0IApMIDM5LjYwODk2OSAxNS44OTYzNTQgCkwgMzcuNzU5OTY5IDE1Ljg5NjM1NCAKegpNIDQ1LjMzNjAzMSAxOC4wNDYzNTQgCkwgNDYuMTUzMDMxIDE4LjA0NjM1NCAKTCA0Ni4xNTMwMzEgMTIuMTIwNDE3IApMIDQ1LjMzNjAzMSAxMi4xMjA0MTcgCkwgNDUuMzM2MDMxIDE0LjU5ODI5MiAKTCA0Mi44NDIwMzEgMTQuNTk4MjkyIApMIDQyLjg0MjAzMSAxMi4xMjA0MTcgCkwgNDIuMDI1MDMxIDEyLjEyMDQxNyAKTCA0Mi4wMjUwMzEgMTguMDQ2MzU0IApMIDQyLjg0MjAzMSAxOC4wNDYzNTQgCkwgNDIuODQyMDMxIDE1LjI2ODgyMyAKTCA0NS4zMzYwMzEgMTUuMjY4ODIzIApMIDQ1LjMzNjAzMSAxOC4wNDYzNTQgCnoKTSA0OC42OTAwMzEgMTIuMTIwNDE3IApMIDQ3Ljg3MzAzMSAxMi4xMjA0MTcgCkwgNDcuODczMDMxIDE4LjA0NjM1NCAKTCA1MS4wMjk1IDE4LjA0NjM1NCAKTCA1MS4xMjM1NjMgMTcuMzMyODIzIApMIDQ4LjY5MDAzMSAxNy4zMzI4MjMgCkwgNDguNjkwMDMxIDEyLjEyMDQxNyAKegoiIHN0eWxlPSJmaWxsOiAjYjg4NjBiIi8+CiAgIDwvZz4KICAgPGcgaWQ9InRleHRfMiI+CiAgICA8IS0tIDIxIC0tPgogICAgPGcgc3R5bGU9ImZpbGw6ICMxMTExMTEiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDgwLjc3NjAwNSA5NS4zNDM3MDMpIHNjYWxlKDAuMjIgLTAuMjIpIj4KICAgICA8ZGVmcz4KICAgICAgPHBhdGggaWQ9IkZpcmFTYW5zLVJlZ3VsYXItODdkIiBkPSJNIDE0NTkgNDM0NiAKQyA5MjIgNDM0NiA1MDYgNDEyOCAxNjAgMzY5OSAKTCA1NDQgMzM5MiAKQyA4MzIgMzcxOCAxMDY5IDM4NTkgMTQyNyAzODU5IApDIDE4NDMgMzg1OSAyMTMxIDM1OTcgMjEzMSAzMTQ5IApDIDIxMzEgMjQ1MSAxNzYwIDIwNDIgMjUwIDQ2NyAKTCAyNTAgMCAKTCAyNzc4IDAgCkwgMjg0OCA0OTMgCkwgOTIyIDQ5MyAKQyAyMjM0IDE4MDUgMjc0NiAyMzc0IDI3NDYgMzE3NCAKQyAyNzQ2IDM4NDAgMjI0NiA0MzQ2IDE0NTkgNDM0NiAKegoiIHRyYW5zZm9ybT0ic2NhbGUoMC4wMTU2MjUpIi8+CiAgICAgIDxwYXRoIGlkPSJGaXJhU2Fucy1SZWd1bGFyLTg3OSIgZD0iTSAyMDY3IDQyODIgCkwgMTU0OSA0MjgyIApMIDIyNCAzNDYyIApMIDQ4MCAzMDQ2IApMIDE0NzggMzY1NCAKTCAxNDc4IDAgCkwgMjA2NyAwIApMIDIwNjcgNDI4MiAKegoiIHRyYW5zZm9ybT0ic2NhbGUoMC4wMTU2MjUpIi8+CiAgICAgPC9kZWZzPgogICAgIDx1c2UgeGxpbms6aHJlZj0iI0ZpcmFTYW5zLVJlZ3VsYXItODdkIi8+CiAgICAgPHVzZSB4bGluazpocmVmPSIjRmlyYVNhbnMtUmVndWxhci04NzkiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQ3IDApIi8+CiAgICA8L2c+CiAgIDwvZz4KICA8L2c+CiA8L2c+CiA8ZGVmcz4KICA8Y2xpcFBhdGggaWQ9InBhMzhhODUxODFmIj4KICAgPHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjE4MS40MTczMjMiIGhlaWdodD0iMTUzLjA3MDg2NiIvPgogIDwvY2xpcFBhdGg+CiA8L2RlZnM+Cjwvc3ZnPgo="></span><span class="dazu">14 und 21 sind Vielfache von 7. Diese drei Karten liegen nicht auf dem Tisch.</span></div>
 </header>
 
 <div class="leiste">
@@ -3007,6 +3028,135 @@ async function bild(still){
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
     f();
   }));
+}
+
+/* ---------- Das Abgabebild ----------
+
+   NEU (2026-10-13, Christine Bürlis Rückmeldung vom 24.09.): «Als LP
+   wäre es gut, wenn man die Sortierung anschauen kann. Bei Bild
+   speichern wird aber *nur* ein Screenshot gemacht, und wenn die SuS
+   alle Kärtchen stapeln, sehe ich als LP nichts. Schön wäre es, wenn es
+   ein Abgabe-Format gibt, das die Kärtchen wieder nebeneinander
+   darstellt.»
+
+   Der Punkt trifft etwas Grundsätzliches: Die Fläche WEISS mehr, als
+   ihr Bild zeigt. Zu jeder Karte ist bekannt, in welchem Feld sie
+   liegt und wie die Gruppe dieses Feld benannt hat. Das Abgabebild
+   zeichnet diesen Stand neu auf - je Feld eine Zeile, die Karten
+   nebeneinander, nichts verdeckt.
+
+   ES ERSETZT «Bild speichern» NICHT, und das ist Absicht: Dass eine
+   Gruppe gestapelt hat, ist selbst eine Beobachtung. Das eine Bild
+   zeigt, WIE sie gelegt haben, das andere, WAS sie gelegt haben.
+
+   Was frei auf dem Tisch liegt, kommt in eine letzte Zeile - von links
+   nach rechts, wie es dort lag. Eine Ordnung ohne Felder lässt sich
+   nicht aufräumen, ohne etwas zu behaupten; die Reihenfolge ist das
+   Einzige, was wirklich dasteht. */
+function abgabeZeilen(){
+  const sichtbar = karten.filter(k => k.style.display !== 'none'
+                                   && k.dataset.rolle !== 'ablage');
+  // NACH NUMMER sortieren, nicht nach DOM-Folge: Die Felder werden mit
+  // insertBefore(..., firstChild) eingehaengt und stehen deshalb
+  // rueckwaerts. Ohne diese Zeile heisst das erste Feld «Feld 4».
+  // Die Zusatzfelder haben keine Nummer und kommen ans Ende.
+  const felder = [...document.querySelectorAll('.rasterfeld')]
+        .filter(d => !d.classList.contains('neu'))
+        .sort((a, b) => {
+          const za = a.dataset.zusatz === '1', zb = b.dataset.zusatz === '1';
+          if (za !== zb) return za ? 1 : -1;
+          return Number(a.dataset.nr || 0) - Number(b.dataset.nr || 0);
+        });
+  const zeilen = [];
+  let nr = 0;
+  felder.forEach(d => {
+    const zusatz = d.dataset.zusatz === '1';
+    const kennung = zusatz ? 'z' : Number(d.dataset.nr);
+    const drin = sichtbar.filter(k => k._feld === kennung)
+                         .sort((a, b) => (a._x || 0) - (b._x || 0));
+    if (!zusatz) nr++;
+    if (!drin.length) return;
+    const e = d.querySelector('input.titel'), t = d.querySelector('span');
+    // Der selbst geschriebene Titel ist das Ergebnis und steht so da.
+    // Wo die Gruppe nichts schreiben kann, waere die Feldbeschriftung
+    // («eine Zahl») in jeder Zeile dieselbe - dann nummerieren wir
+    // lieber. Das Zusatzfeld behaelt seinen Text; der sagt etwas.
+    const eigen = !!(e && e.value.trim());
+    const titel = eigen ? e.value.trim()
+                        : (zusatz && t ? t.textContent : 'Feld ' + nr);
+    zeilen.push({titel: titel, eigen: eigen, karten: drin});
+  });
+  const rest = sichtbar.filter(k => k._feld === undefined)
+                       .sort((a, b) => (a._x || 0) - (b._x || 0));
+  if (rest.length)
+    zeilen.push({titel: 'noch auf dem Tisch', eigen: false, karten: rest});
+  return zeilen;
+}
+
+async function abgabebild(){
+  const zeilen = abgabeZeilen();
+  if (!zeilen.length){
+    meldung.textContent = 'Auf der Fläche liegt noch nichts.';
+    return;
+  }
+  const kb = 150, kh = Math.round(kb * 0.844);     // feste Kartengroesse
+  const luft = 12, kopf = 26, rand = 18;
+  // HOECHSTENS ACHT je Zeile. Ohne diese Grenze macht eine einzige
+  // Zeile mit neunzehn Karten - der Vorrat zu Beginn - ein Bild von
+  // dreitausend Pixeln Breite, das niemand ansehen kann. Laengere
+  // Zeilen laufen um; sie bleiben eine Zeile und bekommen nur mehrere
+  // Lagen.
+  const JE_ZEILE = 8;
+  const lagen = z => Math.ceil(z.karten.length / JE_ZEILE);
+  const breiteste = Math.min(JE_ZEILE,
+        Math.max(...zeilen.map(z => z.karten.length)));
+  const w = rand * 2 + breiteste * kb + (breiteste - 1) * luft;
+  const h = rand * 2 + zeilen.reduce(
+        (a, z) => a + kopf + lagen(z) * (kh + luft), 0);
+  const s = 2, c = document.createElement('canvas');
+  c.width = w * s; c.height = h * s;
+  const g = c.getContext('2d'); g.scale(s, s);
+  g.fillStyle = F.karte(); g.fillRect(0, 0, w, h);
+
+  let y = rand;
+  for (const z of zeilen){
+    g.fillStyle = z.eigen ? farbe('--tinte') : F.matt();
+    g.font = (z.eigen ? '17px "Patrick Hand", cursive'
+                      : '13px "Fira Sans", sans-serif');
+    g.textAlign = 'left'; g.textBaseline = 'top';
+    g.fillText(z.titel || ' ', rand, y + 4, w - rand * 2);
+    y += kopf;
+    let i = 0;
+    for (const k of z.karten){
+      const b = k.querySelector('img');
+      await b.decode().catch(() => {});
+      const spalte = i % JE_ZEILE, lage = Math.floor(i / JE_ZEILE);
+      g.drawImage(b, rand + spalte * (kb + luft),
+                     y + lage * (kh + luft), kb, kh);
+      i++;
+    }
+    y += lagen(z) * (kh + luft);
+  }
+  await new Promise(f => c.toBlob(b => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(b);
+    a.download = 'abgabe.png'; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    f();
+  }));
+  meldung.textContent = 'Abgabebild gespeichert — die Karten stehen darin nebeneinander.';
+}
+
+{
+  const bk = document.getElementById('bild');
+  if (bk){
+    const ab = document.createElement('button');
+    ab.id = 'abgabebild';
+    ab.textContent = 'Abgabebild';
+    ab.title = 'Speichert den Stand aufgeräumt: je Feld eine Zeile, nichts verdeckt';
+    ab.onclick = abgabebild;
+    bk.after(ab);
+  }
 }
 
 if (FLAECHE === 'kette' && vorfuehrenMoeglich()){
