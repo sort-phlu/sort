@@ -239,10 +239,27 @@ footer.schlicht p{margin:0 0 5px;line-height:1.5}
 .reihe b{display:block;margin-bottom:7px;font-weight:600}
 .kacheln{display:grid;gap:7px;
   grid-template-columns:repeat(auto-fill,minmax(136px,1fr))}
-.kacheln a{display:flex;flex-direction:column;gap:3px;min-height:64px;
+/* ALLE GLEICH HOCH (2026-10-13, Rikes Wunsch). Im Raster sind die
+   Kacheln EINER Zeile von sich aus gleich hoch - zwischen den Zeilen
+   waren sie es nicht: 65 px dort, wo die Titel zweizeilig umbrechen,
+   81 px bei dreizeiligen. Gemessen, nicht geschaetzt.
+   Die Mindesthoehe ist gemessen, nicht geschaetzt: Sie ist die Hoehe
+   der laengsten Kachel («Welche drei Karten gehoeren zum selben
+   Term?») bei 136 px Spaltenbreite. Kommt einmal ein noch laengerer
+   Titel dazu, waechst diese eine Zeile wieder - dann ist die Zahl hier
+   nachzumessen, nicht zu raten. Die Spaltenbreite
+   bleibt bei 136 px: Mit 148 passte die sechste Kachel nicht mehr in
+   die Zeile, und ein Thema mit sechs Sortierungen stand dann in zwei
+   Reihen - genau die Unuebersichtlichkeit, die weg sollte. */
+.kacheln a{display:flex;flex-direction:column;gap:4px;min-height:88px;
   padding:7px 9px;border:1px solid var(--linie);border-radius:5px;
   text-decoration:none;color:var(--braun)}
-.kacheln a .zahl{font-size:.95rem;font-weight:700;line-height:1}
+/* Die Ziffer in der Handschrift - dasselbe Mittel wie bei .kv2 .nummer.
+   Sie darf groesser stehen: Eine Schreibschrift liest sich bei gleichem
+   Grad kleiner als eine Druckschrift. Der TITEL bleibt in der
+   Druckschrift; er wird ueberflogen, nicht gelesen. */
+.kacheln a .zahl{font-family:var(--hand);font-size:1.3rem;font-weight:400;
+  line-height:1;color:var(--braun)}
 .kacheln a .was{font-size:.76rem;line-height:1.28;color:var(--tinte-hell);
   font-weight:400}
 .kacheln a:hover{background:var(--creme);border-color:var(--braun)}
