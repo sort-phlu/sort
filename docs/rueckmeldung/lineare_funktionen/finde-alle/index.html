@@ -99,20 +99,41 @@ button.stumpf{opacity:.45;}
    Auftrag - richtig, aber man muss es lesen und sich vorstellen. Hier
    steht es als BILD.
 
-   Er sieht bewusst anders aus als der Tisch: eingerückt, auf hellem
-   Grund, mit einer Marke davor. Sonst sucht eine Gruppe die
-   Beispielkarten im eigenen Satz - und findet sie nicht, denn sie
+   GEAENDERT (2026-10-13, Rike): nicht mehr als Streifen unter dem
+   Auftrag, sondern als SCHAU - sie geht beim Oeffnen der Flaeche einmal
+   von selbst auf und laesst sich jederzeit wieder holen. Der Streifen
+   stand dauernd da und nahm der Flaeche eine Zeile; gesehen werden muss
+   das Beispiel aber nur am Anfang. Gross genug zum Hinschauen ist es
+   jetzt auch: 132px statt 62px.
+
+   Sie sieht bewusst anders aus als der Tisch. Sonst sucht eine Gruppe
+   die Beispielkarten im eigenen Satz - und findet sie nicht, denn sie
    gehören nicht dazu. Anfassen kann man sie nicht. */
-.beispiel{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
-  margin:10px 0 0;padding:8px 11px;border-radius:7px;
+.beispielknopf{margin:10px 0 0;padding:7px 13px;border-radius:7px;
+  font:inherit;font-size:.82rem;letter-spacing:.04em;cursor:pointer;
+  color:var(--fliess);
   background:color-mix(in srgb, var(--akzent) 7%, transparent);
   border:1px dashed color-mix(in srgb, var(--akzent) 45%, transparent)}
-.beispiel .marke{font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;
-  color:var(--fliess);opacity:.75;white-space:nowrap}
-.beispiel .karten{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.beispiel img{height:62px;width:auto;display:block;pointer-events:none;
-  border-radius:4px}
-.beispiel .dazu{font-size:.82rem;color:var(--fliess);opacity:.85;max-width:34ch}
+.beispielknopf:hover{background:color-mix(in srgb, var(--akzent) 14%, transparent)}
+
+/* Die Beispielschau liegt UEBER der Flaeche, wie die Gegenueberstellung,
+   und aus demselben Grund undurchsichtig: Was durchscheint, wird
+   angeklickt. */
+#beispielschau{position:fixed; inset:0; z-index:45; overflow:auto;
+  background:#faf7f1; padding:26px 18px 30px;
+  display:flex; flex-direction:column; align-items:center; gap:14px;}
+#beispielschau .kopf{font-size:19px; color:#333; letter-spacing:.01em;
+  text-align:center;}
+#beispielschau .karten{display:flex; align-items:center; gap:10px;
+  flex-wrap:wrap; justify-content:center;}
+#beispielschau img{height:132px; width:auto; display:block;
+  pointer-events:none; border-radius:5px;}
+#beispielschau .dazu{font-size:.95rem; color:var(--fliess);
+  max-width:46ch; text-align:center;}
+#beispielschau .auftragzeile{margin:0; font-size:.9rem; color:var(--fliess);
+  opacity:.8; max-width:56ch; text-align:center;}
+#beispielschau .zuknopf{position:absolute; top:14px; right:16px;}
+@media (max-width:620px){ #beispielschau img{height:94px;} }
 
 /* Die Gegenueberstellung. Sie liegt UEBER der Flaeche und ist nicht
    anfassbar - der Tisch darunter bleibt, wie er war. */
@@ -4533,6 +4554,59 @@ if (FLAECHE === 'tisch' || FLAECHE === 'runden' || FLAECHE === 'reihe'){
     else window.addEventListener('load', start);
   }
 }
+
+/* ---------- Die Beispielschau ----------
+
+   Ein Beispiel gibt es nur, wo die Variante eines mitbringt; sonst
+   steht hier nichts und der Knopf existiert gar nicht erst. */
+(function(){
+  const knopf  = document.getElementById('beispielknopf');
+  const inhalt = document.getElementById('beispielinhalt');
+  if (!knopf || !inhalt) return;
+
+  let offen = null;
+  function zu(){ if (offen){ offen.remove(); offen = null; } }
+
+  function zeigen(){
+    if (offen) return;
+    const schau = document.createElement('div');
+    schau.id = 'beispielschau';
+    const kopf = document.createElement('div');
+    kopf.className = 'kopf';
+    kopf.textContent = knopf.dataset.marke || 'Beispiel';
+    const zuk = document.createElement('button');
+    zuk.className = 'zuknopf'; zuk.type = 'button';
+    zuk.textContent = 'schliessen';
+    zuk.onclick = zu;
+    /* Der Auftrag gehoert mit hinein. Die Schau geht ungefragt auf und
+       deckt die Kopfzeile zu - ohne den Auftrag stuende das Beispiel
+       dann vor einer Frage, die man noch gar nicht gelesen hat. */
+    const auf = document.querySelector('header .auftrag');
+    if (auf){
+      const z = document.createElement('p');
+      z.className = 'auftragzeile';
+      z.textContent = auf.textContent;
+      schau.appendChild(z);
+    }
+    schau.append(kopf, zuk);
+    // Der Inhalt wird GEKLONT, nicht verschoben: Wer die Schau zumacht
+    // und wieder aufmacht, soll dasselbe sehen.
+    [...inhalt.children].forEach(k => schau.appendChild(k.cloneNode(true)));
+    document.body.appendChild(schau);
+    offen = schau;
+    zuk.focus();
+  }
+
+  knopf.onclick = zeigen;
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') zu(); });
+
+  /* Einmal von selbst auf, beim Oeffnen der Flaeche. Rikes Auftrag war
+     «ein Beispiel am Anfang, damit die SuS sehen, worauf es hinausläuft»
+     - das trifft nur zu, wenn es ungefragt dasteht. Danach holt es, wer
+     es nochmals braucht. */
+  if (document.readyState === 'complete') zeigen();
+  else window.addEventListener('load', zeigen);
+})();
 </script>
 <script>window.SORT_AUFGABE={thema:3,variante:4};</script>
 <script>window.KASPER_RUECKMELDUNG={abgabe:null,schluessel:"",ablage:"https://drive.switch.ch/index.php/s/NC2KaGNB6sJLWqX",projekt:"sort",immer:true,sammeln:true,stueck:"Thema 3 · Lineare Funktionen · Umgebung 4"};</script>

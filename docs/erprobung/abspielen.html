@@ -66,6 +66,38 @@ button.neben:hover{background:var(--creme)}
 .fussnote{margin:14px 0 0;font-size:.86rem;color:var(--hell);max-width:72ch}
 .stand.fehler{color:var(--rot)} .stand.gut{color:var(--gruen);font-weight:600}
 
+/* ---------- Die aufgeraeumte Ansicht ----------
+
+   Christine Buerli, 24.09.: «Wenn die SuS alle Kaertchen stapeln, sehe
+   ich als LP nichts.» Nachgerechnet an den neun Abgaben vom 25.09.: Von
+   207 gelegten Kaertchen liegen 103 zu ueber der Haelfte unter einem
+   anderen.
+
+   Es fehlt dafuer kein Datum. Jede Abgabe weiss, welches Kaertchen zum
+   Schluss in welchem Feld lag und wie die Gruppe das Feld benannt hat -
+   nur gezeigt wurde es bisher an den Koordinaten, also uebereinander.
+   Diese Ansicht zeigt dasselbe nebeneinander: je Feld eine Zeile.
+
+   Sie ERSETZT die Wiedergabe nicht. Dass eine Gruppe gestapelt hat, ist
+   selbst eine Beobachtung; die eine Ansicht zeigt, WIE gelegt wurde,
+   die andere, WAS gelegt wurde. */
+#aufgeraeumt{margin:12px 0 0;border:1px solid var(--linie);border-radius:8px;
+  background:var(--karte);padding:16px 18px}
+#aufgeraeumt .zeile{margin:0 0 18px}
+#aufgeraeumt .zeile:last-child{margin-bottom:0}
+#aufgeraeumt .titel{font-family:'Patrick Hand',cursive;font-size:1.12rem;
+  color:var(--tinte);margin:0 0 7px;display:flex;align-items:baseline;gap:9px}
+#aufgeraeumt .titel .wieviel{font-family:var(--druck);font-size:.78rem;
+  color:var(--hell)}
+#aufgeraeumt .titel.fremd{font-family:var(--druck);font-size:.92rem;
+  color:var(--hell)}
+#aufgeraeumt .karten{display:flex;flex-wrap:wrap;gap:7px}
+#aufgeraeumt .karten img{height:88px;width:auto;display:block;
+  border:1px solid var(--linie);border-radius:4px;background:#fff}
+#aufgeraeumt .leer{font-size:.86rem;color:var(--hell)}
+#aufgeraeumt .hinweis{margin:0 0 14px;font-size:.84rem;color:var(--hell);
+  max-width:72ch}
+
 h3.balken{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
   color:var(--braun);margin:30px 0 10px;border-bottom:2px solid var(--braun);
   padding-bottom:7px}
@@ -225,6 +257,7 @@ dl.legende dt{margin:0} dl.legende dd{margin:0;color:#463f36;line-height:1.45}
     <div class="kopfzeile" id="kopfzeile"></div>
     <div class="flaeche" id="flaeche"><div class="inner" id="inner">
       <div id="grund"></div></div></div>
+    <div id="aufgeraeumt" hidden></div>
 
     <div class="pult">
       <button id="spielen">Abspielen</button>
@@ -235,6 +268,7 @@ dl.legende dt{margin:0} dl.legende dd{margin:0;color:#463f36;line-height:1.45}
         <option value="0.5">0,5×</option><option value="1" selected>1×</option>
         <option value="2">2×</option><option value="4">4×</option>
       </select>
+      <button id="raeumen" class="neben">Aufgeräumt ansehen</button>
     </div>
 
     <audio id="ton" preload="auto"></audio>
@@ -779,6 +813,9 @@ function waehlen(i){
     || '<span style="color:var(--hell);font-size:.85rem">keine</span>';
 
   $('buehne').style.display = 'block';
+  // Beim Wechsel der Sitzung zurueck auf die Wiedergabe - sonst zeigt die
+  // aufgeraeumte Ansicht noch die vorige Gruppe.
+  if (!$('aufgeraeumt').hidden) raeumSchalten();
   passen();
   marken();
   laufBauen();
@@ -1045,12 +1082,129 @@ function zustandBei(t){
     im.style.zIndex = (l.z || 1) + 1;
     im.classList.toggle('greift', code === greift);
   }
+  // Die Lage wird aufbewahrt: Die aufgeraeumte Ansicht braucht nicht die
+  // DOM-Koordinaten, sondern die Angaben dahinter - vor allem `verdeckt`
+  // (die Karte liegt im Vorrat, nicht bei 0,0 auf dem Tisch).
+  S.lage = lage;
   if (letzte !== S.letzterIndex){ S.letzterIndex = letzte; laufMarkieren(letzte); }
 
   $('zeit').textContent = zeitText(t) + ' / ' + zeitText(S.dauer);
   const anteil = S.dauer ? Math.min(1, t / S.dauer) : 0;
   $('fuell').style.width = (anteil*100) + '%';
   $('griff').style.left = (anteil*100) + '%';
+}
+
+/* ============================================================
+   Aufgeraeumt ansehen
+   ============================================================ */
+function felderJetzt(){
+  const G = S.flaeche && S.flaeche.gemessen;
+  // `neu` ist der Knopf «+ noch eine Gruppe» - ein Bedienelement, kein
+  // Ergebnis. Er kommt nicht ins Blatt.
+  return ((G && G.felder) || []).filter(f => !f.neu);
+}
+
+function raeumZeilen(){
+  const lage = S.lage || {};
+  const felder = felderJetzt();
+  const breite = S.breite, hoehe = S.breite * 0.844;
+  const zeilen = felder.map(f => ({ titel: f.text || '', eigen: !!f.selbstbenannt,
+                                    karten: [] }));
+  const vorrat = { titel: 'noch im Vorrat', eigen: false, karten: [] };
+  const daneben = { titel: 'auf dem Tisch, ausserhalb der Felder',
+                    eigen: false, karten: [] };
+
+  for (const code in S.knoten){
+    const l = lage[code];
+    if (!l) continue;
+    if (l.verdeckt){ vorrat.karten.push({ code, x: 0, y: 0 }); continue; }
+    const mx = (l.x || 0) + breite / 2, my = (l.y || 0) + hoehe / 2;
+    // Das KLEINSTE enthaltende Feld gewinnt. Felder koennen ineinander
+    // liegen; das groessere ist dann der Rahmen, nicht die Ablage.
+    let treffer = -1, flaeche = Infinity;
+    felder.forEach((f, i) => {
+      if (mx < f.x || mx > f.x + f.w || my < f.y || my > f.y + f.h) return;
+      if (f.w * f.h < flaeche){ flaeche = f.w * f.h; treffer = i; }
+    });
+    (treffer >= 0 ? zeilen[treffer] : daneben)
+      .karten.push({ code, x: l.x || 0, y: l.y || 0 });
+  }
+
+  // Leserichtung innerhalb einer Zeile: zeilenweise von oben, darin von
+  // links. Ohne das Band waere eine Karte, die zwei Pixel hoeher liegt,
+  // eine eigene Zeile.
+  const band = Math.max(1, hoehe * 0.6);
+  const ordnen = z => z.karten.sort((a, b) =>
+    (Math.round(a.y / band) - Math.round(b.y / band)) || (a.x - b.x));
+  zeilen.forEach(ordnen); ordnen(daneben); ordnen(vorrat);
+
+  const alle = zeilen.slice();
+  if (daneben.karten.length) alle.push(daneben);
+  if (vorrat.karten.length) alle.push(vorrat);
+  return alle;
+}
+
+function raeumZeigen(){
+  const kasten = $('aufgeraeumt');
+  kasten.innerHTML = '';
+  const hinweis = document.createElement('p');
+  hinweis.className = 'hinweis';
+  hinweis.textContent = 'Dieselbe Lage, nur nebeneinander statt '
+    + 'übereinander: je Feld eine Zeile, in Leserichtung. Die Felder '
+    + 'und ihre Namen sind die der Gruppe. Gemessen wurden sie am Ende '
+    + 'der Sitzung — wer mittendrin stehenbleibt, sieht die Karten von '
+    + 'dort in den Feldern von zuletzt.';
+  kasten.appendChild(hinweis);
+
+  const zeilen = raeumZeilen();
+  if (!zeilen.length){
+    const p = document.createElement('p');
+    p.className = 'leer';
+    p.textContent = 'Zu dieser Aufnahme sind keine Felder gemessen worden.';
+    kasten.appendChild(p);
+  }
+  zeilen.forEach((z, i) => {
+    const d = document.createElement('div'); d.className = 'zeile';
+    const h = document.createElement('div');
+    h.className = 'titel' + (z.eigen ? '' : ' fremd');
+    h.appendChild(document.createTextNode(z.titel || ('Feld ' + (i + 1))));
+    const wv = document.createElement('span');
+    wv.className = 'wieviel';
+    wv.textContent = z.karten.length === 1 ? '1 Karte'
+                                           : z.karten.length + ' Karten';
+    h.appendChild(wv);
+    d.appendChild(h);
+    const kk = document.createElement('div'); kk.className = 'karten';
+    if (!z.karten.length){
+      const leer = document.createElement('span');
+      leer.className = 'leer'; leer.textContent = 'leer geblieben';
+      kk.appendChild(leer);
+    }
+    z.karten.forEach(k => {
+      const im = document.createElement('img');
+      im.src = (S.flaeche.karten && S.flaeche.karten[k.code]) || '';
+      im.alt = k.code;
+      kk.appendChild(im);
+    });
+    d.appendChild(kk);
+    kasten.appendChild(d);
+  });
+}
+
+function raeumSchalten(){
+  const kasten = $('aufgeraeumt'), knopf = $('raeumen');
+  const an = kasten.hidden;
+  if (an){
+    anhalten();
+    raeumZeigen();
+    kasten.hidden = false;
+    $('flaeche').style.display = 'none';
+    knopf.textContent = 'Wiedergabe ansehen';
+  } else {
+    kasten.hidden = true;
+    $('flaeche').style.display = '';
+    knopf.textContent = 'Aufgeräumt ansehen';
+  }
 }
 
 /* ============================================================
@@ -1146,6 +1300,7 @@ function springen(t){
   zustandBei(t);
 }
 $('spielen').onclick = () => S.laeuft ? anhalten() : starten();
+$('raeumen').onclick = raeumSchalten;
 $('tempo').onchange = e => {
   S.tempo = parseFloat(e.target.value);
   if (S.tonDa) ton.playbackRate = S.tempo;
