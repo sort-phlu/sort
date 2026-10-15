@@ -63,6 +63,19 @@ img{max-width:100%}
 .leiste nav{margin-left:auto;display:flex;gap:22px;font-family:var(--sans);font-size:.88rem}
 .leiste nav a{text-decoration:none;font-weight:600;color:var(--tinte-hell)}
 .leiste nav a:hover{color:var(--braun);text-decoration:underline;text-underline-offset:4px}
+/* Sprachumschalter. Er sitzt links vom Hauslogo; weil beide auf der
+   rechten Seite stehen wollen, bekommt das Logo daneben eine feste
+   statt einer automatischen Einrueckung - sonst teilen sich zwei
+   `margin-left:auto` den freien Platz und der Umschalter landet
+   mitten in der Leiste. */
+.sprachwahl{margin-left:auto;display:flex;align-items:center;gap:9px;
+  font-family:var(--sans);font-size:.74rem;letter-spacing:.12em;
+  text-transform:uppercase;font-weight:700}
+.sprachwahl a{text-decoration:none;color:var(--tinte-hell)}
+.sprachwahl a:hover{color:var(--braun);text-decoration:underline;text-underline-offset:4px}
+.sprachwahl .jetzt{color:var(--braun)}
+.sprachwahl .strich{color:var(--linie);font-weight:400}
+.sprachwahl+.haus{margin-left:14px}
 
 /* ---------- Kopfbereich ---------- */
 .augen{font-family:var(--sans);font-size:.74rem;font-weight:700;letter-spacing:.16em;
@@ -210,13 +223,47 @@ footer.schlicht img.mrh{width:124px;height:auto;display:block}
 footer.schlicht .worte{flex:1;min-width:230px}
 footer.schlicht p{margin:0 0 5px;line-height:1.5}
 
-.reihe{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;
-  padding:6px 0;border-top:1px solid var(--linie);font-size:.9rem}
-.reihe b{flex:1;min-width:150px;font-weight:600}
-.reihe a{display:inline-block;width:26px;height:26px;line-height:24px;
-  text-align:center;border:1px solid var(--linie);border-radius:3px;
-  text-decoration:none;color:var(--braun);font-size:.85rem;font-weight:600}
-.reihe a:hover{background:var(--creme);border-color:var(--braun)}
+/* GEAENDERT (2026-10-13, Rikes Befund): Die Titel sind verschieden
+   lang, und als Knopfreihe standen sie unruhig nebeneinander - man sah
+   weder auf einen Blick, WIE VIELE Sortierungen ein Thema hat, noch
+   lagen sie in einer Linie.
+
+   Seit dem 18.09. tragen die Knoepfe den Titel statt einer Ziffer, und
+   das bleibt richtig: Ein Titel sagt, was einen erwartet. Die Nummer
+   kommt wieder DAZU, nicht an seine Stelle - gross oben, der Titel
+   klein darunter. Jede Kachel ist gleich gross, damit das Raster
+   zaehlbar wird. Die Nummern sind dieselben, die die Klasse spaeter
+   sieht: die Reihenfolge der Freigabeliste. */
+.reihe{display:block;padding:9px 0;border-top:1px solid var(--linie);
+  font-size:.9rem}
+.reihe b{display:block;margin-bottom:7px;font-weight:600}
+.kacheln{display:grid;gap:7px;
+  grid-template-columns:repeat(auto-fill,minmax(136px,1fr))}
+/* ALLE GLEICH HOCH (2026-10-13, Rikes Wunsch). Im Raster sind die
+   Kacheln EINER Zeile von sich aus gleich hoch - zwischen den Zeilen
+   waren sie es nicht: 65 px dort, wo die Titel zweizeilig umbrechen,
+   81 px bei dreizeiligen. Gemessen, nicht geschaetzt.
+   Die Mindesthoehe ist gemessen, nicht geschaetzt: Sie ist die Hoehe
+   der laengsten Kachel («Welche drei Karten gehoeren zum selben
+   Term?») bei 136 px Spaltenbreite. Kommt einmal ein noch laengerer
+   Titel dazu, waechst diese eine Zeile wieder - dann ist die Zahl hier
+   nachzumessen, nicht zu raten. Die Spaltenbreite
+   bleibt bei 136 px: Mit 148 passte die sechste Kachel nicht mehr in
+   die Zeile, und ein Thema mit sechs Sortierungen stand dann in zwei
+   Reihen - genau die Unuebersichtlichkeit, die weg sollte. */
+.kacheln a{display:flex;flex-direction:column;gap:4px;min-height:88px;
+  padding:7px 9px;border:1px solid var(--linie);border-radius:5px;
+  text-decoration:none;color:var(--braun)}
+/* Die Ziffer in der Handschrift - dasselbe Mittel wie bei .kv2 .nummer.
+   Sie darf groesser stehen: Eine Schreibschrift liest sich bei gleichem
+   Grad kleiner als eine Druckschrift. Der TITEL bleibt in der
+   Druckschrift; er wird ueberflogen, nicht gelesen. */
+.kacheln a .zahl{font-family:var(--hand);font-size:1.3rem;font-weight:400;
+  line-height:1;color:var(--braun)}
+.kacheln a .was{font-size:.76rem;line-height:1.28;color:var(--tinte-hell);
+  font-weight:400}
+.kacheln a:hover{background:var(--creme);border-color:var(--braun)}
+.kacheln a:hover .was{color:var(--braun)}
 table.zugaenge{width:100%;border-collapse:collapse;font-size:.9rem}
 table.zugaenge td{padding:7px 8px;border-top:1px solid var(--linie);vertical-align:top}
 table.zugaenge td span{color:var(--tinte-hell);font-size:.83rem}
@@ -294,7 +341,20 @@ footer p{margin:0 0 5px}
 </head>
 <body>
 <div class="leiste"><div class="rand"><span class="wortmarke">SORT</span><span class="ort aufloesung"><b>S</b>ortieren · <b>O</b>rdnen · <b>R</b>eflektieren · <b>T</b>ransfer</span></div></div>
-<div class="rand kopfklein"><h1>Klasse 7a</h1><p class="schule">Kantonsschule Reussbühl</p><p class="handzeile">Sucht euch eine Aufgabe aus.</p><div class="klassenbild"><img src="../../bilder/banner.jpg" alt="Jugendliche ordnen Karten auf einem Tisch." width="1400" height="560"></div></div><main class="rand" style="padding-top:6px"><section class="feld"><div class="feldkopf"><span class="marker" style="background:var(--blau)"></span><h2>Variablen und Terme</h2></div><p class="zeile">Streichholzmuster, Würfeltürme und Figuren – und die Terme, die man in ihnen lesen kann.</p><p class="balken">Diese Aufgaben macht ihr</p><div class="knoepfe kv1" style="--f:var(--blau)"><a class="sortierung" href="../variablen_und_terme/variante_1/?k=7a"><span class="nummer">Sortierung 1</span><h3>Welche Terme passen zu dieser Figur?</h3><p>Zu jeder Figur passen drei Terme.</p></a></div><p class="balken freiwillig">Freiwillig — wenn ihr noch Lust habt</p><div class="knoepfe kv1" style="--f:var(--blau)"><a class="sortierung" href="../variablen_und_terme/variante_2/?k=7a"><span class="nummer">Sortierung 2</span><h3>Wo steckt dieser Term überall?</h3><p>Sucht zu jedem Term alle passenden Figurenfolgen, Flächen und Sachsituationen.</p></a><a class="sortierung" href="../variablen_und_terme/variante_3/?k=7a"><span class="nummer">Sortierung 3</span><h3>Welche drei Karten gehören zum selben Term?</h3><p>Term, Baum und Sprachkarte stellen denselben Term auf drei Arten dar.</p></a><a class="sortierung" href="../variablen_und_terme/variante_5/?k=7a"><span class="nummer">Sortierung 4</span><h3>Was gehört alles zusammen?</h3><p>Zu jeder Figur gehören sieben Karten.</p></a><a class="sortierung" href="../variablen_und_terme/variante_6/?k=7a"><span class="nummer">Sortierung 5</span><h3>Der Eindringling</h3><p>Jede Vierergruppe zeigt eine Figur und drei Terme.</p></a><a class="sortierung" href="../variablen_und_terme/variante_7/?k=7a"><span class="nummer">Sortierung 6</span><h3>Immer – manchmal – nie</h3><p>Erster Durchgang: Ordnet jede Aussagenkarte einem der drei Felder zu und begründet jede Entscheidung.</p></a></div></section></main>
+<div class="rand kopfklein"><h1>Klasse 7a</h1><p class="schule">Kantonsschule Reussbühl</p><p class="handzeile">Sucht euch eine Aufgabe aus.</p><div class="klassenbild"><img src="../../bilder/banner.jpg" alt="Jugendliche ordnen Karten auf einem Tisch." width="1400" height="560"></div></div><main class="rand" style="padding-top:6px"><style>
+.thema>summary{list-style:none;cursor:pointer;position:relative;padding-right:44px}
+.thema>summary::-webkit-details-marker{display:none}
+.thema>summary::after{content:"";position:absolute;right:10px;top:9px;width:11px;height:11px;
+  border-right:2.5px solid var(--braun);border-bottom:2.5px solid var(--braun);
+  transform:rotate(45deg);transition:transform .2s ease}
+.thema[open]>summary::after{transform:rotate(225deg);top:15px}
+.thema>summary:focus-visible{outline:2px solid var(--braun);outline-offset:6px}
+.thema>summary:hover h2{text-decoration:underline;text-decoration-thickness:1px;
+  text-underline-offset:4px}
+.thema .anzahl{font-family:var(--sans);font-size:.82rem;font-weight:700;color:var(--braun)}
+.thema:not([open]) .zeile{margin-bottom:6px}
+.thema[open]>summary{margin-bottom:4px}
+</style><details class="feld thema"><summary><div class="feldkopf"><span class="marker" style="background:var(--blau)"></span><h2>Variablen und Terme</h2><span class="anzahl">1 Aufgabe für alle · 5 freiwillig</span></div><p class="zeile">Streichholzmuster, Würfeltürme und Figuren – und die Terme, die man in ihnen lesen kann.</p></summary><p class="balken">Diese Aufgaben macht ihr</p><div class="knoepfe kv1" style="--f:var(--blau)"><a class="sortierung" href="../variablen_und_terme/variante_1/?k=7a"><h3>Welche Terme passen zu dieser Figur?</h3><p>Zu jeder Figur passen drei Terme.</p></a></div><p class="balken freiwillig">Freiwillig — wenn ihr noch Lust habt</p><div class="knoepfe kv1" style="--f:var(--blau)"><a class="sortierung" href="../variablen_und_terme/variante_2/?k=7a"><h3>Wo steckt dieser Term überall?</h3><p>Zu jedem Term gehören genau eine Figurenfolge, eine Fläche und eine Sachsituation.</p></a><a class="sortierung" href="../variablen_und_terme/variante_3/?k=7a"><h3>Welche drei Karten gehören zum selben Term?</h3><p>Term, Baum und Sprachkarte stellen denselben Term auf drei Arten dar.</p></a><a class="sortierung" href="../variablen_und_terme/variante_5/?k=7a"><h3>Was gehört alles zusammen?</h3><p>Zu jeder Figur gehören sieben Karten.</p></a><a class="sortierung" href="../variablen_und_terme/variante_6/?k=7a"><h3>Der Eindringling</h3><p>Jede Vierergruppe zeigt eine Figur und drei Terme.</p></a><a class="sortierung" href="../variablen_und_terme/variante_7/?k=7a"><h3>Immer – manchmal – nie</h3><p>Erster Durchgang: Ordnet jede Aussagenkarte einem der drei Felder zu und begründet jede Entscheidung.</p></a></div></details><details class="feld thema"><summary><div class="feldkopf"><span class="marker" style="background:var(--gruen)"></span><h2>Potenzen</h2><span class="anzahl">1 Aufgabe für alle · 4 freiwillig</span></div><p class="zeile">Kurzschreibweise, Rechenregeln und die Frage, warum sie gelten müssen — an Karten geprüft, nicht behauptet.</p></summary><p class="balken">Diese Aufgaben macht ihr</p><div class="knoepfe kv1" style="--f:var(--gruen)"><a class="sortierung" href="../potenzen/viele-wege/?k=7a"><h3>Viele Wege, ein Wert</h3><p>Auf den Karten stehen Rechnungen.</p></a></div><p class="balken freiwillig">Freiwillig — wenn ihr noch Lust habt</p><div class="knoepfe kv1" style="--f:var(--gruen)"><a class="sortierung" href="../potenzen/wonach-ordnen/?k=7a"><h3>Wonach kann man diese Karten ordnen?</h3><p>Sortiert die Karten nach einem Kriterium, das ihr selbst wählt.</p></a><a class="sortierung" href="../potenzen/nach-groesse/?k=7a"><h3>Ordnet nach Grösse</h3><p>Legt jede Karte in ein Feld, der Grösse nach: links die kleinste, rechts die grösste.</p></a><a class="sortierung" href="../potenzen/drei-karten/?k=7a"><h3>Drei Karten, die zusammenpassen</h3><p>In jedem Feld steht ein Produkt und sein Wert: erstes · zweites = drittes.</p></a><a class="sortierung" href="../potenzen/eindringling/?k=7a"><h3>Der Eindringling</h3><p>Jede Vierergruppe enthält eine Karte, die nicht zu den anderen passt.</p></a></div></details></main>
 <footer class="schlicht"><div class="rand"><img class="phlu" src="../../bilder/logo-phlu.png" alt="PH Luzern, Pädagogische Hochschule"><div class="worte"><p>Ein Projekt der Pädagogischen Hochschule Luzern, gefördert von der Milton Ray Hartmann Stiftung.</p><p>Wenn etwas nicht funktioniert: fragt eure Lehrperson.</p></div></div></footer>
 </body>
 </html>

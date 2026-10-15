@@ -436,6 +436,13 @@ const KOPF = 30;                 // Freiraum fuer die Ueberschrift
 const NACHSCHUB = [];  // Begruendung je Stufe
 const SORTIERT = false;   // links nach Kartensorte getrennt
 const TYPNAMEN = {"P": "POTENZ", "T": "RECHNUNG", "R": "BEHAUPTUNG", "B": "PROBE", "A": "AUSGESCHRIEBEN", "W": "WERT", "S": "AUSSAGE", "Z": "ZAHL", "K": "ZAHL", "N": "FELD"};   // Buchstabe -> Klartext, fuer die Vorratsfelder
+const VORRATBAENDER = "";   // "" oder Sortenfolge, ein Band je Sorte
+// «FIGURENFOLGE» -> «Figurenfolge»: Die Kartenkoepfe schreiben gross,
+// das Band ist eine Ueberschrift im Satz.
+const bandName = t => {
+  const n = TYPNAMEN[t] || t;
+  return n.charAt(0) + n.slice(1).toLowerCase();
+};
 const NACHSCHUBSCHRITT = 1;   // Stufen je grossem Knopf
 const VORRATSPALTEN = false;   // Vorrat in Spalten statt Baendern
 const VORRATLINKS = "BA";   // Kartensorten, die als Bild gelten
@@ -749,6 +756,36 @@ function einpassen(){
                          .reduce((a, e) => a + (e.breite || 1.2), 0);
         grenzen.push(rechtsBreit / (RASTER.breite + spalte + 0.4));
       }
+      // NEU (2026-09-23, SORT, Viola Niederberger: «nicht mehr als 5
+      // Dreiergruppen pro Bildschirmseite ... alle untereinander noch
+      // ersichtlich»). Dritte Obergrenze, nur wo eine Variante sie
+      // verlangt: RASTER.sichtbar Felder muessen ohne Scrollen
+      // Platz haben. Gerechnet mit den Massen aus rasterZeichnen(): Kopf
+      // 38, je Feld mindestens eine Kartenreihe samt Titel (0,844 · b +
+      // 40) oder RASTER.hoehe, dazu 10 Abstand - und so viele Spalten,
+      // wie bei dieser Kartenbreite nebeneinander gehen. Gesucht wird
+      // von oben die groesste Breite, bei der es aufgeht.
+      //
+      // Untergrenze 100 px: Darunter faellt der Hauptinhalt unter die
+      // Lesbarkeitsschwelle aus agent/05 (7,3 px bei 110 px Karte, Schwelle
+      // 6,7 px). Gemessen am Tablet quer (1024 x 768): Fuer vier sichtbare
+      // Felder haette die Karte auf 80 px schrumpfen muessen. Lesbarkeit
+      // geht vor - dort wird lieber ein Stueck gescrollt.
+      //
+      // Noetig, weil die Kartengroesse sonst an der KARTENZAHL haengt:
+      // Weniger Gruppen gaben groessere Karten (159 statt 110 px) - und
+      // damit wieder nur drei Felder auf dem Schirm.
+      if (RASTER && RASTER.sichtbar && RASTER.breite){
+        const passt = b => {
+          const fh = Math.max(0.844 * b * (RASTER.hoehe || 1), 0.844 * b + 40);
+          const sp = Math.max(1, Math.floor((rechtsBreit - 6) / (b * RASTER.breite + 10)));
+          return Math.ceil(RASTER.sichtbar / sp) * (fh + 10) + 38 <= tisch.clientHeight;
+        };
+        let b = breite;
+        const LESBAR = 100;
+        while (b > LESBAR && !passt(b)) b--;
+        if (b < breite) grenzen.push(b);
+      }
       if (grenzen.length)
         breite = Math.max(40, Math.min(breite, Math.floor(Math.min(...grenzen))));
     }
@@ -876,12 +913,21 @@ function nachSorten(zu, x0, x1, hoch, h, oben){
   // Die Zweiteilung ist nicht neu erfunden: Das Thema fuehrt sie in
   // VORRAT_LINKS und SPALTEN, bisher nur fuer die Druckvorlage.
   const istBild = k => VORRATLINKS.includes(k.dataset.typ || '?');
+  // NEU (2026-09-23, SORT, Viola Niederberger): Eine Variante kann statt
+  // «Bilder / Rest» ein Band JE KARTENSORTE verlangen, in fester
+  // Reihenfolge (VORRATBAENDER, z. B. "TBS"). Ohne den Schluessel bleibt
+  // alles wie am 31.08. entschieden - die Zweiteilung gilt weiter.
+  const sorteVon = k => VORRATBAENDER ? (k.dataset.typ || '?')
+                                      : (istBild(k) ? 'B' : 'R');
+  const rang = t => VORRATBAENDER
+        ? (VORRATBAENDER.includes(t) ? VORRATBAENDER.indexOf(t) : 99)
+        : (t === 'B' ? 0 : 1);
   const sorten = [];
-  bestand.forEach(k => { const t = istBild(k) ? 'B' : 'R';
+  bestand.forEach(k => { const t = sorteVon(k);
                          if (!sorten.includes(t)) sorten.push(t); });
-  sorten.sort((a, b) => (a === 'B' ? 0 : 1) - (b === 'B' ? 0 : 1));
+  sorten.sort((a, b) => rang(a) - rang(b));
   const gruppen = sorten.map(t =>
-        bestand.filter(k => (istBild(k) ? 'B' : 'R') === t));
+        bestand.filter(k => sorteVon(k) === t));
   const luft = 10;
   const frei = Math.max(h, hoch - y0 - luft * (gruppen.length - 1));
 
@@ -1005,7 +1051,9 @@ function nachSorten(zu, x0, x1, hoch, h, oben){
     const t = document.createElement('span');
     // Klartext, wo es ihn gibt - sonst der Buchstabe. Ein Feld ohne
     // Namen waere ein Rahmen ohne Aussage.
-    t.textContent = sorten[gi] === 'B' ? VORRATNAMEN[0] : VORRATNAMEN[1];
+    t.textContent = VORRATBAENDER
+      ? bandName(sorten[gi])
+      : (sorten[gi] === 'B' ? VORRATNAMEN[0] : VORRATNAMEN[1]);
     rahmen.appendChild(t);
     tisch.insertBefore(rahmen, tisch.firstChild);
     // Das Gitter richtet sich nach der ZAHL der Karten im Band, nicht
