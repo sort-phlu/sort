@@ -264,6 +264,16 @@ function mitschreibenStarten(){
     }, false);
   });
 
+  /* NEU (2026-10-16): Ereignisse, die die Flaeche selbst meldet
+     (kern/htmlvorlage.py, ereignis()) - etwa der Ausschnitt der Graphen
+     oder eine Markierung in einer Karte. */
+  document.addEventListener('sort-ereignis', e => {
+    const d = Object.assign({}, e.detail || {});
+    const was = d.was || 'ereignis';
+    delete d.was;
+    merken(was, d);
+  }, false);
+
   /* Auswahlknöpfe für die Feldanzahl, falls vorhanden */
   const ak = document.getElementById('anzahlknoepfe');
   if (ak) ak.addEventListener('click', e => {
