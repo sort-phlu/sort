@@ -4003,15 +4003,38 @@ if (NACHSCHUB && NACHSCHUB.length){
     // Nur den Zuwachs merken, den DER NACHSCHUB gebracht hat - Felder,
     // die jemand ueber «noch eine Gruppe» selbst geoeffnet hat, gehoeren
     // ihm und werden nicht mitgenommen.
+    //
+    // NEU (gemeinsam entschieden, Rike 2026-11-07, Bruchrechnung V2):
+    // RASTER.mitwachsen === false schaltet das ab. Wo die Zahl der
+    // Gruppen die Antwort ist, verriete das Mitwachsen sie: Nach dem
+    // Nachlegen standen genau so viele Felder da wie Zahlen (5 -> 6 -> 7
+    // -> 8). Mehr Felder holt sich die Gruppe dann mit «noch eine
+    // Gruppe». Ohne den Schluessel bleibt alles wie bisher.
     const felderVorher = feldAnzahl;
-    feldAnzahl = Math.max(feldAnzahl, gruppenAufDemTisch());
+    if (!(RASTER && RASTER.mitwachsen === false))
+      feldAnzahl = Math.max(feldAnzahl, gruppenAufDemTisch());
     feldZuwachs += feldAnzahl - felderVorher;
+    // NEU (gemeinsam entschieden, Rike 2026-11-07, Bruchrechnung V2):
+    // RASTER.nachlegen_einpassen rechnet nach dem Nachlegen die
+    // Kartengroesse neu. Bisher galt die Groesse vom Oeffnen; bei 1180 x
+    // 820 ragten nach der letzten Stufe vier Karten aus dem Vorrat. Wer
+    // die Groesse selbst gestellt hat, behaelt sie (breiteVonHand). Die
+    // eingerasteten Karten gehen danach in ihre Felder zurueck, wie beim
+    // Zoomen (zoom(), Befund vom 2026-09-14).
+    const neuEinpassen = RASTER && RASTER.nachlegen_einpassen && !breiteVonHand;
     if (FLAECHE === 'kette') kettenNeuZeichnen();
     else if (FLAECHE === 'buendel'){ buendelAufbau(); buendelLegen(); }
     // Nur die neuen Karten bekommen einen Platz - alles, was schon liegt,
     // bleibt unangetastet, ob sortiert oder noch lose.
     else {
+      if (neuEinpassen){ einpassen(); haelftenZeichnen(); }
       rasterZeichnen(rasterKnopf && rasterKnopf.classList.contains('an'));
+      if (neuEinpassen && RASTER.einrasten){
+        rasterBeschriften();
+        alleRasterfelder().forEach(f => {
+          if (Number.isFinite(parseFloat(f.style.left))) feldNeuSetzen(feldKennung(f));
+        });
+      }
       auslegen(neue);
     }
     beschriften();
@@ -4324,6 +4347,19 @@ function rasterZeichnen(an){
         einpassenWennAutomatisch(); rasterZeichnen(true); reiheAllesSetzen();
       } else {
         rasterZeichnen(true);
+        // FEHLERBEHOBEN (Rike 2026-11-07, Bruchrechnung V2: «wenn man
+        // eine neue Gruppe dazufuegt, verzerrt sich alles und die Karten
+        // liegen nicht mehr richtig»). Ursache: Hier wurden nur die
+        // Felder neu gezeichnet. Die Felder ruecken dabei (gemessen bei
+        // 1000 x 540: um 6 px; aendert sich die Spaltenzahl, ganz an
+        // andere Stellen), die eingerasteten Karten blieben aber liegen.
+        // Jetzt wie beim Zoomen (zoom(), 2026-09-14): jede Karte zurueck
+        // in das Feld, dessen Nummer sie traegt.
+        if (RASTER.einrasten){
+          alleRasterfelder().forEach(f => {
+            if (Number.isFinite(parseFloat(f.style.left))) feldNeuSetzen(feldKennung(f));
+          });
+        }
       }
     };
     tisch.insertBefore(d, tisch.firstChild);
