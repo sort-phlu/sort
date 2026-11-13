@@ -223,15 +223,47 @@ footer.schlicht img.mrh{width:124px;height:auto;display:block}
 footer.schlicht .worte{flex:1;min-width:230px}
 footer.schlicht p{margin:0 0 5px;line-height:1.5}
 
-.reihe{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;
-  padding:6px 0;border-top:1px solid var(--linie);font-size:.9rem}
-.reihe b{flex:1;min-width:150px;font-weight:600}
-/* GEAENDERT (2026-09-18): Hier standen 26x26 grosse Ziffernkaestchen.
-   Seit die Knoepfe den TITEL tragen, muessen sie mitwachsen. */
-.reihe a{display:inline-block;padding:3px 10px;
-  text-align:center;border:1px solid var(--linie);border-radius:3px;
-  text-decoration:none;color:var(--braun);font-size:.85rem;font-weight:600}
-.reihe a:hover{background:var(--creme);border-color:var(--braun)}
+/* GEAENDERT (2026-10-13, Rikes Befund): Die Titel sind verschieden
+   lang, und als Knopfreihe standen sie unruhig nebeneinander - man sah
+   weder auf einen Blick, WIE VIELE Sortierungen ein Thema hat, noch
+   lagen sie in einer Linie.
+
+   Seit dem 18.09. tragen die Knoepfe den Titel statt einer Ziffer, und
+   das bleibt richtig: Ein Titel sagt, was einen erwartet. Die Nummer
+   kommt wieder DAZU, nicht an seine Stelle - gross oben, der Titel
+   klein darunter. Jede Kachel ist gleich gross, damit das Raster
+   zaehlbar wird. Die Nummern sind dieselben, die die Klasse spaeter
+   sieht: die Reihenfolge der Freigabeliste. */
+.reihe{display:block;padding:9px 0;border-top:1px solid var(--linie);
+  font-size:.9rem}
+.reihe b{display:block;margin-bottom:7px;font-weight:600}
+.kacheln{display:grid;gap:7px;
+  grid-template-columns:repeat(auto-fill,minmax(136px,1fr))}
+/* ALLE GLEICH HOCH (2026-10-13, Rikes Wunsch). Im Raster sind die
+   Kacheln EINER Zeile von sich aus gleich hoch - zwischen den Zeilen
+   waren sie es nicht: 65 px dort, wo die Titel zweizeilig umbrechen,
+   81 px bei dreizeiligen. Gemessen, nicht geschaetzt.
+   Die Mindesthoehe ist gemessen, nicht geschaetzt: Sie ist die Hoehe
+   der laengsten Kachel («Welche drei Karten gehoeren zum selben
+   Term?») bei 136 px Spaltenbreite. Kommt einmal ein noch laengerer
+   Titel dazu, waechst diese eine Zeile wieder - dann ist die Zahl hier
+   nachzumessen, nicht zu raten. Die Spaltenbreite
+   bleibt bei 136 px: Mit 148 passte die sechste Kachel nicht mehr in
+   die Zeile, und ein Thema mit sechs Sortierungen stand dann in zwei
+   Reihen - genau die Unuebersichtlichkeit, die weg sollte. */
+.kacheln a{display:flex;flex-direction:column;gap:4px;min-height:88px;
+  padding:7px 9px;border:1px solid var(--linie);border-radius:5px;
+  text-decoration:none;color:var(--braun)}
+/* Die Ziffer in der Handschrift - dasselbe Mittel wie bei .kv2 .nummer.
+   Sie darf groesser stehen: Eine Schreibschrift liest sich bei gleichem
+   Grad kleiner als eine Druckschrift. Der TITEL bleibt in der
+   Druckschrift; er wird ueberflogen, nicht gelesen. */
+.kacheln a .zahl{font-family:var(--hand);font-size:1.3rem;font-weight:400;
+  line-height:1;color:var(--braun)}
+.kacheln a .was{font-size:.76rem;line-height:1.28;color:var(--tinte-hell);
+  font-weight:400}
+.kacheln a:hover{background:var(--creme);border-color:var(--braun)}
+.kacheln a:hover .was{color:var(--braun)}
 table.zugaenge{width:100%;border-collapse:collapse;font-size:.9rem}
 table.zugaenge td{padding:7px 8px;border-top:1px solid var(--linie);vertical-align:top}
 table.zugaenge td span{color:var(--tinte-hell);font-size:.83rem}
@@ -309,7 +341,7 @@ footer p{margin:0 0 5px}
 </head>
 <body>
 <div class="leiste"><div class="rand"><a class="haus" href="../index.html"><img src="../bilder/logo-phlu.png" alt="PH Luzern, Pädagogische Hochschule"></a></div></div>
-<div class="rand kopfklein"><p class="augen">Zum Ausprobieren</p><h1>Die Sortieraufgaben</h1><p>Eine Kostprobe aus dem Projekt. Die Kartensätze werden gerade in Klassen erprobt; hier stehen einzelne Aufgaben zum Anschauen und Ausprobieren — direkt im Browser, ohne Anmeldung und ohne Installation.</p></div><main class="rand" style="padding-top:14px"><section class="feld"><div class="feldkopf"><h2>Was hier steht, ist ein Zwischenstand</h2></div><p class="zeile">Die Aufgaben sind <b>noch nicht fertig</b>, und wir sagen das lieber selbst, als dass ihr es entdeckt: Mal passt die Sortierfläche nicht zur Aufgabe, mal sind es zu viele Karten, mal ist die Darstellung nicht die beste. Genau deshalb erproben wir gerade.</p><p class="zeile"><b>Und es hakt auch technisch noch.</b> Die Sortierflächen laufen direkt im Browser und sind nicht in jeder Lage stabil — beim Vergrössern kann eine Karte an die falsche Stelle rutschen, und auf kleinen Bildschirmen wird es eng. Wenn euch das begegnet, ist es kein Bedienfehler.</p><p class="zeile"><b>Erprobt ist noch nicht alles.</b> Manche dieser Aufgaben waren schon in einer Klasse, andere noch nicht. Was ihr hier seht, ist deshalb kein abgeschlossener Satz, sondern der Stand von heute.</p></section><section class="feld"><div class="feldkopf"><span class="marker" style="background:var(--blau)"></span><h2>Variablen und Terme</h2></div><p class="zeile">Streichholzmuster, Würfeltürme und Figuren – und die Terme, die man in ihnen lesen kann.</p><div class="knoepfe kv1" style="--f:var(--blau)"><a class="sortierung" href="variablen_und_terme/variante_1/"><h3>Welche Terme passen zu dieser Figur?</h3><p>Zu jeder Figur passen drei Terme.</p></a><a class="sortierung" href="variablen_und_terme/variante_6/"><h3>Der Eindringling</h3><p>Jede Vierergruppe zeigt eine Figur und drei Terme.</p></a></div></section><section class="feld"><div class="feldkopf"><span class="marker" style="background:var(--lila)"></span><h2>Ähnlichkeit</h2></div><p class="zeile">Figuren, Behauptungen und Vergleiche – zwischen ähnlich und nur beinahe ähnlich.</p><div class="knoepfe kv1" style="--f:var(--lila)"><a class="sortierung" href="aehnlichkeit/variante_1/"><h3>Ähnlichkeitsklassen</h3><p>Legt die Karten so zusammen, dass in jeder Gruppe ähnliche Figuren liegen.</p></a><a class="sortierung" href="aehnlichkeit/variante_3/"><h3>Der Umweg</h3><p>Start und Ende sind vorgegeben.</p></a></div></section></main>
+<div class="rand kopfklein"><p class="augen">Zum Ausprobieren</p><h1>Die Sortieraufgaben</h1><p>Eine Kostprobe aus dem Projekt. Die Kartensätze werden gerade in Klassen erprobt; hier stehen einzelne Aufgaben zum Anschauen und Ausprobieren — direkt im Browser, ohne Anmeldung und ohne Installation.</p></div><main class="rand" style="padding-top:14px"><section class="feld"><div class="feldkopf"><h2>Was hier steht, ist ein Zwischenstand</h2></div><p class="zeile">Die Aufgaben sind <b>noch nicht fertig</b>, und wir sagen das lieber selbst, als dass ihr es entdeckt: Mal passt die Sortierfläche nicht zur Aufgabe, mal sind es zu viele Karten, mal ist die Darstellung nicht die beste. Genau deshalb erproben wir gerade.</p><p class="zeile"><b>Und es hakt auch technisch noch.</b> Die Sortierflächen laufen direkt im Browser und sind nicht in jeder Lage stabil — beim Vergrössern kann eine Karte an die falsche Stelle rutschen, und auf kleinen Bildschirmen wird es eng. Wenn euch das begegnet, ist es kein Bedienfehler.</p><p class="zeile"><b>Erprobt ist noch nicht alles.</b> Manche dieser Aufgaben waren schon in einer Klasse, andere noch nicht. Was ihr hier seht, ist deshalb kein abgeschlossener Satz, sondern der Stand von heute.</p></section><section class="feld"><div class="feldkopf"><span class="marker" style="background:var(--blau)"></span><h2>Variablen und Terme</h2></div><p class="zeile">Streichholzmuster, Würfeltürme und Figuren – und die Terme, die man in ihnen lesen kann.</p><div class="knoepfe kv1" style="--f:var(--blau)"><a class="sortierung" href="variablen_und_terme/variante_1/"><h3>Welche Terme passen zu dieser Figur?</h3><p>Zu jeder Figur passen drei Terme.</p></a><a class="sortierung" href="variablen_und_terme/variante_6/"><h3>Der Eindringling</h3><p>Jede Vierergruppe zeigt eine Figur und drei Terme.</p></a></div></section><section class="feld"><div class="feldkopf"><span class="marker" style="background:var(--gruen)"></span><h2>Potenzen</h2></div><p class="zeile">Kurzschreibweise, Rechenregeln und die Frage, warum sie gelten müssen — an Karten geprüft, nicht behauptet.</p><div class="knoepfe kv1" style="--f:var(--gruen)"><a class="sortierung" href="potenzen/wonach-ordnen/"><h3>Wonach kann man diese Karten ordnen?</h3><p>Sortiert die Karten nach einem Kriterium, das ihr selbst wählt.</p></a><a class="sortierung" href="potenzen/nach-groesse/"><h3>Ordnet nach Grösse</h3><p>Legt jede Karte in ein Feld, der Grösse nach: links die kleinste, rechts die grösste.</p></a></div></section><section class="feld"><div class="feldkopf"><span class="marker" style="background:var(--gelb)"></span><h2>Teiler und Vielfache</h2></div><p class="zeile">Zahlen, Produkte, Teilermengen und Punktbilder — und die Frage, was eine Zahl zur Teilerin einer anderen macht.</p><div class="knoepfe kv1" style="--f:var(--gelb)"><a class="sortierung" href="teiler_und_vielfache/wonach-ordnen/"><h3>Wonach kann man diese Karten ordnen?</h3><p>Sortiert die Karten nach einem Kriterium, das ihr selbst wählt.</p></a><a class="sortierung" href="teiler_und_vielfache/wie-viele-teiler/"><h3>Ordnet nach der Anzahl der Teiler</h3><p>Legt die Zahlen in eine Reihe: links die mit den wenigsten Teilern, rechts die mit den meisten.</p></a></div></section><section class="feld"><div class="feldkopf"><span class="marker" style="background:var(--rot)"></span><h2>Faktorisieren und Bruchterme</h2></div><p class="zeile">Bausteine erkennen, kürzen, vergleichen – und sehen, was verboten ist.</p><div class="knoepfe kv1" style="--f:var(--rot)"><a class="sortierung" href="faktorisieren_und_bruchterme/variante_1/"><h3>Wonach kann man diese Karten ordnen?</h3><p>Sortiert die Karten nach einem Kriterium, das ihr selbst wählt.</p></a><a class="sortierung" href="faktorisieren_und_bruchterme/variante_2/"><h3>Welche Bausteine stecken drin?</h3></a></div></section><section class="feld"><div class="feldkopf"><span class="marker" style="background:var(--lila)"></span><h2>Ähnlichkeit</h2></div><p class="zeile">Figuren, Behauptungen und Vergleiche – zwischen ähnlich und nur beinahe ähnlich.</p><div class="knoepfe kv1" style="--f:var(--lila)"><a class="sortierung" href="aehnlichkeit/variante_1/"><h3>Ähnlichkeitsklassen</h3><p>Legt die Karten so zusammen, dass in jeder Gruppe ähnliche Figuren liegen.</p></a><a class="sortierung" href="aehnlichkeit/variante_3/"><h3>Der Umweg</h3><p>Start und Ende sind vorgegeben.</p></a></div></section><section class="feld"><div class="feldkopf"><span class="marker" style="background:var(--blau)"></span><h2>Lineare Funktionen</h2></div><p class="zeile">Graph, Gleichung, Wertetabelle und Situation — dieselbe Funktion in vier Kleidern, und was in jedem zu sehen ist.</p><div class="knoepfe kv1" style="--f:var(--blau)"><a class="sortierung" href="lineare_funktionen/wonach-ordnen/"><h3>Wonach kann man diese Karten ordnen?</h3><p>Sortiert die Karten nach einem Kriterium, das ihr selbst wählt.</p></a><a class="sortierung" href="lineare_funktionen/eine-funktion/"><h3>Welche Karten gehören zur selben Funktion?</h3><p>Graph, Gleichung, Wertetabelle und Situation beschreiben dieselbe Funktion.</p></a></div></section></main>
 <footer><div class="rand"><div class="spalten"><div><b>Hochschule</b><p>Pädagogische Hochschule Luzern</p><p>Institut für Fachdidaktik MINT und Nachhaltigkeit</p></div><div><b>Förderung und Erprobung</b><p>Gefördert von der Milton Ray Hartmann Stiftung</p><p>Erprobt an der Kantonsschule Reussbühl und der Sekundarschule Hochdorf</p></div><div><b>Kontakt</b><p>Dr. Henrike Allmendinger</p><p><a href="mailto:henrike.allmendinger@phlu.ch">henrike.allmendinger@phlu.ch</a></p><p><a href="https://www.phlu.ch/henrike-allmendinger.html">Profil an der PH Luzern</a></p></div></div></div></footer>
 </body>
 </html>
