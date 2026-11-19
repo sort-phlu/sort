@@ -223,15 +223,47 @@ footer.schlicht img.mrh{width:124px;height:auto;display:block}
 footer.schlicht .worte{flex:1;min-width:230px}
 footer.schlicht p{margin:0 0 5px;line-height:1.5}
 
-.reihe{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;
-  padding:6px 0;border-top:1px solid var(--linie);font-size:.9rem}
-.reihe b{flex:1;min-width:150px;font-weight:600}
-/* GEAENDERT (2026-09-18): Hier standen 26x26 grosse Ziffernkaestchen.
-   Seit die Knoepfe den TITEL tragen, muessen sie mitwachsen. */
-.reihe a{display:inline-block;padding:3px 10px;
-  text-align:center;border:1px solid var(--linie);border-radius:3px;
-  text-decoration:none;color:var(--braun);font-size:.85rem;font-weight:600}
-.reihe a:hover{background:var(--creme);border-color:var(--braun)}
+/* GEAENDERT (2026-10-13, Rikes Befund): Die Titel sind verschieden
+   lang, und als Knopfreihe standen sie unruhig nebeneinander - man sah
+   weder auf einen Blick, WIE VIELE Sortierungen ein Thema hat, noch
+   lagen sie in einer Linie.
+
+   Seit dem 18.09. tragen die Knoepfe den Titel statt einer Ziffer, und
+   das bleibt richtig: Ein Titel sagt, was einen erwartet. Die Nummer
+   kommt wieder DAZU, nicht an seine Stelle - gross oben, der Titel
+   klein darunter. Jede Kachel ist gleich gross, damit das Raster
+   zaehlbar wird. Die Nummern sind dieselben, die die Klasse spaeter
+   sieht: die Reihenfolge der Freigabeliste. */
+.reihe{display:block;padding:9px 0;border-top:1px solid var(--linie);
+  font-size:.9rem}
+.reihe b{display:block;margin-bottom:7px;font-weight:600}
+.kacheln{display:grid;gap:7px;
+  grid-template-columns:repeat(auto-fill,minmax(136px,1fr))}
+/* ALLE GLEICH HOCH (2026-10-13, Rikes Wunsch). Im Raster sind die
+   Kacheln EINER Zeile von sich aus gleich hoch - zwischen den Zeilen
+   waren sie es nicht: 65 px dort, wo die Titel zweizeilig umbrechen,
+   81 px bei dreizeiligen. Gemessen, nicht geschaetzt.
+   Die Mindesthoehe ist gemessen, nicht geschaetzt: Sie ist die Hoehe
+   der laengsten Kachel («Welche drei Karten gehoeren zum selben
+   Term?») bei 136 px Spaltenbreite. Kommt einmal ein noch laengerer
+   Titel dazu, waechst diese eine Zeile wieder - dann ist die Zahl hier
+   nachzumessen, nicht zu raten. Die Spaltenbreite
+   bleibt bei 136 px: Mit 148 passte die sechste Kachel nicht mehr in
+   die Zeile, und ein Thema mit sechs Sortierungen stand dann in zwei
+   Reihen - genau die Unuebersichtlichkeit, die weg sollte. */
+.kacheln a{display:flex;flex-direction:column;gap:4px;min-height:88px;
+  padding:7px 9px;border:1px solid var(--linie);border-radius:5px;
+  text-decoration:none;color:var(--braun)}
+/* Die Ziffer in der Handschrift - dasselbe Mittel wie bei .kv2 .nummer.
+   Sie darf groesser stehen: Eine Schreibschrift liest sich bei gleichem
+   Grad kleiner als eine Druckschrift. Der TITEL bleibt in der
+   Druckschrift; er wird ueberflogen, nicht gelesen. */
+.kacheln a .zahl{font-family:var(--hand);font-size:1.3rem;font-weight:400;
+  line-height:1;color:var(--braun)}
+.kacheln a .was{font-size:.76rem;line-height:1.28;color:var(--tinte-hell);
+  font-weight:400}
+.kacheln a:hover{background:var(--creme);border-color:var(--braun)}
+.kacheln a:hover .was{color:var(--braun)}
 table.zugaenge{width:100%;border-collapse:collapse;font-size:.9rem}
 table.zugaenge td{padding:7px 8px;border-top:1px solid var(--linie);vertical-align:top}
 table.zugaenge td span{color:var(--tinte-hell);font-size:.83rem}
@@ -310,7 +342,7 @@ footer p{margin:0 0 5px}
 </head>
 <body>
 <div class="leiste"><div class="rand"><a class="haus" href="../../index.html"><img src="../../bilder/logo-phlu.png" alt="PH Luzern, Pädagogische Hochschule"></a></div></div>
-<div class="rand kopfklein"><p class="augen">To try out</p><h1>A sorting task in English</h1><p>One task from the project, in English. The cards of this topic carry almost no language — a figure, a few measurements, an angle — which is why it is the one that travels. The other tasks are in German for now.</p></div><main class="rand" style="padding-top:14px"><section class="feld"><div class="feldkopf"><h2>What you see here is work in progress</h2></div><p class="zeile"><b>This is the one task we have put into English.</b> Everything else in the project exists in German only, and this one sample is here to be looked at, not to be taught with — we are not working with the English version ourselves yet.</p><p class="zeile"><b>And it is not finished.</b> None of these tasks are. Sometimes the sorting surface does not fit the task, sometimes there are too many cards, sometimes the representation is not the best one. That is exactly why we are trialling them.</p><p class="zeile"><b>It is not technically stable either.</b> The sorting surfaces run directly in the browser. When you zoom in, a card can end up in the wrong place, and on small screens it gets tight. If that happens to you, you have not done anything wrong.</p></section><section class="feld"><div class="feldkopf"><span class="marker" style="background:var(--lila)"></span><h2>Similarity</h2></div><p class="zeile">Figures, claims and comparisons — between similar and merely alike.</p><div class="knoepfe kv1" style="--f:var(--lila)"><a class="sortierung" href="similarity/"><span class="nummer">Sorting 1</span><h3>Similarity classes</h3><p>Sort the cards so that each group holds similar figures.</p></a></div></section></main>
+<div class="rand kopfklein"><p class="augen">To try out</p><h1>A sorting task in English</h1><p>One task from the project, in English. The cards of this topic carry almost no language — a figure, a few measurements, an angle — which is why it is the one that travels. The other tasks are in German for now.</p></div><main class="rand" style="padding-top:14px"><section class="feld"><div class="feldkopf"><h2>What you see here is work in progress</h2></div><p class="zeile"><b>This is the one task we have put into English.</b> Everything else in the project exists in German only, and this one sample is here to be looked at, not to be taught with — we are not working with the English version ourselves yet.</p><p class="zeile"><b>And it is not finished.</b> None of these tasks are. Sometimes the sorting surface does not fit the task, sometimes there are too many cards, sometimes the representation is not the best one. That is exactly why we are trialling them.</p><p class="zeile"><b>It is not technically stable either.</b> The sorting surfaces run directly in the browser. On small screens it gets tight. If that happens to you, you have not done anything wrong.</p></section><section class="feld"><div class="feldkopf"><span class="marker" style="background:var(--lila)"></span><h2>Similarity</h2></div><p class="zeile">Figures, claims and comparisons — between similar and merely alike.</p><div class="knoepfe kv1" style="--f:var(--lila)"><a class="sortierung" href="similarity/"><span class="nummer">Sorting 1</span><h3>Similarity classes</h3><p>Sort the cards so that each group holds similar figures.</p></a></div></section></main>
 <footer><div class="rand"><div class="spalten"><div><b>University</b><p>Lucerne University of Teacher Education</p><p>Institut für Fachdidaktik MINT und Nachhaltigkeit</p></div><div><b>Funding and classroom trials</b><p>Funded by the Milton Ray Hartmann Stiftung</p><p>Tried out at Kantonsschule Reussbühl and Sekundarschule Hochdorf</p></div><div><b>Contact</b><p>Dr. Henrike Allmendinger</p><p><a href="mailto:henrike.allmendinger@phlu.ch">henrike.allmendinger@phlu.ch</a></p><p><a href="https://www.phlu.ch/henrike-allmendinger.html">Profile at the PH Luzern</a></p></div></div></div></footer>
 </body>
 </html>
